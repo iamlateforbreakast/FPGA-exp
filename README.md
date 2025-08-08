@@ -6,6 +6,8 @@ Setting up the Sipeed toolchain
 
 The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html
 
+[project1][https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project1]
+
 Setting up the open source toolchain
 ------------------------------------
 
@@ -19,7 +21,7 @@ Setting up the Hardcaml toolchain
 Projects
 --------
 
-1. Evaluate the Sipeed proprietary toolchain
+[1. Evaluate the Sipeed proprietary toolchain][https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project1]
 2. evaluate the open source toolchain
 3. Evaluate the Hardcaml toolchain
 4. GPIO project
