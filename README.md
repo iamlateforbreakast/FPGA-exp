@@ -4,8 +4,14 @@ A few experiments targetting the Sipeed Nano 20K. The general aim would be to fo
 Setting up the Sipeed toolchain
 -------------------------------
 
+The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html
+
 Setting up the open source toolchain
 ------------------------------------
+
+A description of setting up the open source toolchain is described here: 
+- https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
+- 
 
 Setting up the Hardcaml toolchain
 ---------------------------------
@@ -25,3 +31,26 @@ Projects
 10. ADC/DAC project
 11. Soft CPU project
 12. Accelerator project
+
+Interesting Resources
+---------------------
+
+Using open source toolchain on Sipeed Tang Nano 9K.
+
+https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
+
+Using Raspberry Pi 5 and open source toolchain.
+
+https://www.weigu.lu/other_projects/fpga/fpga_tang_nano_9k/index.html
+
+Interesting H/W blog and FPGA experiements.
+
+https://specbranch.com/
+
+Quick and simple tutorial to flash a blink project on Sipeed Tang nanon 9K using open source toolchain.
+
+https://blog.peramid.es/posts/2024-10-19-fpga.html
+
+Brilliant blog with interesting FPGA projects and installing open source chain on docker on Sipeed Tang Nano 20K.
+
+https://www.mikekohn.net/micro/tang_nano_dev.php
