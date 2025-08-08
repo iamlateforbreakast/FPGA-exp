@@ -13,15 +13,22 @@ The latest installer is usbipd-win_5.1.0_x64.msi.
 Share Windows USB port with Fedora
 ----------------------------------
 
-usbipd list
+In powershell in administrator mode, list the avaialble USB devices by typing:
 
-usbipd bind --busid=2-2
+    usbipd.exe list
 
-Start Fedora 42
+The result should list a device named "USB Serial Converter A, USB Serial Converter B" with BUSID 2-2 in my case. We can now share this USB with other users by typing:
 
-usbipd attach --wsl --busid=2-2
+    usbipd.exe bind --busid=2-2
 
-In WSL lsusb
+It is then necessary to start the Fedora 42 WSL instance and then attach the USB 2 serial ports to the WSL instance by typing:
+
+    usbipd.exe attach --wsl --busid=2-2
+
+In WSL, it should now be possible to see the new serial ports by typing:
+
+    ls /dev/ttyUSB*
+    lsusb
 
 
 
