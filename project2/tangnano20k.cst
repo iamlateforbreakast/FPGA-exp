@@ -1,8 +1,8 @@
 IO_LOC "clk" 52;
 IO_PORT "clk" PULL_MODE=UP;
-IO_LOC "led[0]" 10;
-IO_LOC "led[1]" 11;
-IO_LOC "led[2]" 13;
-IO_LOC "led[3]" 14;
-IO_LOC "led[4]" 15;
-IO_LOC "led[5]" 16;
+IO_LOC "led[0]" 15; // 9k 10;
+IO_LOC "led[1]" 16; // 9k 11;
+IO_LOC "led[2]" 17; // 9k 13;
+IO_LOC "led[3]" 18; // 9k 14;
+IO_LOC "led[4]" 19; // 9k 15;
+IO_LOC "led[5]" 20; // 9k 16;
