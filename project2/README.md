@@ -30,7 +30,11 @@ In WSL, it should now be possible to see the new serial ports by typing:
     ls /dev/ttyUSB*
     lsusb
 
+YOSYS
+-----
 
+    read_verilog counter.v
+    synth_gowin -top counter -json counter.json -family gw2a
 
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
