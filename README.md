@@ -20,9 +20,7 @@ Projects
 --------
 
 [1. Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project1)
-
 [2. evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project2)
-
 [3. Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project3)
 
 4. GPIO project
