@@ -30,6 +30,15 @@ In WSL, it should now be possible to see the new serial ports by typing:
     ls /dev/ttyUSB*
     lsusb
 
+As a serial terminal in WSL, I choose to use "moserial" which is the default gnome serial terminal.
+
+    sudo dnf install moserial
+
+
+In Fedora 42, I did not managed to add myself to the dialout group so I ended doing
+
+    sudo chmod 666 /dev/ttyUSB[0-1]
+
 YOSYS
 -----
 
@@ -38,6 +47,8 @@ YOSYS
 
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
+
+Type help to see all commands. "reboot" boots the FPGA and produces the following boot message.
 
 OpenFPGAloader
 --------------
