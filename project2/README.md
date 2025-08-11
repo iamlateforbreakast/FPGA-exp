@@ -39,12 +39,27 @@ In Fedora 42, I did not managed to add myself to the dialout group so I ended do
 
     sudo chmod 666 /dev/ttyUSB[0-1]
 
-YOSYS
------
+Install YOSYS:
+--------------
 
     read_verilog counter.v
     synth_gowin -top counter -json counter.json -family gw2a
 
+Install nextpnr:
+----------------
+
+    sudo dnf install cmake python3-devel
+    sudo dnf install boost-devel eigen3-devel
+    mkdir Tools
+    git clone https://github.com/YosysHQ/nextpnr.git
+    cd nextpnr
+    git submodule update --init --recursive
+    mkdir build
+    cd build
+    cmake .. -DARCH="himbaechel" -DHIMBAECHEL_UARCH="gowin"
+    make
+
+    
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
 
