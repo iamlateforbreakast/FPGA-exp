@@ -59,6 +59,9 @@ Install nextpnr:
     cmake .. -DARCH="himbaechel" -DHIMBAECHEL_UARCH="gowin"
     make
 
+Then add nextpnr-himbaechel to the execution search path.
+
+    export PATH=$PATH:~/Tools/nextpnr/build
     
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
