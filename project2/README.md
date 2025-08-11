@@ -30,10 +30,62 @@ In WSL, it should now be possible to see the new serial ports by typing:
     ls /dev/ttyUSB*
     lsusb
 
+As a serial terminal in WSL, I choose to use "moserial" which is the default gnome serial terminal.
 
+    sudo dnf install moserial
+
+
+In Fedora 42, I did not managed to add myself to the dialout group so I ended doing
+
+    sudo chmod 666 /dev/ttyUSB[0-1]
+
+Install YOSYS:
+--------------
+
+    read_verilog counter.v
+    synth_gowin -top counter -json counter.json -family gw2a
+
+Install nextpnr:
+----------------
+
+There is an nexpnr package avaialble in Fedora 42 but it does not support the nanotang 20k device. So it needs to be compiled from sources
+
+    sudo dnf install cmake python3-devel
+    sudo dnf install boost-devel eigen3-devel
+    mkdir Tools
+    git clone https://github.com/YosysHQ/nextpnr.git
+    cd nextpnr
+    git submodule update --init --recursive
+    mkdir build
+    cd build
+    cmake .. -DARCH="himbaechel" -DHIMBAECHEL_UARCH="gowin"
+    make
+
+Then add nextpnr-himbaechel to the execution search path.
+
+    export PATH=$PATH:~/Tools/nextpnr/build
+    nextpnr-himbaechel -r --json counter.json --write counter_pnr.json --freq 27 --vopt family=GW2A-18C --vopt cst=tangnano20k.cst --device GW2AR-LV18QN88C8/I7
+    gowin_pack -d GW2A-18C -o counter.fs counter_pnr.json
+
+Install openFPGAloader:
+-----------------------
+
+    sudo dnf install libftdi-devel
+    cd ~/Tools
+    git clone https://github.com/trabucayre/openFPGALoader.git
+    cd openFPGALoader/
+    mkdir build
+    cd build/
+    cmake ../
+    cmake --build .
+    sudo make install
 
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
+
+Type help to see all commands. "reboot" boots the FPGA and produces the following boot message.
+
+![Litex_Boot_Report](./images/litex_boot.png)
 
 OpenFPGAloader
 --------------
