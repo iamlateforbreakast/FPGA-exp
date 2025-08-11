@@ -1,0 +1,4 @@
+(library
+ (name project3_lib)
+ (modules counter)
+ (libraries hardcaml))
