@@ -48,6 +48,8 @@ Install YOSYS:
 Install nextpnr:
 ----------------
 
+There is an nexpnr package avaialble in Fedora 42 but it does not support the nanotang 20k device. So it needs to be compiled from sources
+
     sudo dnf install cmake python3-devel
     sudo dnf install boost-devel eigen3-devel
     mkdir Tools
@@ -62,7 +64,22 @@ Install nextpnr:
 Then add nextpnr-himbaechel to the execution search path.
 
     export PATH=$PATH:~/Tools/nextpnr/build
-    
+    nextpnr-himbaechel -r --json counter.json --write counter_pnr.json --freq 27 --vopt family=GW2A-18C --vopt cst=tangnano20k.cst --device GW2AR-LV18QN88C8/I7
+    gowin_pack -d GW2A-18C -o counter.fs counter_pnr.json
+
+Install openFPGAloader:
+-----------------------
+
+    sudo dnf install libftdi-devel
+    cd ~/Tools
+    git clone https://github.com/trabucayre/openFPGALoader.git
+    cd openFPGALoader/
+    mkdir build
+    cd build/
+    cmake ../
+    cmake --build .
+    sudo make install
+
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
 
