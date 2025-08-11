@@ -50,7 +50,7 @@ Serial Communication with the Tang Nano 20K:
 
 Type help to see all commands. "reboot" boots the FPGA and produces the following boot message.
 
-![Litex_Boot_Report](./images/litex_boot.jpg)
+![Litex_Boot_Report](./images/litex_boot.png)
 
 OpenFPGAloader
 --------------
