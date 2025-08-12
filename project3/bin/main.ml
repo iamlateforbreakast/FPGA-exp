@@ -1,10 +1,12 @@
 (* main.ml *)
 
-open Project3_lib
+open Project3_lib.Counter
 open Hardcaml
 
-module SimpleCircuit = Circuit.With_interface(Counter.I)(Counter.O)
+module SimpleCircuit = Circuit.With_interface(I)(O)
 
-let circuit = SimpleCircuit.create_exn Counter.create ~name:"counter"
+let circuit = SimpleCircuit.create_exn create ~name:"counter"
 
-let () = Rtl.print Verilog circuit
+let output_mode = Rtl.Output_mode.To_file("counter.v")
+
+let () = Rtl.output ~output_mode Verilog circuit

@@ -5,7 +5,7 @@ open Hardcaml.Signal
 
 module I = struct
   type 'a t =
-    { clock : 'a;
+    { clk : 'a;
       clear : 'a;
       incr  : 'a }
   [@@deriving hardcaml]
@@ -13,15 +13,15 @@ end
 
 module O = struct
   type 'a t =
-    { dout : 'a[@bits 8]
+    { leds : 'a[@bits 6]
     }
   [@@deriving hardcaml]
 end
 
 let create (i : _ I.t) =
-  { O.dout = reg_fb
-      (Reg_spec.create ~clock:i.clock ~clear:i.clear ())
+  { O.leds = reg_fb
+      (Reg_spec.create ~clock:i.clk ~clear:i.clear ())
       ~enable:i.incr
-      ~width:8
+      ~width:6
       ~f:(fun d -> d +:. 1)
   }
