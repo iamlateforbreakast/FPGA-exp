@@ -1,4 +1,6 @@
 (executable
+ (name main) 
  (public_name project3)
- (name main)
- (libraries hardcaml project3_lib))
+ (modules main)
+ (libraries project3_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
