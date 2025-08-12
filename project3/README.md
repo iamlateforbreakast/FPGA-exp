@@ -8,3 +8,19 @@ Install Hardcaml:
 -----------------
 
     opam install hardcaml ppx_hardcaml
+
+Create library:
+---------------
+
+We first need to create a new OCAML project by typing
+
+    dune init project project3
+    
+Create main executable:
+-----------------------
+
+The executable is generating the Verilog file.
+
+Conclusion:
+-----------
+I found the use of Hardcaml quite hard to understand. The ressources are limited on the web.
