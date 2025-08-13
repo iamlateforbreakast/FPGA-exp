@@ -80,6 +80,12 @@ Install openFPGAloader:
     cmake --build .
     sudo make install
 
+Then add openFPGAloader to the execution path:
+
+    export PATH=$PATH:~/Tools/nextpnr/build
+    openFPGALoader --scan-usb
+    openFPGALoader --ftdi-serial 2025030317 counter.fs
+
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
 
