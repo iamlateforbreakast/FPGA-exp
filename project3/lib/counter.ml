@@ -16,7 +16,6 @@ module O = struct
   [@@deriving hardcaml]
 end
 
-(* Frequency is 27MHz to 1/2 s wait time betwen led increment *)
 let wait_time = 13_499_999
 
 let create (i : _ I.t) =

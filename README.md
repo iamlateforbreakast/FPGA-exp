@@ -22,16 +22,13 @@ Projects
 1. [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project1)
 2. [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project2)
 3. [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project3)
-
-4. GPIO project
-5. UART project
-6. HDMI project
-7. I2C project
-8. SPI project
-9. USB project
-10. ADC/DAC project
-11. Soft CPU project
-12. Accelerator project
+4. [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project4)
+5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project5)
+6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project6)
+7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project7)
+8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project8)
+9. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project9)
+10. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project10)
 
 Interesting Resources
 ---------------------
