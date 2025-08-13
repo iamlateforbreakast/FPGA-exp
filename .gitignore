@@ -1,2 +1,8 @@
-./project3/_build
-./project3/counter.v
+project3/_build/
+project3/counter.v
+
+*.fs
+
+*.opam
+
+*.json
