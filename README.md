@@ -40,8 +40,6 @@ Using open source toolchain on Sipeed Tang Nano 9K.
 
 https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
 
-https://www.mikekohn.net/micro/tang_nano_dev.php
-
 Using Raspberry Pi 5 and open source toolchain.
 
 https://www.weigu.lu/other_projects/fpga/fpga_tang_nano_9k/index.html
@@ -57,3 +55,8 @@ https://blog.peramid.es/posts/2024-10-19-fpga.html
 Brilliant blog with interesting FPGA projects and installing open source chain on docker on Sipeed Tang Nano 20K.
 
 https://www.mikekohn.net/micro/tang_nano_dev.php
+
+Detailled blog implementing a NERV32 on Nano tang 20k
+
+https://www.jpfau.org/series/oss-risc-v-development-on-tang-nano/
+
