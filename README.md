@@ -1,20 +1,10 @@
 # FPGA-exp
-A few experiments targetting the Sipeed Nano 20K. The general aim would be to form a general view about the FPGA development process regarding complexity and development time as well as testing efficiency.
+A few experiments targetting the Sipeed Tang Nano 20K. The general aim would be to form a general view about the FPGA development process regarding complexity and development time as well as testing efficiency.
 
 Setting up the Sipeed toolchain
 -------------------------------
 
 The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html
-
-Setting up the open source toolchain
-------------------------------------
-
-A description of setting up the open source toolchain is described here: 
-- https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
-- 
-
-Setting up the Hardcaml toolchain
----------------------------------
 
 Projects
 --------
