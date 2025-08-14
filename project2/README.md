@@ -1,5 +1,6 @@
 Install FTDI USB driver:
 ------------------------
+In theory, Windows 11 should recognise the Tang nano 20k board and expose the 2 serial communication ports. I had to install the drivers from Future tech to proceed.
 
 WSL USB serial adaptor:
 -----------------------
@@ -10,8 +11,8 @@ https://github.com/dorssel/usbipd-win/releases
 
 The latest installer is usbipd-win_5.1.0_x64.msi.
 
-Share Windows USB port with Fedora
-----------------------------------
+Share Windows USB port with Fedora WSL:
+---------------------------------------
 
 In powershell in administrator mode, list the avaialble USB devices by typing:
 
@@ -70,6 +71,8 @@ Then add nextpnr-himbaechel to the execution search path.
 Install openFPGAloader:
 -----------------------
 
+openfpgaloader is the tool loading the bitstream into the Tang Nano flash memory from the computer to the board using the USB conector.
+
     sudo dnf install libftdi-devel
     cd ~/Tools
     git clone https://github.com/trabucayre/openFPGALoader.git
@@ -82,21 +85,16 @@ Install openFPGAloader:
 
 Then add openFPGAloader to the execution path:
 
-    export PATH=$PATH:~/Tools/nextpnr/build
-    openFPGALoader --scan-usb
-    openFPGALoader --ftdi-serial 2025030317 counter.fs
+    export PATH=$PATH:~/Tools/openFPGALoader/build
+    sudo openFPGALoader --scan-usb
+    sudo openFPGALoader --ftdi-serial 2025030317 counter.fs
 
 Serial Communication with the Tang Nano 20K:
 --------------------------------------------
 
 Type help to see all commands. "reboot" boots the FPGA and produces the following boot message.
 
-![Litex_Boot_Report](./images/litex_boot.png)
+![Litex_Boot_Report on Tang nano 20k](./images/litex_boot.png)
 
-OpenFPGAloader
---------------
 
-openfpgaloader is the tool loading the bitstream into the Tang Nano flash memory from the computer to the board using the USB conector.
 
-    sudo dnf copr enable mobicarte/openFPGALoader
-    sudo dnf install openFPGALoader   
