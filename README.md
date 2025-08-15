@@ -47,3 +47,7 @@ Detailled blog implementing a NERV32 on Nano tang 20k
 
 https://www.jpfau.org/series/oss-risc-v-development-on-tang-nano/
 
+List of project tagged #GOWIN on github
+
+https://github.com/topics/gowin?o=desc&s=forks
+
