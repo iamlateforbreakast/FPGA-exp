@@ -1,0 +1,1 @@
+(* gowin_clkdiv.ml *)
