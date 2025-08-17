@@ -2,21 +2,20 @@ open Hardcaml
 
 module I = struct
   type 'a t =
-    { clk_in1 : 'a
-    ; resetn : 'a
+    { clkin : 'a
     } 
   [@@deriving sexp_of, hardcaml]
 end
 
 module O = struct
   type 'a t =
-    { locked : 'a
-    ; clk_out : 'a
+    { lock : 'a
+    ; clkout : 'a
     }
   [@@deriving sexp_of, hardcaml]
 end
 
 let create (input : _ I.t) =
   let module Inst = Instantiation.With_interface(I)(O) in
-  Inst.create ~name:"design_1_clk_wiz_0_0" input
+  Inst.create ~name:"gowin_rpll" input
 ;;
