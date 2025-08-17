@@ -11,9 +11,7 @@ end
 module O = struct
   type 'a t =
     { locked : 'a
-    ; clk_out1 : 'a
-    ; clk_out2 : 'a
-    ; clk_out3 : 'a
+    ; clk_out : 'a
     }
   [@@deriving sexp_of, hardcaml]
 end
