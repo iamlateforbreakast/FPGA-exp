@@ -1,5 +1,6 @@
 (* svo_hdmi.ml *)
 open Hardcaml
+open Signal
 
 module type Config = Config.S
 
@@ -30,8 +31,9 @@ module Make (X : Config.S) = struct
   let create (_scope : Scope.t) (_i : _ I.t) =
     { O.tmds_clk_n = Signal.gnd;
       O.tmds_clk_p = Signal.gnd;
-      O.tmds_d_n = Signal.gnd; 
-      O.tmds_d_p = Signal.gnd }
+      O.tmds_d_n = Signal.gnd @: Signal.gnd @: Signal.gnd; 
+      O.tmds_d_p = Signal.gnd @: Signal.gnd @: Signal.gnd
+    }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

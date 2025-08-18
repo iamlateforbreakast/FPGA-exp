@@ -30,7 +30,6 @@ module My_config = struct
 end
 
 module Hdmi = Svo_hdmi.Make(My_config)
-module Tcard = Svo_tcard.Make(My_config)
 
 module TopCircuit = Circuit.With_interface(I)(O)
 
@@ -39,22 +38,18 @@ let create (scope: Scope.t) (input: _ I.t)=
     (Gowin_rpll.I.{clkin = input.clkin}) in
   let clkdiv = Gowin_clkdiv.hierarchical scope 
     (Gowin_clkdiv.I.{ hclkin = rpll.clkout
-                    ; resetn = Signal.vdd }) in
-  let tcard = Tcard.hierarchical scope 
-    (Tcard.I.{ clk = clkdiv.clkout
-             ; resetn = Signal.vdd
-             ; out_axis_tready = Signal.gnd }) in
+                    ; resetn = rpll.lock }) in
   (* Instantiate the HDMI module with the required inputs *)
   let hdmi = Hdmi.hierarchical scope 
     (Hdmi.I.{ clk = Signal.gnd
             ; resetn = Signal.vdd
             ; out_axis_tready = Signal.gnd
             ; clk_pixel = clkdiv.clkout
-            ; clk_5x_pixel = clkdiv.clkout
-            ; locked = rpll.locked }) in
+            ; clk_5x_pixel = rpll.clkout
+            ; locked = rpll.lock }) in
   {
     O.tmds_clk_n = hdmi.tmds_clk_n;
-    O.tmds_clk_p = hdmi.tmds_clk_p;
+    O.tmds_clk_p = clkdiv.clkout;
     O.tmds_d_n = hdmi.tmds_d_n;
     O.tmds_d_p = hdmi.tmds_d_p;
   }
