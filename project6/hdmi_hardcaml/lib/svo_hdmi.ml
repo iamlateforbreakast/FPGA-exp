@@ -28,7 +28,11 @@ module Make (X : Config.S) = struct
     [@@deriving hardcaml]
   end
 
-  let create (_scope : Scope.t) (_i : _ I.t) =
+  module Tcard = Svo_tcard(X)
+  module Encoder = Svo_enc(X)
+  
+  let create (_scope : Scope.t) (i : _ I.t) =
+    let tcard = Tcard.hierarchical scope (Tcard.I.{resetn=i.resetn}) in
     { O.tmds_clk_n = Signal.gnd;
       O.tmds_clk_p = Signal.gnd;
       O.tmds_d_n = Signal.gnd @: Signal.gnd @: Signal.gnd; 
