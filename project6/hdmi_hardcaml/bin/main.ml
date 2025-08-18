@@ -2,6 +2,23 @@
 open Hardcaml
 open Project6_lib
 
+module I = struct
+  type 'a t =
+    { clkin : 'a
+    } 
+  [@@deriving hardcaml]
+end
+
+module O = struct
+  type 'a t =
+    { tmds_clk_n : 'a
+    ; tmds_clk_p : 'a
+    ; tmds_d_n : 'a [@bits 3]
+    ; tmds_d_p : 'a [@bits 3] 
+    }
+  [@@deriving hardcaml]
+end
+
 module My_config = struct
   let svo_mode = 640
   let svo_frame_rate = 60
@@ -15,42 +32,33 @@ end
 module Hdmi = Svo_hdmi.Make(My_config)
 module Tcard = Svo_tcard.Make(My_config)
 
-
-module I = struct
-  type 'a t =
-    { clkin : 'a
-    } 
-  [@@deriving hardcaml]
-end
-
-module O = struct
-  type 'a t =
-    { tmds_clk_n : 'a
-    ; tmds_clk_p : 'a
-    }
-  [@@deriving hardcaml]
-end
-
 module TopCircuit = Circuit.With_interface(I)(O)
-let create (scope: Scope.t) (input: _ I.t)=
-  let rpll = Gowin_rpll.hierarchical scope (Gowin_rpll.I.{clkin = input.clkin}) in
-  let clkdiv = Gowin_clkdiv.hierarchical scope 
-    (Gowin_clkdiv.I.{ hclkin = rpll.clkout; resetn = Signal.gnd }) in
-  let tcard = Tcard.hierarchical scope (Tcard.I.{ clk = clkdiv.clkout; resetn = Signal.gnd }) in
 
+let create (scope: Scope.t) (input: _ I.t)=
+  let rpll = Gowin_rpll.hierarchical scope 
+    (Gowin_rpll.I.{clkin = input.clkin}) in
+  let clkdiv = Gowin_clkdiv.hierarchical scope 
+    (Gowin_clkdiv.I.{ hclkin = rpll.clkout
+                    ; resetn = Signal.vdd }) in
+  let tcard = Tcard.hierarchical scope 
+    (Tcard.I.{ clk = clkdiv.clkout
+             ; resetn = Signal.vdd
+             ; out_axis_tready = Signal.gnd }) in
   (* Instantiate the HDMI module with the required inputs *)
   let hdmi = Hdmi.hierarchical scope 
     (Hdmi.I.{ clk = Signal.gnd
-            ; resetn = Signal.gnd
+            ; resetn = Signal.vdd
             ; out_axis_tready = Signal.gnd
             ; clk_pixel = clkdiv.clkout
             ; clk_5x_pixel = clkdiv.clkout
             ; locked = rpll.locked }) in
-
   {
-    O.tmds_clk_n = Signal.gnd;
-    O.tmds_clk_p = Signal.gnd;
+    O.tmds_clk_n = hdmi.tmds_clk_n;
+    O.tmds_clk_p = hdmi.tmds_clk_p;
+    O.tmds_d_n = hdmi.tmds_d_n;
+    O.tmds_d_p = hdmi.tmds_d_p;
   }
+  
 let circuit = 
   let scope = Scope.create ~flatten_design:false () in
   TopCircuit.create_exn ~name:"top" (create scope)
