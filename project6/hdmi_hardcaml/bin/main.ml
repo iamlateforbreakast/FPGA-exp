@@ -13,14 +13,47 @@ module My_config = struct
 end
 
 module Hdmi = Svo_hdmi.Make(My_config)
+module Tcard = Svo_tcard.Make(My_config)
 
-module SimpleCircuit = Circuit.With_interface(Hdmi.I)(Hdmi.O)
 
+module I = struct
+  type 'a t =
+    { clkin : 'a
+    } 
+  [@@deriving hardcaml]
+end
+
+module O = struct
+  type 'a t =
+    { tmds_clk_n : 'a
+    ; tmds_clk_p : 'a
+    }
+  [@@deriving hardcaml]
+end
+
+module TopCircuit = Circuit.With_interface(I)(O)
+let create (scope: Scope.t) (input: _ I.t)=
+  let rpll = Gowin_rpll.hierarchical scope (Gowin_rpll.I.{clkin = input.clkin}) in
+  let clkdiv = Gowin_clkdiv.hierarchical scope 
+    (Gowin_clkdiv.I.{ hclkin = rpll.clkout; resetn = Signal.gnd }) in
+  let tcard = Tcard.hierarchical scope (Tcard.I.{ clk = clkdiv.clkout; resetn = Signal.gnd }) in
+
+  (* Instantiate the HDMI module with the required inputs *)
+  let hdmi = Hdmi.hierarchical scope 
+    (Hdmi.I.{ clk = Signal.gnd
+            ; resetn = Signal.gnd
+            ; out_axis_tready = Signal.gnd
+            ; clk_pixel = clkdiv.clkout
+            ; clk_5x_pixel = clkdiv.clkout
+            ; locked = rpll.locked }) in
+
+  {
+    O.tmds_clk_n = Signal.gnd;
+    O.tmds_clk_p = Signal.gnd;
+  }
 let circuit = 
   let scope = Scope.create ~flatten_design:false () in
-  let rpll = SimpleCircuit.create_exn ~name:"gowin_rpll" (create scope) in
-  let clkdiv = SimpleCircuit.create_exn ~name:"gowin_clkdiv" (create scope) in
-  SimpleCircuit.create_exn ~name:"svo_hdmi" (Hdmi.create scope)
+  TopCircuit.create_exn ~name:"top" (create scope)
 
 let output_mode = Rtl.Output_mode.To_file("hdmi.v")
 
