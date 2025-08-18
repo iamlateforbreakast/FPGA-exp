@@ -28,15 +28,20 @@ module Make (X : Config.S) = struct
     [@@deriving hardcaml]
   end
 
-  module Tcard = Svo_tcard(X)
-  module Encoder = Svo_enc(X)
-  
+  module Tcard = Svo_tcard.Make(X)
+  module Encoder = Svo_enc.Make(X)
+  module Tmds = Svo_tmds.Make(X)
+
   let create (scope : Scope.t) (i : _ I.t) =
-    let tcard = Tcard.hierarchical scope (Tcard.I.{ resetn=i.resetn; clk=i.clk }) in
-    { O.tmds_clk_n = Signal.gnd;
-      O.tmds_clk_p = Signal.gnd;
-      O.tmds_d_n = Signal.gnd @: Signal.gnd @: Signal.gnd; 
-      O.tmds_d_p = Signal.gnd @: Signal.gnd @: Signal.gnd
+    let tcard = Tcard.hierarchical scope (Tcard.I.{ resetn=i.resetn; clk=i.clk; out_axis_tready=Signal.vdd }) in
+    let enc = Encoder.hierarchical scope (Encoder.I.{ clk=i.clk; resetn=i.resetn; out_axis_tready=i.out_axis_tready; clk_pixel=i.clk_pixel; clk_5x_pixel=i.clk_5x_pixel; locked=i.locked }) in
+    let tmds = Tmds.hierarchical scope (Tmds.I.{ clk=i.clk; resetn=i.resetn; out_axis_tready=i.out_axis_tready; clk_pixel=i.clk_pixel; clk_5x_pixel=i.clk_5x_pixel; locked=i.locked }) in
+    (* Connect the outputs of the encoder to the TMDS outputs *)
+    {
+      O.tmds_clk_n = tcard.tmds_clk_n;
+      O.tmds_clk_p = tcard.tmds_clk_p;
+      O.tmds_d_n = enc.tmds_d_n;
+      O.tmds_d_p = enc.tmds_d_p;
     }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =

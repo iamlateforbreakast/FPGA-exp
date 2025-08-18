@@ -20,7 +20,7 @@ module O = struct
 end
 
 module My_config = struct
-  let svo_mode = 640
+  let svo_mode = "640x480V"
   let svo_frame_rate = 60
   let svo_bits_per_pixel = 24
   let svo_bits_per_red = 8
