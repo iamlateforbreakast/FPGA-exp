@@ -1,0 +1,4 @@
+(executable
+ (public_name hdmi_hardcaml)
+ (name main)
+ (libraries project6_lib hardcaml))
