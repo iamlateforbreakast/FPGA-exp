@@ -1,4 +1,6 @@
 (executable
  (public_name hdmi_hardcaml)
  (name main)
- (libraries project6_lib hardcaml))
+ (modules main)
+ (libraries project6_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
