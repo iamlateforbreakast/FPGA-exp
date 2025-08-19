@@ -1,4 +1,6 @@
 (* gowin_elvds_obuf.ml *)
+open Hardcaml
+
 module I = struct
   type 'a t =
     { input : 'a [@name "I"]
