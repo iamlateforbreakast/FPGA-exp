@@ -51,12 +51,30 @@ module Make (X : Config.S) = struct
 	         ; clk_pixel=i.clk_pixel
 		     ; clk_5x_pixel=i.clk_5x_pixel
 	         ; locked=i.locked }) in
+    let tmds_d =
+      (* OSER10 instantiation, returns 3 bits *)
+      Signal.gnd @: Signal.gnd @: Signal.gnd
+    in
+
+    let buf_outputs =
+      Array.init 4 (fun idx ->
+        Gowin_elvds_obuf.hierarchical scope { Elvds_obuf.I.i =
+          if idx = 0 then i.clk_pixel else bit tmds_d (idx - 1)
+        }
+      )
+    in
+
+    let tmds_clk_p = buf_outputs.(0).O.o in
+    let tmds_clk_n = buf_outputs.(0).O.ob in
+    let tmds_d_p = Signal.concat [ buf_outputs.(3).O.o; buf_outputs.(2).O.o; buf_outputs.(1).O.o ] in
+    let tmds_d_n = Signal.concat [ buf_outputs.(3).O.ob; buf_outputs.(2).O.ob; buf_outputs.(1).O.ob ] in
+	
     (* Connect the outputs of the encoder to the TMDS outputs *)
     {
-      O.tmds_clk_n = tcard.tmds_clk_n;
-      O.tmds_clk_p = tcard.tmds_clk_p;
-      O.tmds_d_n = enc.tmds_d_n;
-      O.tmds_d_p = enc.tmds_d_p;
+      O.tmds_clk_n = tmds_clk_n;
+      O.tmds_clk_p = tmds_clk_p;
+      O.tmds_d_n = tmds_d_n;
+      O.tmds_d_p = tmds_d_p;
     }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
