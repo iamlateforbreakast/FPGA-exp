@@ -55,10 +55,15 @@ let create (scope: Scope.t) (input: _ I.t)=
     O.tmds_d_p = hdmi.tmds_d_p;
   }
   
+  let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
+    let module H = Hierarchy.In_scope(I)(O) in
+    H.hierarchical ~scope ~name:"top" create i
+
+let scope = Scope.create ~flatten_design:false ()    
 let circuit = 
-  let scope = Scope.create ~flatten_design:false () in
-  TopCircuit.create_exn ~name:"top" (create scope)
+  TopCircuit.create_exn ~name:"top" (hierarchical scope)
 
 let output_mode = Rtl.Output_mode.To_file("hdmi.v")
 
-let () = Rtl.output ~output_mode Verilog circuit
+let () = Rtl.output ~database:(Scope.circuit_database scope) 
+                    ~output_mode Verilog circuit
