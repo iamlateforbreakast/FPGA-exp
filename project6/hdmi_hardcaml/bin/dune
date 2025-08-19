@@ -4,3 +4,17 @@
  (modules main)
  (libraries project6_lib hardcaml)
  (preprocess (pps ppx_jane ppx_hardcaml)))
+
+(executable
+ (name main2)
+ (modules main2)
+ (libraries project6_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
+
+(executable
+ (name main3)
+ (modules main3)
+ (libraries project6_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
+
+
