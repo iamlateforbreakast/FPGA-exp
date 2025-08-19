@@ -19,11 +19,11 @@ module Counter = struct
 
   let create (scope : Scope.t) (i : _ I.t) =
     let spec = Reg_spec.create ~clock:i.clock ~clear:i.clear () in
-    let r = reg_fb spec ~enable:i.enable ~width:4 (fun d -> d +:. 1) in
+    let r = reg_fb spec ~enable:i.enable ~width:4 ~f:(fun d -> (d +:. 1)) in
     { O.count = r }
   
   let circuit_name = "counter"
-  let circuit_create = Circuit.create_exn ~name:circuit_name create
+  let circuit_create = Circuit.create_exn ~name:circuit_name (create scope)
 end
 
 (* A top-level module that instantiates the counter *)
