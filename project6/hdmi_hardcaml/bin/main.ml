@@ -27,6 +27,7 @@ module My_config = struct
   let svo_bits_per_green = 8
   let svo_bits_per_blue = 8
   let svo_bits_per_alpha = 0
+  let svo_hor_pixels = 640
 end
 
 module Hdmi = Svo_hdmi.Make(My_config)

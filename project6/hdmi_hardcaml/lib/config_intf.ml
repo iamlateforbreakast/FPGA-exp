@@ -7,6 +7,7 @@ module type S = sig
   val svo_bits_per_green : int
   val svo_bits_per_blue : int
   val svo_bits_per_alpha : int
+  val svo_hor_pixels : int
 end
 
 module type Config = sig
