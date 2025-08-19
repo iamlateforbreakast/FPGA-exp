@@ -1,5 +1,6 @@
 (* svo_tmds.ml *)
 open Hardcaml
+open Hardcaml.Signal
 
 module type Config = Config.S
 
@@ -24,7 +25,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (_i : _ I.t) =
-    { O.dout = Signal.gnd; }
+    { O.dout = zero 10; }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

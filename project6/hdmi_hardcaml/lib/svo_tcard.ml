@@ -1,5 +1,6 @@
 (* svo_tcard.ml *)
 open Hardcaml
+open Hardcaml.Signal
 
 module type Config = Config.S
 
@@ -24,7 +25,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (_i : _ I.t) =
-    { O.out_axis_tvalid = Signal.gnd; O.out_axis_tdata = Signal.gnd; O.out_axis_tuser = Signal.gnd }
+    { O.out_axis_tvalid = Signal.gnd; O.out_axis_tdata = zero 24; O.out_axis_tuser = Signal.gnd }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

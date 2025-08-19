@@ -52,7 +52,7 @@ module Make (X : Config.S) = struct
                  ; resetn = i.resetn
 	         ; de = Signal.bit enc.out_axis_tuser 3
                  ; ctrl = Signal.select enc.out_axis_tuser 2 1
-                 ; din = Signal.select enc.out_axis_tdata (idx*8) 8 })) in
+                 ; din = Signal.select enc.out_axis_tdata (23-idx*8) (16-idx*8) })) in
 
     let oser10_outputs =
       Array.init 3 (fun idx -> (
@@ -64,7 +64,7 @@ module Make (X : Config.S) = struct
     let buf_outputs =
       Array.init 4 (fun idx -> (
         Gowin_elvds_obuf.hierarchical scope { Gowin_elvds_obuf.I.input =
-          if idx = 0 then i.clk_pixel else bit oser10_outputs.(3).output (idx - 1) })) in
+          if idx = 0 then i.clk_pixel else oser10_outputs.(idx).output })) in
 
     let tmds_clk_p = buf_outputs.(0).output in
     let tmds_clk_n = buf_outputs.(0).output_b in
