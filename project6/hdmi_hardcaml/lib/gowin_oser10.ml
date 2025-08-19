@@ -1,4 +1,6 @@
 (* gowin_oser10.ml *)
+open Hardcaml
+
 module I = struct
   type 'a t =
     { input : 'a [@bits 10, @name "D"]
