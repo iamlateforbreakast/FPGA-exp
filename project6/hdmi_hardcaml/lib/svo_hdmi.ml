@@ -64,7 +64,7 @@ module Make (X : Config.S) = struct
     let buf_outputs =
       Array.init 4 (fun idx -> (
         Gowin_elvds_obuf.hierarchical scope { Gowin_elvds_obuf.I.input =
-          if idx = 0 then i.clk_pixel else oser10_outputs.(idx).output })) in
+          if idx = 0 then i.clk_pixel else oser10_outputs.(idx-1).output })) in
 
     let tmds_clk_p = buf_outputs.(0).output in
     let tmds_clk_n = buf_outputs.(0).output_b in
