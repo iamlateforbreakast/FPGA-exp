@@ -36,6 +36,6 @@ let testbench n =
 
 let () =
   let waves = testbench 15 in
-  Hardcaml_waveterm.Interactive.run ~wave_width:5 ~signal_width:30 waves
+  Hardcaml_waveterm_interactive.run ~wave_width:5 ~signals_width:30 waves
 
      
