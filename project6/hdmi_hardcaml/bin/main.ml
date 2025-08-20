@@ -59,11 +59,15 @@ let create (scope: Scope.t) (input: _ I.t)=
     let module H = Hierarchy.In_scope(I)(O) in
     H.hierarchical ~scope ~name:"top" create i
 
-let scope = Scope.create ~flatten_design:false ()    
-let circuit = 
-  TopCircuit.create_exn ~name:"top" (hierarchical scope)
+(*let output_mode = Rtl.Output_mode.To_file("hdmi.v")*)
 
-let output_mode = Rtl.Output_mode.To_file("hdmi.v")
-
-let () = Rtl.output ~database:(Scope.circuit_database scope) 
-                    ~output_mode Verilog circuit
+let () = 
+  let output_dir = "verilog_out" in
+  let _ = Sys.command ("mkdir -p " ^ output_dir) in
+  let scope = Scope.create ~flatten_design:false () in
+  let db = Circuit_database.create_exn ~top_level_name:"top" (module TopCircuit.I)(module TopCircuit.O) (hierarchical scope)
+  in
+    Rtl.output 
+      ~output_mode:Verilog_mode.Verilog_file_per_module
+      ~output_path:output_dir
+      db
