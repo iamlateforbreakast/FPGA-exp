@@ -5,4 +5,10 @@
  (libraries project6_lib hardcaml)
  (preprocess (pps ppx_jane ppx_hardcaml)))
 
+ (executable
+  (name simulation)
+  (modules simulation)
+  (libraries project6_lib hardcaml hardcaml_waveterm)
+  (preprocess (pps ppx_jane ppx_hardcaml)))
+
 
