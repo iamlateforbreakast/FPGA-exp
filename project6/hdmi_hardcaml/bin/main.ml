@@ -53,19 +53,18 @@ let create (scope: Scope.t) (input: _ I.t)=
     O.tmds_d_p = hdmi.tmds_d_p;
   }
   
-let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
+let _hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
     H.hierarchical ~scope ~name:"top" create i
 
 let () =
   let module TopCircuit = Circuit.With_interface(I)(O) in
-  let scope = Scope.create ~flatten_design:true () in
-  let circuit = TopCircuit.create_exn ~name:"top" (hierarchical scope) in
+  let scope = Scope.create ~flatten_design:false () in
+  let circuit = TopCircuit.create_exn ~name:"top" (create scope) in
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)
   let output_dir = "verilog_out" in
   let _ = Sys.command ("mkdir -p " ^ output_dir) in
-
   Rtl.output
       ~database
       Verilog

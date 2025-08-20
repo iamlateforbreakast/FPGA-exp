@@ -16,6 +16,8 @@ module O = struct
   [@@deriving hardcaml]
 end
 
+module Circuit = Circuit.With_interface(I)(O)
+
 let create (_scope : Scope.t) (_i : _ I.t) =
   { O.clkout = Signal.gnd; O.lock = Signal.gnd }
 

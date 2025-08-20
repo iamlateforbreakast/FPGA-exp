@@ -60,16 +60,16 @@ module Make (X : Config.S) = struct
           Gowin_oser10.I.{ pclk = i.clk_pixel
                          ; fclk = i.clk_5x_pixel
                          ; reset = i.resetn
-                         ; input =  tmds_outputs.(idx).dout })) in
+                         ; inp =  tmds_outputs.(idx).dout })) in
     let buf_outputs =
       Array.init 4 (fun idx -> (
-        Gowin_elvds_obuf.hierarchical scope { Gowin_elvds_obuf.I.input =
-          if idx = 0 then i.clk_pixel else oser10_outputs.(idx-1).output })) in
+        Gowin_elvds_obuf.hierarchical scope { Gowin_elvds_obuf.I.inp =
+          if idx = 0 then i.clk_pixel else oser10_outputs.(idx-1).out })) in
 
-    let tmds_clk_p = buf_outputs.(0).output in
-    let tmds_clk_n = buf_outputs.(0).output_b in
-    let tmds_d_p = buf_outputs.(3).output @: buf_outputs.(2).output @: buf_outputs.(1).output in
-    let tmds_d_n = buf_outputs.(3).output_b @: buf_outputs.(2).output_b @: buf_outputs.(1).output_b in
+    let tmds_clk_p = buf_outputs.(0).out in
+    let tmds_clk_n = buf_outputs.(0).out_b in
+    let tmds_d_p = buf_outputs.(3).out @: buf_outputs.(2).out @: buf_outputs.(1).out in
+    let tmds_d_n = buf_outputs.(3).out_b @: buf_outputs.(2).out_b @: buf_outputs.(1).out_b in
 	
     (* Connect the outputs of the encoder to the TMDS outputs *)
     {
