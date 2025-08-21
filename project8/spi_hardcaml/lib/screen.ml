@@ -23,3 +23,4 @@ module Make (X : Config.S) = struct
       }
     [@@deriving hardcaml]
   end
+end
