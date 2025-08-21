@@ -6,11 +6,11 @@ module My_config = struct
   let file_name = "image.hex"
 end
 
-module My_Screen = Screen.Make(My_config)
+module MyScreen = Screen.Make(My_config)
 
 let create (scope: Scope.t) (input: _ I.t)=
   (* Instantiate the My_screen module with the required inputs *)
-  My_screen.create scope input
+  MyScreen.create scope input
 
 let () =
   let module TopCircuit = Circuit.With_interface(MyScreen.I)(MyScreen.O) in
