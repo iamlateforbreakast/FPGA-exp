@@ -38,8 +38,8 @@ module Make (X : Config) = struct
   reg [9:0] pixelCounter = 0;
   *)
   
-  (* State machine definition *)
-  let sm_spec = Reg_spec.create ~clock () in
+  
+  
     let state = Always.State_machine.create (module States) sm_spec ~enable:vdd
   
   
@@ -47,16 +47,20 @@ module Make (X : Config) = struct
     let open Signal in
     let open Always in
     (* Create synchronous registers *)
-    let spec = Reg_spec.create ~clock:i.clk ~clear:i.reset () in
-    let counter = reg_fb spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
-    let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd
+    let reg_sync_spec = Reg_spec.create ~clock:i.clk ~clear:i.reset () in
+    let counter = reg_fb reg_sync_spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
+    (*
     let reset =
     let dc =
     let sclk =
     let sdin =
     let cs =
-    let c_wire = Always.Variable.wire ~default:(Signal.zero 8) () in
-    let c_reg = Always.Variable.reg ~enable:Signal.vdd r_sync ~width:8 in
+    *)
+    
+    (* State machine definition *)
+    let sm_spec = Reg_spec.create ~clock () in
+    let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd in
+
   
     (* The program block with a call to [compile]. *)
     Always.(compile [
