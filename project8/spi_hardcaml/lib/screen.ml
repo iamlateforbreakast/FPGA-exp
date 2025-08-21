@@ -30,15 +30,17 @@ module Make (X : Config) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
 
-  (*
+  (* Init counter *)
   reg [32:0] counter = 0;
+  let spec = Reg_spec.create ~clock ()
   
-  
-  reg dc = 1;
-  reg sclk = 1;
-  reg sdin = 0;
-  reg reset = 1;
-  reg cs = 0;
+  let counter = Reg.reg_fb spec ~enable:vdd
+  let dc =
+  let sclk = Reg.reg_fb spec
+  let sdin
+  let reset
+  let cs
+  (*
   
   reg [7:0] dataToSend = 0;
   reg [3:0] bitNumber = 0;  
@@ -46,35 +48,25 @@ module Make (X : Config) = struct
   *)
   
   (* State machine definition *)
-  let sm = Always.State_machine.create (module States) spec ~enable:vdd
+  let sm_spec = Reg_spec.create ~clock () in
+    let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd
   
   
   let create (_scope: Scope.t) (_i: _ I.t) =
     let open Signal in
-    {O.io_sclk = gnd; O.io_sdin = gnd; io_cs = gnd; io_dc = gnd; io_reset = gnd}
-
-  always @(posedge clk) begin
-    case (state)
-      state_init_power: begin
-        if (counter == STARTUP_WAIT) begin
-          state <= state_send_command;
-          counter <= 0;
-        end else begin
-          counter <= counter + 1;
-        end
-      end
-      state_send_command: begin
-        // Some logic to load the command
-        state <= state_load_data;
-      end
-      state_load_data: begin
-        // Some logic to load pixel data
-        state <= state_send_command;
-      end
-      default: begin
-        state <= state_init_power;
-      end
-    endcase
-  end
-
+    
+    let c_wire = Always.Variable.wire ~default:(Signal.zero 8) () in
+    let c_reg = Always.Variable.reg ~enable:Signal.vdd r_sync ~width:8 in
+  
+    (* The program block with a call to [compile]. *)
+    Always.(compile [
+      if_ (a ==: b) [
+        c_wire <-- (sll a ~by:1);
+        c_reg  <-- (sll a ~by:1)
+      ] [
+        c_wire <-- (a +: b);
+        c_reg  <-- (a +: b);
+      ]
+    ]);
+    output "c_wire" c_wire.value, output "c_reg" c_reg.value
 end
