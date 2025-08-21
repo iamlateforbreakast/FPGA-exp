@@ -40,15 +40,13 @@ module Make (X : Config) = struct
   
   
   
-    let state = Always.State_machine.create (module States) sm_spec ~enable:vdd
   
   
   let create (_scope: Scope.t) (i: _ I.t) =
     let open Signal in
-    let open Always in
     (* Create synchronous registers *)
-    let reg_sync_spec = Reg_spec.create ~clock:i.clk ~clear:i.reset () in
-    let counter = reg_fb reg_sync_spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
+    let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:i.i_reset () in
+    let _counter = reg_fb reg_sync_spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
     (*
     let reset =
     let dc =
@@ -58,17 +56,17 @@ module Make (X : Config) = struct
     *)
     
     (* State machine definition *)
-    let sm_spec = Reg_spec.create ~clock () in
+    let sm_spec = Reg_spec.create ~clock:i.i_clk () in
     let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd in
 
   
     (* The program block with a call to [compile]. *)
     Always.(compile [
-      match_ state [
-        Init_power, [];
-        Send_command, [];
-        Load_data, [];
+      sm.switch [
+        (Init_power, []);
+        (Send_command, []);
+        (Load_data, []);
       ]
     ]);
-    {O.o_sclk = Empty; o_sdin = Empty; o_cs = Empty; o_dc = Empty; o_reset = Empty}
+    {O.o_sclk = empty; o_sdin = empty; o_cs = empty; o_dc = empty; o_reset = empty}
 end
