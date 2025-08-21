@@ -32,21 +32,19 @@ module Make (X : Config) = struct
   end
     
   (*
-  
   reg [7:0] dataToSend = 0;
   reg [3:0] bitNumber = 0;  
   reg [9:0] pixelCounter = 0;
   *)
   
-  
-  
-  
-  
   let create (_scope: Scope.t) (i: _ I.t) =
     let open Signal in
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:i.i_reset () in
-    let _counter = reg_fb reg_sync_spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
+    let _counter = reg_fb reg_sync_spec 
+                     ~enable:vdd 
+                     ~width:33 
+                     ~f:(fun c -> mux2 (c ==:. 30_000_000)(zero 33)(c +:. 1)) in
     (*
     let reset =
     let dc =
@@ -68,5 +66,5 @@ module Make (X : Config) = struct
         (Load_data, []);
       ]
     ]);
-    {O.o_sclk = empty; o_sdin = empty; o_cs = empty; o_dc = empty; o_reset = empty}
+    {O.o_sclk = Signal.gnd; o_sdin = Signal.gnd; o_cs = Signal.gnd; o_dc = Signal.gnd; o_reset = Signal.gnd}
 end
