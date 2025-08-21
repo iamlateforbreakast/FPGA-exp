@@ -9,18 +9,19 @@ module Make (X : Config) = struct
 
   module I = struct
     type 'a t =
-      { clk : 'a
+      { i_clk : 'a
+      ; i_reset: 'a
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { io_sclk : 'a
-      ; io_sdin : 'a
-      ; io_cs : 'a
-      ; io_dc : 'a
-      ; io_reset : 'a
+      { o_sclk : 'a
+      ; o_sdin : 'a
+      ; o_cs : 'a
+      ; o_dc : 'a
+      ; o_reset : 'a
       }
     [@@deriving hardcaml]
   end
@@ -29,17 +30,7 @@ module Make (X : Config) = struct
     type t = Init_power | Send_command | Load_data
     [@@deriving sexp_of, compare, enumerate]
   end
-
-  (* Init counter *)
-  reg [32:0] counter = 0;
-  let spec = Reg_spec.create ~clock ()
-  
-  let counter = Reg.reg_fb spec ~enable:vdd
-  let dc =
-  let sclk = Reg.reg_fb spec
-  let sdin
-  let reset
-  let cs
+    
   (*
   
   reg [7:0] dataToSend = 0;
@@ -49,24 +40,31 @@ module Make (X : Config) = struct
   
   (* State machine definition *)
   let sm_spec = Reg_spec.create ~clock () in
-    let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd
+    let state = Always.State_machine.create (module States) sm_spec ~enable:vdd
   
   
-  let create (_scope: Scope.t) (_i: _ I.t) =
+  let create (_scope: Scope.t) (i: _ I.t) =
     let open Signal in
-    
+    let open Always in
+    (* Create synchronous registers *)
+    let spec = Reg_spec.create ~clock:i.clk ~clear:i.reset () in
+    let counter = reg_fb spec ~enable:vdd ~width:33 ~f:(fun c -> c +:. 1) in
+    let sm = Always.State_machine.create (module States) sm_spec ~enable:vdd
+    let reset =
+    let dc =
+    let sclk =
+    let sdin =
+    let cs =
     let c_wire = Always.Variable.wire ~default:(Signal.zero 8) () in
     let c_reg = Always.Variable.reg ~enable:Signal.vdd r_sync ~width:8 in
   
     (* The program block with a call to [compile]. *)
     Always.(compile [
-      if_ (a ==: b) [
-        c_wire <-- (sll a ~by:1);
-        c_reg  <-- (sll a ~by:1)
-      ] [
-        c_wire <-- (a +: b);
-        c_reg  <-- (a +: b);
+      match_ state [
+        Init_power, [];
+        Send_command, [];
+        Load_data, [];
       ]
     ]);
-    output "c_wire" c_wire.value, output "c_reg" c_reg.value
+    {O.o_sclk = Empty; o_sdin = Empty; o_cs = Empty; o_dc = Empty; o_reset = Empty}
 end
