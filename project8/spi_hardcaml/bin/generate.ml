@@ -8,7 +8,7 @@ end
 
 module MyScreen = Screen.Make(My_config)
 
-let create (scope: Scope.t) (input: _ I.t)=
+let create (scope: Scope.t) (input: _ MyScreen.I.t)=
   (* Instantiate the My_screen module with the required inputs *)
   MyScreen.create scope input
 

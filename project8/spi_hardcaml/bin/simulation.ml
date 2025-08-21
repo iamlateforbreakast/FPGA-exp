@@ -10,7 +10,7 @@ end
 
 module MyScreen = Screen.Make(My_config)
 
-module Simulator = Cyclesim.With_interface (Hdmi.I)(Hdmi.O)
+module Simulator = Cyclesim.With_interface (MyScreen.I)(MyScreen.O)
 
 let testbench n =
   let scope = 
@@ -19,7 +19,7 @@ let testbench n =
       ~flatten_design:true () in
   let sim = 
     Simulator.create
-      ~config:Cyclesim.Config.trace_all (Hdmi.create scope) in
+      ~config:Cyclesim.Config.trace_all (MyScreen.create scope) in
       let waves, sim = Waveform.create sim in
 
   for _i = 0 to n do

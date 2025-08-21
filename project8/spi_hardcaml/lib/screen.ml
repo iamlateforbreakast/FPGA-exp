@@ -1,10 +1,11 @@
 (* screen.ml *)
 open Hardcaml
-open Signal
 
-module type Config = Config.S
+module type Config = Config_intf.S
 
-module Make (X : Config.S) = struct
+module Make (X : Config) = struct
+
+  let startup_wait_parameter = Parameter.create ~name:"STARTUP_WAIT" ~value:(Parameter.Value.Int 10_000_000)
 
   module I = struct
     type 'a t =
@@ -23,4 +24,9 @@ module Make (X : Config.S) = struct
       }
     [@@deriving hardcaml]
   end
+
+  let create (_scope: Scope.t) (_i: _ I.t) =
+    let open Signal in
+    {O.io_sclk = gnd; O.io_sdin = gnd; io_cs = gnd; io_dc = gnd; io_reset = gnd}
+
 end
