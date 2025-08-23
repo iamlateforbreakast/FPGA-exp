@@ -1,6 +1,7 @@
 (* Try.ml *)
+open Hardcaml
 
-module Test = struct
+module Try = struct
   module I = struct
 
   module O = struct
@@ -11,6 +12,7 @@ module Test = struct
 end
 
 let () =
-  let open Test in
-  let scope = Scope.create in
-  Rt
+  let module TryCircuit = Circuit.With_interface(Try.I)(Try.O) in
+  let circuit = TryCircuit.create_exn Test.create ~name:"try" in
+  let output_mode = Rtl.Output_mode.To_file("try.v") in
+  Rtl.output ~output_mode Verilog circuit
