@@ -3,12 +3,29 @@ open Hardcaml
 
 module Try = struct
   module I = struct
+    type 'a t =
+      { i_clk : 'a
+      ; i_inc : 'a
+      ; i_reset: 'a
+      } 
+    [@@deriving hardcaml]
+  end
 
   module O = struct
+    type 'a t =
+      { o_count : 'a [@bits 6]
+      }
+    [@@deriving hardcaml]
+  end
+
+  module States = struct
+    type t = Init | Inc | Reset
+    [@@deriving sexp_of, compare, enumerate]
+  end
 
   let create (scope : Scope.t)(i: I.t) =
-  {
-  }
+    let open Signal in
+    {O.o_count = counter.value }
 end
 
 let () =
