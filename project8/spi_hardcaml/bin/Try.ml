@@ -25,6 +25,12 @@ module Try = struct
 
   let create (scope : Scope.t)(i: I.t) =
     let open Signal in
+    let open Try in
+    let state = State_machine.create (module States) ~enable:vdd spec in
+    let main = [ states.switch
+      [Init,[]];
+      [Inc,[]];
+      [Reset,[]]]
     {O.o_count = counter.value }
 end
 
