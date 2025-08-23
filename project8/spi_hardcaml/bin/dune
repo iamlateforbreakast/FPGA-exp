@@ -10,3 +10,9 @@
   (modules simulation)
   (libraries project8_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
   (preprocess (pps ppx_jane ppx_hardcaml)))
+
+ (executable
+  (name test)
+  (modules test)
+  (libraries project8_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
+  (preprocess (pps ppx_jane ppx_hardcaml)))
