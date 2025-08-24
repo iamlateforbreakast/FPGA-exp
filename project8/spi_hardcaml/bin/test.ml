@@ -32,19 +32,18 @@ module Try = struct
     let counter_next = counter +:. 1 in
     let state = State_machine.create (module States) ~enable:vdd reg_sync_spec in
    compile  [ state.switch
-      [Init,[counter.set (Signal.zero 6);]];
-      [Inc,[if_ i.i_inc
-            [ counter_reg.set counter_next;
-              state.set_next Inc;
-            ]
-            [ state.set_next Init; ];
-        ];
-      [Reset,[
-          counter.set (Signal.zero 6);
-          state.set_next Init;]]];
-    {O.o_count Reset, [
-          counter_reg.set (Signal.zero 6);
-          state.set_next Init; counter }
+      [(Init,[counter.set (Signal.zero 6)]);
+       (Inc,
+        [if_ i.i_inc
+          [ counter.set counter_next;
+            state.set_next Inc;
+          ]
+          [ state.set_next Init; ];
+        ]);
+       (Reset,
+        [ counter.set (Signal.zero 6);
+          state.set_next Init;])]];
+    {O.o_count = counter }
 end
 
 let () =
