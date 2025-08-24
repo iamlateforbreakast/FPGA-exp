@@ -29,12 +29,22 @@ module Try = struct
     
     let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:gnd () in
     let counter = reg_fb reg_sync_spec ~width:6 ~enable:vdd in
+    let counter_next = counter +:. 1 in
     let state = State_machine.create (module States) ~enable:vdd reg_sync_spec in
    compile  [ state.switch
       [Init,[]];
-      [Inc,[]];
-      [Reset,[]]];
-    {O.o_count = counter }
+      [Inc,[if_ i.i_inc
+            [ counter_reg.set counter_next;
+              state.set_next Inc;
+            ]
+            [ state.set_next Init; ];
+        ];
+      [Reset,[
+          counter.set (Signal.zero 6);
+          state.set_next Init;]]];
+    {O.o_count Reset, [
+          counter_reg.set (Signal.zero 6);
+          state.set_next Init; counter }
 end
 
 let () =
