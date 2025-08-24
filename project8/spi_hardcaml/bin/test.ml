@@ -28,21 +28,20 @@ module Try = struct
     let open Always in
     
     let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:gnd () in
-    let counter = reg_fb reg_sync_spec ~width:6 ~enable:vdd in
-    let counter_next = counter +:. 1 in
     let state = State_machine.create (module States) ~enable:vdd reg_sync_spec in
+    let counter = reg_fb reg_sync_spec ~width:6 ~enable:vdd ~f:(fun d -> (d +:. 1)) in
+
    compile  [ state.switch
-      [(Init,[counter.set (Signal.zero 6)]);
+      [(Init,[if_ i.i_inc [state.set_next Inc;] 
+               [state.set_next Init;]
+            ]);
        (Inc,
         [if_ i.i_inc
-          [ counter.set counter_next;
-            state.set_next Inc;
-          ]
-          [ state.set_next Init; ];
+          [ state.set_next Inc;]
+          [if_ i.i_reset [state.set_next Reset][ state.set_next Init; ]]
         ]);
        (Reset,
-        [ counter.set (Signal.zero 6);
-          state.set_next Init;])]];
+        [ state.set_next Init;])]];
     {O.o_count = counter }
 end
 
