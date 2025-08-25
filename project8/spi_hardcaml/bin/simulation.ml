@@ -20,8 +20,11 @@ let testbench n =
   let sim = 
     Simulator.create
       ~config:Cyclesim.Config.trace_all (MyScreen.create scope) in
-      let waves, sim = Waveform.create sim in
-
+  let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
+  let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
+  let waves, sim = Waveform.create sim in
+  inputs.i_clk := Bits.vdd;
+  inputs.i_reset := Bits.vdd;
   for _i = 0 to n do
     Cyclesim.cycle sim
   done;
