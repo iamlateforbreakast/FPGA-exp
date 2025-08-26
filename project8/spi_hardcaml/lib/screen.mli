@@ -34,10 +34,6 @@ module Make ( _ : Config) : sig
     -> Signal.t I.t
     -> Signal.t O.t
 
-  (** Creates a hierarchical hardware module for the screen.
-
-      This function is a convenience wrapper around [create] that registers
-      the circuit within a parent scope. *)
   val hierarchical
     :  Scope.t
     -> Signal.t I.t

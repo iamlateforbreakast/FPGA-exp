@@ -11,7 +11,7 @@ module MyScreen = Screen.Make(My_config)
 let () =
   let module TopCircuit = Circuit.With_interface(MyScreen.I)(MyScreen.O) in
   let scope = Scope.create ~flatten_design:false () in
-  let circuit = TopCircuit.create_exn ~name:"screen" (MyScreen.create scope) in
+  let circuit = TopCircuit.create_exn ~name:"screen" (MyScreen.hierarchical scope) in
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)
   let output_dir = "verilog_out" in

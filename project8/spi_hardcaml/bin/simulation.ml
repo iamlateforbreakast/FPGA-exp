@@ -19,7 +19,7 @@ let testbench n =
       ~flatten_design:true () in
   let sim = 
     Simulator.create
-      ~config:Cyclesim.Config.trace_all (MyScreen.create scope) in
+      ~config:Cyclesim.Config.trace_all (MyScreen.hierarchical scope) in
   let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
   let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
