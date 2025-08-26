@@ -3,6 +3,8 @@ project3/counter.v
 
 project6/hdmi_hardcaml/_build/
 
+**/_build/
+
 *.fs
 
 *.opam
