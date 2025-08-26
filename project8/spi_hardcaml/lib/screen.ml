@@ -5,23 +5,24 @@ module type Config = Config_intf.S
 
 module Make (X : Config) = struct
 
-  let startup_wait_parameter = Parameter.create ~name:"STARTUP_WAIT" ~value:(Parameter.Value.Int 10_000_000)
-
+  (* let startup_wait_parameter = Parameter.create ~name:"STARTUP_WAIT" ~value:(Parameter.Value.Int 10_000_000)
+  *)
+  
   module I = struct
     type 'a t =
-      { i_clk : 'a
-      ; i_reset : 'a
+      { i_clk : 'a [@bits 1]
+      ; i_reset : 'a [@bits 1]
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { o_sclk : 'a
-      ; o_sdin : 'a
-      ; o_cs : 'a
-      ; o_dc : 'a
-      ; o_reset : 'a
+      { o_sclk : 'a [@bits 1]
+      ; o_sdin : 'a [@bits 1]
+      ; o_cs : 'a [@bits 1]
+      ; o_dc : 'a [@bits 1]
+      ; o_reset : 'a [@bits 1]
       }
     [@@deriving hardcaml]
   end
@@ -37,7 +38,7 @@ module Make (X : Config) = struct
   reg [9:0] pixelCounter = 0;
   *)
   
-  let create (_scope: Scope.t) (i: _ I.t) =
+  let create (_scope: Scope.t) (i: Signal.t I.t) : Signal.t O.t =
     let open Signal in
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:gnd () in
@@ -60,20 +61,23 @@ module Make (X : Config) = struct
     (* Signal.set_names reset.value ["i_reset"]; *)
 
     (* print_endline (reset.value |> Signal.to_string); *)
-    let out = Always.Variable.reg reg_sync_spec ~width:1 ~enable:vdd in
+    let _out = Always.Variable.reg reg_sync_spec ~width:1 ~enable:vdd in
+    (*let reset = reg_fb reg_sync_spec ~width:1 ~enable:vdd ~f:(fun d -> mux2 (out ==:. vdd)(1)(0)) in*)
+    let _done_ = Always.Variable.wire ~default:gnd in
+    let reset = Always.Variable.wire ~default:vdd in
 
     (* The program block with a call to [compile]. *)
     Always.(compile [
       sm.switch [
-        (Init_power, [if_ (counter <:. 10_000_000) [out <-- vdd][out <-- gnd]]);
+        (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
         (Send_command, []);
         (Load_data, []);
       ]
     ]);
-    {O.o_sclk = i.i_clk; o_sdin = Signal.gnd; o_cs = Signal.gnd; o_dc = gnd; o_reset = bit counter 0}
+    {O.o_sclk = i.i_clk; o_sdin = Signal.gnd; o_cs = Signal.gnd; o_dc = gnd; o_reset = reset.value}
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
-    H.hierarchical ~scope ~name:"screen" ~instance:"inst1" create i
+    H.hierarchical ~scope ~name:"screen" create i
 end
 
