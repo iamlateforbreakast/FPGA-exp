@@ -59,25 +59,19 @@ module Make (X : Config) = struct
       ~enable:vdd 
       ~width:33 
       ~f:(fun c -> mux2 (c <:. 30_000_000)(zero 33)(c +:. 1)) in
-    (* let reset = Always.Variable.wire ~default:vdd in *)
-    (* Signal.set_names reset.value ["i_reset"]; *)
 
-    (* print_endline (reset.value |> Signal.to_string); *)
-    let out = Variable.reg reg_sync_spec ~width:1 ~enable:vdd in
-    (*let reset = reg_fb reg_sync_spec ~width:1 ~enable:vdd ~f:(fun d -> mux2 (out ==:. vdd)(1)(0)) in*)
-    let _done_ = Variable.wire ~default:gnd in
-    let reset = Variable.wire ~default:gnd in
-    let _reset_next = reg reg_sync_spec ~enable:vdd reset.value in
+    let reset = Variable.wire ~default:vdd in
+    (* let _reset_next = reg reg_sync_spec ~enable:vdd reset.value in *)
 
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power, [if_ (counter <:. 10_000_000) [out <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
-        (Send_command, [reset<--. 0; sm.set_next Load_data;]);
+        (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
+        (Send_command, [reset<--. 1; sm.set_next Load_data;]);
         (Load_data, [reset<--. 1; sm.set_next Init_power]);
       ]
     ];
-    {O.o_sclk = i.i_clk; o_sdin = Signal.gnd; o_cs = Signal.gnd; o_dc = gnd; o_reset = out.value}
+    {O.o_sclk = i.i_clk; o_sdin = Signal.gnd; o_cs = Signal.vdd; o_dc = gnd; o_reset = reset.value}
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

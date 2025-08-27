@@ -29,19 +29,20 @@ module Try = struct
     
     let reg_sync_spec = Reg_spec.create ~clock:i.i_clk ~clear:gnd () in
     let state = State_machine.create (module States) ~enable:vdd reg_sync_spec in
-    let counter = reg_fb reg_sync_spec ~width:1 ~enable:vdd ~f:(fun d -> mux2 (state.current ==: Inc.t)(d +:. 1)(d)) in
     let reset = Always.Variable.wire ~default:gnd in
+    let inc = Always.Variable.wire ~default:gnd in
+    let counter = reg_fb reg_sync_spec ~width:1 ~enable:vdd ~f:(fun d -> mux2 (inc.value)(d +:. 1)(d)) in
    compile  [ state.switch
       [(Init,[if_ i.i_inc [state.set_next Inc;] 
                [state.set_next Init;]
             ]);
        (Inc,
         [if_ i.i_inc
-          [ state.set_next Inc;]
+          [ state.set_next Inc;inc <--. 1]
           [if_ i.i_reset [state.set_next Reset][ state.set_next Init; ]]
         ]);
        (Reset,
-        [ reset <-- vdd; state.set_next Init;])]];
+        [ reset <-- vdd; inc <--. 0; state.set_next Init;])]];
     {O.o_count = counter}
 end
 
