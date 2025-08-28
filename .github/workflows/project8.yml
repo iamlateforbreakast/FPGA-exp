@@ -21,8 +21,13 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
           allow-prerelease-opam: true
-      - name: Install HARDCAML
-      
-      - run: cd project8/spi_hardcaml && opam install . --deps-only --with-test
-      - run: opam install hardcaml ppx_hardcaml
+      - name: Install Hardcaml and dependencies
+        run: |
+          # Change to your project subdirectory
+          cd project8/spi_hardcaml
+          # Install dependencies required by the .opam file
+          opam install . --deps-only --with-test
+          # Manually install Hardcaml and ppx_hardcaml
+          # (This step is often not needed if included in your .opam file)
+          opam install hardcaml ppx_hardcaml
         
