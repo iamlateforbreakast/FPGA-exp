@@ -30,4 +30,7 @@ jobs:
           # Manually install Hardcaml and ppx_hardcaml
           # (This step is often not needed if included in your .opam file)
           opam install hardcaml ppx_hardcaml
+      - name: Generate Verilog
+        run:
+          dune build
         
