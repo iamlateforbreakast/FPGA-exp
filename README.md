@@ -16,7 +16,7 @@ Projects
 5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project5)
 6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project6)
 7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project7)
-8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project8)
+8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project8) [![Project8](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
 9. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project9)
 10. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project10)
 
