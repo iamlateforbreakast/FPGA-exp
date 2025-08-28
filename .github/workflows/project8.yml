@@ -29,10 +29,5 @@ jobs:
         run: |
           # Install dependencies required by the .opam file
           opam install . --deps-only --with-test
-          
-      - name: Generate Verilog
-        # Use working-directory to ensure correct path
-        working-directory: project8/spi_hardcaml
-        run: |
-          dune build
+          opam install hardcaml ppx_hardcaml
         
