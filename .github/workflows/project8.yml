@@ -18,14 +18,15 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
       
   Project8-Build-And-Generate:
-    run-ons: ubuntu-latest
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      - name: Setup OCAML
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: ${{ matrix.ocaml-compiler }}
-          dune-cache: true
-          allow-prerelease-opam: true
-      - name: Install HARDCAML
-        run: opam install . --deps-only --with-test
+    runs-on: ubuntu-latest
+      steps:
+        - name: Check out repository code
+          uses: actions/checkout@v4
+        - name: Setup OCAML
+          uses: ocaml/setup-ocaml@v3
+          with:
+            ocaml-compiler: ${{ matrix.ocaml-compiler }}
+            dune-cache: true
+            allow-prerelease-opam: true
+        - name: Install HARDCAML
+          run: opam install . --deps-only --with-test
