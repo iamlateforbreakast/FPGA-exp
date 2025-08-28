@@ -18,7 +18,14 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
       
   Project8-Build-And-Generate:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 5
+    runs-on: ${{ matrix.ocaml-os }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
