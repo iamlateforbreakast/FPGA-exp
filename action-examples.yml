@@ -1,0 +1,90 @@
+name: FPGA Monorepo CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'project2/**'
+      - 'project3/**'
+      - 'project8/**'
+      - '.github/workflows/fpga-ci.yml'
+
+jobs:
+  # Job for Project 2 (Open-Source Toolchain)
+  project2-ci:
+    name: Project 2 Synthesis (Open-Source)
+    runs-on: ubuntu-latest
+    # Condition to run the job only if changes are in project2
+    if: contains(github.event.head_commit.modified, 'project2') || contains(github.event.head_commit.added, 'project2')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install open-source FPGA tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys nextpnr-ecp5 libftdi1-2 libftdi1-dev openocd
+          # Or, alternatively, use the pip install method for yowasp tools
+          # sudo -H pip3 install yowasp-yosys yowasp-nextpnr-ecp5-25k
+
+      - name: Run Project 2 Synthesis
+        run: |
+          cd project2
+          make # Assuming a 'make' target exists for synthesis and tests
+
+  # Job for Project 3 (Open-Source Toolchain)
+  project3-ci:
+    name: Project 3 Simulation (Open-Source)
+    runs-on: ubuntu-latest
+    # Condition to run the job only if changes are in project3
+    if: contains(github.event.head_commit.modified, 'project3') || contains(github.event.head_commit.added, 'project3')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install simulation tools (e.g., Verilator)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator gtkwave
+          
+      - name: Run Project 3 Simulation
+        run: |
+          cd project3
+          make test # Assuming a 'make test' target for simulation
+
+  # Job for Project 8 (Vivado on self-hosted runner)
+  project8-ci:
+    name: Project 8 Vivado Synthesis
+    runs-on: self-hosted # Use a self-hosted runner with Vivado installed
+    # Condition to run the job only if changes are in project8
+    if: contains(github.event.head_commit.modified, 'project8') || contains(github.event.head_commit.added, 'project8')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Vivado environment
+        run: |
+          source /opt/Xilinx/Vivado/<Vivado_Version>/settings64.sh
+
+      - name: Run Project 8 Vivado Synthesis and Generate Bitstream
+        run: |
+          cd project8
+          vivado -mode batch -source build_project.tcl # Assuming a TCL script for batch synthesis
+          # The TCL script should contain the necessary commands, for example:
+          # open_project my_vivado_project.xpr
+          # launch_runs synth_1 -jobs 4
+          # wait_on_runs
+          # launch_runs impl_1 -jobs 4
+          # wait_on_runs
+          # open_run impl_1
+          # write_bitstream
+
+      - name: Upload Bitstream as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project8_bitstream
+          path: project8/runs/impl_1/top_level.bit
