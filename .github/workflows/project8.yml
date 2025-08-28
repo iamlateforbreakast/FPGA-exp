@@ -33,5 +33,4 @@ jobs:
       - name: Generate Verilog
         # Use working-directory to ensure correct path
         working-directory: project8/spi_hardcaml
-        run: |
-          dune build  
+        run: opam exec -- dune build 
