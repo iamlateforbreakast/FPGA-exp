@@ -22,4 +22,7 @@ jobs:
           dune-cache: true
           allow-prerelease-opam: true
       - name: Install HARDCAML
-        run: opam install . --deps-only --with-test
+      
+      - run: cd project8/spi_hardcaml && opam install . --deps-only --with-test
+      - run: opam install hardcaml ppx_hardcaml
+        
