@@ -1,8 +1,9 @@
 name: Project8
 run-name: ${{ github.actor }} is generating the Verilog files. 🚀
+
 on: [push]
+
 jobs:
-    
   Project8-Build-And-Generate:
     strategy:
       fail-fast: false
@@ -15,22 +16,23 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Setup OCAML
+
+      - name: Setup OCAML and Opam environment
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
           allow-prerelease-opam: true
       - name: Install Hardcaml and dependencies
+        # Use working-directory to ensure correct path
+        working-directory: project8/spi_hardcaml
         run: |
-          # Change to your project subdirectory
-          cd project8/spi_hardcaml
           # Install dependencies required by the .opam file
           opam install . --deps-only --with-test
-          # Manually install Hardcaml and ppx_hardcaml
-          # (This step is often not needed if included in your .opam file)
-          opam install hardcaml ppx_hardcaml
+          
       - name: Generate Verilog
-        run:
+        # Use working-directory to ensure correct path
+        working-directory: project8/spi_hardcaml
+        run: |
           dune build
         
