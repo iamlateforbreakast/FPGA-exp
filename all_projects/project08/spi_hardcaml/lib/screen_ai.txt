@@ -1,0 +1,175 @@
+open HardCaml
+open Signal.Comb
+open Signal.Seq
+
+let ( -- ) = ( ^: )
+let ( ==: ) = ( ==: )
+let ( !=: ) = ( !=: )
+let ( *: ) = ( * )
+let ( +: ) = ( + )
+
+module Screen (Param : sig
+  val startup_wait : int
+end) (I : sig
+  val clk : Signal.t
+end) (O : sig
+  val io_sclk : Signal.t
+  val io_sdin : Signal.t
+  val io_cs : Signal.t
+  val io_dc : Signal.t
+  val io_reset : Signal.t
+end) = struct
+  open Param
+  open I
+
+  let startup_wait_bits = `d32 startup_wait
+
+  let (io_sclk, io_sdin, io_cs, io_dc, io_reset) =
+    let module State = struct
+      module T = struct
+        type t =
+          | State_init_power
+          | State_load_init_cmd
+          | State_send
+          | State_check_finished_init
+          | State_load_data
+        [@@deriving hardcaml]
+      end
+      include T
+      include Hardcaml.Enum.Make (T)
+    end in
+
+    let open State in
+
+    let counter = reg ~width:33 clk in
+    let state = reg ~width:State.width clk in
+    let dc = reg clk in
+    let sclk = reg clk in
+    let sdin = reg clk in
+    let reset = reg clk in
+    let cs = reg clk in
+    let data_to_send = reg ~width:8 clk in
+    let bit_number = reg ~width:4 clk in
+    let pixel_counter = reg ~width:10 clk in
+
+    let startup_commands =
+      Const.of_list (
+        List.map
+          (fun s -> Const.of_int ~width:8 s)
+          [
+            0xAE; (* display off *)
+            0x81; (* contrast value *)
+            0x7F;
+            0xA6; (* normal screen mode *)
+            0x20; (* horizontal addressing mode *)
+            0x00;
+            0xC8; (* normal scan direction *)
+            0x40; (* first line to start scanning from *)
+            0xA1; (* address 0 is segment 0 *)
+            0xA8; (* mux ratio *)
+            0x3F; (* 63 *)
+            0xD3; (* display offset *)
+            0x00; (* no offset *)
+            0xD5; (* clock divide ratio *)
+            0x80; (* default ratio/osc frequency *)
+            0xD9; (* set precharge *)
+            0x22; (* switch precharge to 0x22 default *)
+            0xDB; (* vcom deselect level *)
+            0x20;
+            0x8D; (* charge pump config *)
+            0x14; (* enable charge pump *)
+            0xA4; (* resume RAM content *)
+            0xAF; (* display on *)
+          ]
+      )
+      |> Const.flatten |> Signal.wireof_const
+    in
+
+    let setup_instructions = 23 in
+    let command_index = reg ~width:8 clk in
+
+    let screen_buffer =
+      let file = "image.hex" in
+      let screen_buffer_array = Array.make 1024 (Const.of_int ~width:8 0) in
+      let ch = open_in file in
+      let i = ref 0 in
+      try
+        while true do
+          let line = input_line ch in
+          screen_buffer_array.(!i) <- Const.of_string (line ^ "'h" ^ (string_of_int (String.length line)) ) ;
+          i := !i + 1
+        done;
+        Array.to_list screen_buffer_array
+      with End_of_file ->
+        close_in ch;
+        Array.to_list screen_buffer_array
+    in
+
+    let always =
+      Always.proc [
+        Case (state, [
+          State_init_power, [
+            counter <: counter +: Const.of_int ~width:33 1;
+            When (counter <: startup_wait_bits, [
+              reset <: vdd
+            ], [
+              When (counter <: startup_wait_bits * 2, [
+                reset <: gnd
+              ], [
+                When (counter <: startup_wait_bits * 3, [
+                  reset <: vdd
+                ], [
+                  state <: of_enum State_load_init_cmd;
+                  counter <: Const.of_int ~width:33 0;
+                ])
+              ])
+            ]);
+          ];
+          State_load_init_cmd, [
+            dc <: gnd;
+            data_to_send <: Select.(select startup_commands (Bits.( -: ) command_index (Const.of_int ~width:8 1)) *: Const.of_int ~width:8 8);
+            state <: of_enum State_send;
+            bit_number <: Const.of_int ~width:4 7;
+            cs <: gnd;
+            command_index <: command_index -: Const.of_int ~width:8 8;
+          ];
+          State_send, [
+            When (counter ==: Const.of_int ~width:33 0, [
+              sclk <: gnd;
+              sdin <: data_to_send.(bit_number);
+              counter <: Const.of_int ~width:33 1;
+            ], [
+              counter <: Const.of_int ~width:33 0;
+              sclk <: vdd;
+              When (bit_number ==: Const.of_int ~width:4 0, [
+                state <: of_enum State_check_finished_init;
+              ], [
+                bit_number <: bit_number -: Const.of_int ~width:4 1;
+              ])
+            ]);
+          ];
+          State_check_finished_init, [
+            cs <: vdd;
+            When (command_index ==: Const.of_int ~width:8 0, [
+              state <: of_enum State_load_data;
+            ], [
+              state <: of_enum State_load_init_cmd;
+            ]);
+          ];
+          State_load_data, [
+            pixel_counter <: pixel_counter +: Const.of_int ~width:10 1;
+            cs <: gnd;
+            dc <: vdd;
+            bit_number <: Const.of_int ~width:4 7;
+            state <: of_enum State_send;
+            data_to_send <: Mux.of_list (
+              List.mapi (fun i const -> (const, i ==: pixel_counter))
+              screen_buffer
+            );
+          ];
+        ]);
+      ] in
+
+    (sclk, sdin, cs, dc, reset)
+
+end
