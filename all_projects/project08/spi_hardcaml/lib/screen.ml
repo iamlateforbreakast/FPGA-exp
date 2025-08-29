@@ -56,7 +56,7 @@ module Make (X : Config) = struct
     let bit_number = reg ~width:4 clk in
     let pixel_counter = reg ~width:10 clk in
   *)
-    
+
     (* State machine definition *)
     let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
     let counter = reg_fb reg_sync_spec 
@@ -64,6 +64,9 @@ module Make (X : Config) = struct
       ~width:33 
       ~f:(fun c -> mux2 (c <:. 30_000_000)(zero 33)(c +:. 1)) in
 
+    let _sclk = Variable.wire ~default:gnd in
+    let _cs = Variable.wire ~default:vdd in
+    let _dc = Variable.wire ~default:gnd in
     let reset = Variable.wire ~default:vdd in
 
     (* The program block with a call to [compile]. *)
