@@ -45,13 +45,16 @@ module Make (X : Config) = struct
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i_clk ~clear:i_reset () in
 
-
-    (*
-    let dc =
-    let sclk =
-    let sdin =
-    let cs =
-    *)
+    let counter = reg ~width:33 clk in
+    let state = reg ~width:State.width clk in
+    let dc = reg clk in
+    let sclk = reg clk in
+    let sdin = reg clk in
+    let reset = reg clk in
+    let cs = reg clk in
+    let data_to_send = reg ~width:8 clk in
+    let bit_number = reg ~width:4 clk in
+    let pixel_counter = reg ~width:10 clk in
     
     (* State machine definition *)
     let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
@@ -61,7 +64,6 @@ module Make (X : Config) = struct
       ~f:(fun c -> mux2 (c <:. 30_000_000)(zero 33)(c +:. 1)) in
 
     let reset = Variable.wire ~default:vdd in
-    (* let _reset_next = reg reg_sync_spec ~enable:vdd reset.value in *)
 
     (* The program block with a call to [compile]. *)
     compile [
