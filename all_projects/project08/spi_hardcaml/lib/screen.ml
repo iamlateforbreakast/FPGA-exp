@@ -18,11 +18,11 @@ module Make (X : Config) = struct
 
   module O = struct
     type 'a t =
-      { o_sclk : 'a [@bits 1]
-      ; o_sdin : 'a [@bits 1]
-      ; o_cs : 'a [@bits 1]
-      ; o_dc : 'a [@bits 1]
-      ; o_reset : 'a [@bits 1]
+      { io_sclk : 'a [@bits 1]
+      ; io_sdin : 'a [@bits 1]
+      ; io_cs : 'a [@bits 1]
+      ; io_dc : 'a [@bits 1]
+      ; io_reset : 'a [@bits 1]
       }
     [@@deriving hardcaml]
   end
@@ -71,7 +71,7 @@ module Make (X : Config) = struct
         (Load_data, [reset<--. 1; sm.set_next Init_power]);
       ]
     ];
-    {O.o_sclk = i.i_clk; o_sdin = Signal.gnd; o_cs = Signal.vdd; o_dc = gnd; o_reset = reset.value}
+    {O.io_sclk = i.i_clk; io_sdin = Signal.gnd; io_cs = Signal.vdd; io_dc = gnd; io_reset = reset.value}
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
