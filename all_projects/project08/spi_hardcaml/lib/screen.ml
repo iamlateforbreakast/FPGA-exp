@@ -44,7 +44,7 @@ module Make (X : Config) = struct
     let { I.i_clk; i_reset } = i in
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i_clk ~clear:i_reset () in
-
+(*
     let counter = reg ~width:33 clk in
     let state = reg ~width:State.width clk in
     let dc = reg clk in
@@ -55,6 +55,7 @@ module Make (X : Config) = struct
     let data_to_send = reg ~width:8 clk in
     let bit_number = reg ~width:4 clk in
     let pixel_counter = reg ~width:10 clk in
+  *)
     
     (* State machine definition *)
     let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in

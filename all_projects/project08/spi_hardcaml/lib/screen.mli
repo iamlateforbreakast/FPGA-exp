@@ -16,11 +16,11 @@ module Make ( _ : Config) : sig
   (** The output interface. *)
   module O : sig
     type 'a t =
-      { o_sclk  : 'a [@bits 1]  (** SPI clock output *)
-      ; o_sdin  : 'a [@bits 1]  (** SPI data output *)
-      ; o_cs    : 'a [@bits 1]  (** Chip select output *)
-      ; o_dc    : 'a [@bits 1]  (** Data/command select output *)
-      ; o_reset : 'a [@bits 1]  (** Reset output *)
+      { io_sclk  : 'a [@bits 1]  (** SPI clock output *)
+      ; io_sdin  : 'a [@bits 1]  (** SPI data output *)
+      ; io_cs    : 'a [@bits 1]  (** Chip select output *)
+      ; io_dc    : 'a [@bits 1]  (** Data/command select output *)
+      ; io_reset : 'a [@bits 1]  (** Reset output *)
       }
     [@@deriving hardcaml]
   end
