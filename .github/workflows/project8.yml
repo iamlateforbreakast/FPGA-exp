@@ -25,12 +25,12 @@ jobs:
           allow-prerelease-opam: true
       - name: Install Hardcaml and dependencies
         # Use working-directory to ensure correct path
-        working-directory: project8/spi_hardcaml
+        working-directory: all_projects/project8/spi_hardcaml
         run: |
           # Install dependencies required by the .opam file
           opam install . --deps-only --with-test
           opam install hardcaml ppx_hardcaml hardcaml_waveterm
       - name: Generate Verilog
         # Use working-directory to ensure correct path
-        working-directory: project8/spi_hardcaml
+        working-directory: all_projects/project8/spi_hardcaml
         run: opam exec -- dune build 

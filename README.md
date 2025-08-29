@@ -9,16 +9,16 @@ The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/t
 Projects
 --------
 
-1. [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project1)
-2. [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project2)
-3. [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project3)
-4. [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project4)
-5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project5)
-6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project6)
-7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project7)
-8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project8) [![Project8](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
-9. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project9)
-10. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/project10)
+1. [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project1)
+2. [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project2)
+3. [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project3)
+4. [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project4)
+5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project5)
+6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project6)
+7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project7)
+8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project8) [![Project8](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
+9. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project9)
+10. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10)
 
 Interesting Resources
 ---------------------
