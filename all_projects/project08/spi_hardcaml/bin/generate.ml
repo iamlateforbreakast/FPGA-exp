@@ -4,6 +4,7 @@ open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
+  let startup_wait = 10_000_000
 end
 
 let () =
