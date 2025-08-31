@@ -1,7 +1,7 @@
 (* screen.ml *)
 open Hardcaml
 
-module type Config = Config_intf.S
+module type Config = Config.S
 
 module Make (X : Config) = struct
 
