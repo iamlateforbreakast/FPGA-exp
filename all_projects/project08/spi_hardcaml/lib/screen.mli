@@ -1,6 +1,6 @@
 open Hardcaml
 (** A configuration for the screen module. *)
-module type Config = Config_intf
+module type Config = Config.S
 
 (** The top-level screen module. *)
 module Make ( _ : Config) : sig
