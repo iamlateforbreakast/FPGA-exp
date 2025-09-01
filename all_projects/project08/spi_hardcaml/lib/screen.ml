@@ -37,18 +37,14 @@ module Make (X : Config) = struct
     let open Signal in
     let commands = [0x01; 0x11; 0x3A; 0x29] in
     let rom = List.map (fun c -> of_int ~width:8 c) commands in
+    
     mux index rom
   
   let display_rom ~index =
     let open Signal in
-    let size = 128 * 160 in
+    let size = 128 * 8 in
     let rom = List.init size (fun i -> of_int ~width:8 (i mod 256)) in
     mux index rom
-  (*
-  reg [7:0] dataToSend = 0;
-  reg [3:0] bitNumber = 0;  
-  reg [9:0] pixelCounter = 0;
-  *)
   
   let create (_scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Always in
@@ -68,10 +64,11 @@ module Make (X : Config) = struct
       ~width:33 
       ~f:(fun c -> (c +:. 1)) in
 
-    let sclk = Variable.wire ~default:gnd in
+  
     let cs = Variable.wire ~default:vdd in
     let reset = Variable.wire ~default:vdd in
 
+    let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let sdin = Variable.wire ~default:gnd in
     let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
