@@ -10,7 +10,7 @@ module Make (X : Config) = struct
   
   module I = struct
     type 'a t =
-      { i_clk : 'a [@bits 1]
+      { clock : 'a [@bits 1]
       ; i_reset : 'a [@bits 1]
       } 
     [@@deriving hardcaml]
@@ -41,9 +41,9 @@ module Make (X : Config) = struct
   let create (_scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Always in
     let open Signal in
-    let { I.i_clk; i_reset } = i in
+    let { I.clock; i_reset } = i in
     (* Create synchronous registers *)
-    let reg_sync_spec = Reg_spec.create ~clock:i_clk ~clear:i_reset () in
+    let reg_sync_spec = Reg_spec.create ~clock:clock ~clear:i_reset () in
 (*
     let state = reg ~width:State.width clk in
     let pixel_counter = reg ~width:10 clk in
@@ -54,7 +54,7 @@ module Make (X : Config) = struct
     let counter = reg_fb reg_sync_spec 
       ~enable:vdd 
       ~width:33 
-      ~f:(fun c -> mux2 (c <:. 30_000_000)(zero 33)(c +:. 1)) in
+      ~f:(fun c -> mux2 (c <:. (X.startup_wait * 3))(zero 33)(c +:. 1)) in
 
     let sclk = Variable.wire ~default:gnd in
     let cs = Variable.wire ~default:vdd in
@@ -67,13 +67,13 @@ module Make (X : Config) = struct
     compile [
       sm.switch [
         (Init_power,   [sclk <--. 0; cs <--. 0; dc <--. 0;
-                         if_ (counter <:. 10_000_000) [reset <--. 1][reset <--. 0];
-                         when_ (counter >:. 27_000_000) [sm.set_next Load_command]]);
+                         if_ (counter <:. X.startup_wait) [reset <--. 1][reset <--. 0];
+                         when_ (counter >:. (X.startup_wait * 3)) [sm.set_next Load_command]]);
         (Load_command, [reset <--. 1; cs <--. 1; dc <--. 0; sm.set_next Load_display;]);
         (Load_display, [reset <--. 1; cs <--. 1; dc <--. 1; sm.set_next Load_command]);
       ]
     ];
-    {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
+    {O.io_sclk = sclk.value; io_sdin = clock; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

@@ -7,7 +7,7 @@ module Make ( _ : Config) : sig
   (** The input interface. *)
   module I : sig
     type 'a t =
-      { i_clk : 'a [@bits 1]  (** System clock input *)
+      { clock : 'a [@bits 1]  (** System clock input *) 
       ; i_reset : 'a [@bits 1]  (** System reset input *)
       }
     [@@deriving hardcaml]

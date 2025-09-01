@@ -6,7 +6,7 @@ open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
-  let startup_wait = 10_000_000
+  let startup_wait = 2
 end
 
 module MyScreen = Screen.Make(My_config)
@@ -20,11 +20,11 @@ let testbench n =
       ~flatten_design:true () in
   let sim = 
     Simulator.create
-      ~config:Cyclesim.Config.trace_all (MyScreen.hierarchical scope) in
+      ~config:Cyclesim.Config.trace_all (MyScreen.create scope) in
   let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
   let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
-  inputs.i_clk := Bits.vdd;
+
   inputs.i_reset := Bits.vdd;
   for _i = 0 to n do
     Cyclesim.cycle sim
