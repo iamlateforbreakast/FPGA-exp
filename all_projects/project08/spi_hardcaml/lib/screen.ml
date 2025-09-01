@@ -71,8 +71,8 @@ module Make (X : Config) = struct
       sm.switch [
         (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
         (Load_command, [reset <--. 1; dc <--. 0; sm.set_next Send_data;]);
-        (Load_display, [reset<--. 1; dc <--. 1; sm.set_next Send_command]);
-        (Send_data, [reset<--. 1; cs <--. 1; sm.set_next Send_command]);
+        (Load_display, [reset<--. 1; dc <--. 1; sm.set_next Load_command]);
+        (Send_data, [reset<--. 1; cs <--. 1; sm.set_next Load_command]);
       ]
     ];
     {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
