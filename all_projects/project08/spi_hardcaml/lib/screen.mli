@@ -21,6 +21,7 @@ module Make ( _ : Config) : sig
       ; io_cs    : 'a [@bits 1]  (** Chip select output *)
       ; io_dc    : 'a [@bits 1]  (** Data/command select output *)
       ; io_reset : 'a [@bits 1]  (** Reset output *)
+      ; counter  : 'a [@bits 33] (** For debugging purposes *)
       }
     [@@deriving hardcaml]
   end

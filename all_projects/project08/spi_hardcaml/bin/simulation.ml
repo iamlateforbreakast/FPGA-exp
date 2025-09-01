@@ -6,7 +6,7 @@ open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
-  let startup_wait = 2
+  let startup_wait = 1
 end
 
 module MyScreen = Screen.Make(My_config)
@@ -25,7 +25,8 @@ let testbench n =
   let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
-  inputs.i_reset := Bits.vdd;
+  inputs.i_reset := Bits.gnd;
+
   for _i = 0 to n do
     Cyclesim.cycle sim
   done;
