@@ -64,7 +64,7 @@ module Make (X : Config) = struct
     let dc = Variable.wire ~default:gnd in
     let reset = Variable.wire ~default:vdd in
 
-    let dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let _dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let _bitCounter = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in 
     (* The program block with a call to [compile]. *)
     compile [
