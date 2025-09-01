@@ -47,11 +47,6 @@ module Make (X : Config) = struct
 (*
     let counter = reg ~width:33 clk in
     let state = reg ~width:State.width clk in
-    let dc = reg clk in
-    let sclk = reg clk in
-    let sdin = reg clk in
-    let reset = reg clk in
-    let cs = reg clk in
     let data_to_send = reg ~width:8 clk in
     let bit_number = reg ~width:4 clk in
     let pixel_counter = reg ~width:10 clk in
@@ -73,8 +68,8 @@ module Make (X : Config) = struct
     compile [
       sm.switch [
         (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
-        (Send_command, [reset<--. 1; sm.set_next Load_data;]);
-        (Load_data, [reset<--. 1; sm.set_next Init_power]);
+        (Send_command, [reset <--. 1; cs <--. 0; sm.set_next Load_data;]);
+        (Load_data, [reset<--. 1; cs <--. 1; sm.set_next Send_command]);
       ]
     ];
     {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
