@@ -28,7 +28,7 @@ module Make (X : Config) = struct
   end
 
   module States = struct
-    type t = Init_power | Send_command | Load_data
+    type t = Init_power | Load_command | Load_display | Send_data
     [@@deriving sexp_of, compare, enumerate]
   end
     
@@ -64,12 +64,15 @@ module Make (X : Config) = struct
     let dc = Variable.wire ~default:gnd in
     let reset = Variable.wire ~default:vdd in
 
+    let dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let bitCounter = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in 
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
         (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]]]);
-        (Send_command, [reset <--. 1; cs <--. 0; sm.set_next Load_data;]);
-        (Load_data, [reset<--. 1; cs <--. 1; sm.set_next Send_command]);
+        (Load_command, [reset <--. 1; dc <--. 0; sm.set_next Load_data;]);
+        (Load_display, [reset<--. 1; dc <--. 1; sm.set_next Send_command]);
+        (Send_data, [reset<--. 1; cs <--. 1; sm.set_next Send_command]);
       ]
     ];
     {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
