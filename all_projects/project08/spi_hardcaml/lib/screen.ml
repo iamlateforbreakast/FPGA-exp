@@ -28,7 +28,7 @@ module Make (X : Config) = struct
   end
 
   module States = struct
-    type t = Init_power | Load_command | Load_display | Send_data
+    type t = Init_power | Load_command | Load_display
     [@@deriving sexp_of, compare, enumerate]
   end
     
@@ -45,10 +45,7 @@ module Make (X : Config) = struct
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i_clk ~clear:i_reset () in
 (*
-    let counter = reg ~width:33 clk in
     let state = reg ~width:State.width clk in
-    let data_to_send = reg ~width:8 clk in
-    let bit_number = reg ~width:4 clk in
     let pixel_counter = reg ~width:10 clk in
   *)
 
@@ -64,16 +61,16 @@ module Make (X : Config) = struct
     let dc = Variable.wire ~default:gnd in
     let reset = Variable.wire ~default:vdd in
 
-    let _dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
-    let _bitCounter = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in 
+    (* let _dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let _bitCounter = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in *)
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power, [if_ (counter <:. 10_000_000) [reset <--. 1][if_ (counter <:. 20_000_000) [reset <--. 0][reset <--. 1]];
-                      when_ (counter >:. 27_000_000) [sm.set_next Load_command]]);
-        (Load_command, [reset <--. 1; cs <--. 1; dc <--. 0; sm.set_next Send_data;]);
-        (Load_display, [reset<--. 1; cs <--. 1; dc <--. 1; sm.set_next Load_command]);
-        (Send_data, [reset<--. 1; cs <--. 1; sm.set_next Load_command]);
+        (Init_power,   [sclk <--. 0; cs <--. 0; dc <--. 0;
+                         if_ (counter <:. 10_000_000) [reset <--. 1][reset <--. 0];
+                         when_ (counter >:. 27_000_000) [sm.set_next Load_command]]);
+        (Load_command, [reset <--. 1; cs <--. 1; dc <--. 0; sm.set_next Load_display;]);
+        (Load_display, [reset <--. 1; cs <--. 1; dc <--. 1; sm.set_next Load_command]);
       ]
     ];
     {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
