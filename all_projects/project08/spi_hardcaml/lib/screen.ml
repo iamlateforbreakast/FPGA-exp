@@ -77,7 +77,7 @@ module Make (X : Config) = struct
         (Load_data, [reset<--. 1; sm.set_next Init_power]);
       ]
     ];
-    {O.io_sclk = i.i_clk; io_sdin = Signal.gnd; io_cs = Signal.vdd; io_dc = gnd; io_reset = reset.value}
+    {O.io_sclk = sclk.value; io_sdin = Signal.gnd; io_cs = cs.value; io_dc = dc.value; io_reset = reset.value}
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
