@@ -34,9 +34,4 @@ module Make ( _ : Config) : sig
     :  Scope.t
     -> Signal.t I.t
     -> Signal.t O.t
-
-  val hierarchical
-    :  Scope.t
-    -> Signal.t I.t
-    -> Signal.t O.t
 end
