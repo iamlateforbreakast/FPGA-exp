@@ -65,9 +65,8 @@ module Make (X : Config) = struct
       ~f:(fun c -> (c +:. 1)) in
 
   
-    let cs = Variable.wire ~default:vdd in
-    let reset = Variable.wire ~default:vdd in
-
+    let cs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let reset = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let sdin = Variable.wire ~default:gnd in
     let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
@@ -80,8 +79,8 @@ module Make (X : Config) = struct
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power,   [sclk <--. 1; cs <--. 0; dc <--. 0;
-                         if_ (counter <:. X.startup_wait) [reset <--. 1][reset <--. 0];
+        (Init_power,   [sclk <--. 0; reset <--. 1; cs <--. 0; dc <--. 0;
+                         if_ (counter <=:. X.startup_wait) [reset <--. 1][reset <--. 0];
                          when_ (counter >:. (X.startup_wait * 3)) [reset <--. 1; bitCounter <--. 0; sm.set_next Send_data]]);
         (Send_data, [
                       when_ (bitCounter.value ==: (of_int ~width:4 0))
@@ -95,18 +94,18 @@ module Make (X : Config) = struct
                           when_ (dc.value ==: vdd)
                             [dataToSend <-- display_rom ~index:column_index.value;
                              column_index <-- (column_index.value +:. 1);
-                             when_ (column_index.value ==: of_int ~width:10 (128*160 - 1))
+                             when_ (column_index.value ==: of_int ~width:10 (128*8 - 1))
                                [column_index <--. 0;];
                             ];
                           bitCounter <--. 0;
                         ];
                       when_ (bitCounter.value <: (of_int ~width:4 8))
-                        [ reset <--. 0; cs <--. 0; dc <--. 1; sm.set_next Send_data;];
+                        [ cs <--. 0; dc <--. 1; sm.set_next Send_data;];
                       when_ (bitCounter.value ==: (of_int ~width:4 8))
-                        [ reset <--. 0];
+                        [ ];
                       sclk <-- ~:(sclk.value);
                       bitCounter <-- (bitCounter.value +:. 1);
-                      sdin <-- gnd
+                      sdin <-- bit dataToSend.value 0;
                     ]);  
       ]
     ];
