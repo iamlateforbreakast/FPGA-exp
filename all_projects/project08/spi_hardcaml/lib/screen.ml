@@ -66,8 +66,8 @@ module Make (X : Config) = struct
 
   
     let cs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let reset = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let reset = Variable.wire ~default:vdd in
+    let sclk = Variable.wire ~default:gnd in
     let sdin = Variable.wire ~default:gnd in
     let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
@@ -79,10 +79,10 @@ module Make (X : Config) = struct
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power,   [sclk <--. 0; reset <--. 1; cs <--. 0; dc <--. 0;
-                         if_ (counter <=:. X.startup_wait) [reset <--. 1][reset <--. 0];
-                         when_ (counter >:. (X.startup_wait * 3)) [reset <--. 1; bitCounter <--. 0; sm.set_next Send_data]]);
-        (Send_data, [
+        (Init_power,   [sclk <--. 0; reset <-- vdd; cs <--. 0; dc <--. 0;
+                         if_ (counter <=:. X.startup_wait) [reset <-- vdd][reset <-- gnd];
+                         when_ (counter >:. (X.startup_wait * 3)) [reset <-- vdd; bitCounter <--. 0; sm.set_next Send_data]]);
+        (Send_data, [ cs <--. 1;
                       when_ (bitCounter.value ==: (of_int ~width:4 0))
                         [
                           when_ (dc.value ==: gnd) 
@@ -103,7 +103,7 @@ module Make (X : Config) = struct
                         [ cs <--. 0; dc <--. 1; sm.set_next Send_data;];
                       when_ (bitCounter.value ==: (of_int ~width:4 8))
                         [ ];
-                      sclk <-- ~:(sclk.value);
+                      sclk <-- ~:(i.clock);
                       bitCounter <-- (bitCounter.value +:. 1);
                       sdin <-- bit dataToSend.value 0;
                     ]);  
