@@ -70,8 +70,8 @@ module Make (X : Config) = struct
   
     let cs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let reset = Variable.wire ~default:vdd in
-    let sclk = Variable.wire ~default:gnd in
-    let sdin = Variable.wire ~default:gnd in
+    let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let sdin = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
 
@@ -79,7 +79,6 @@ module Make (X : Config) = struct
 
     let dataToSend = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let bitCounter = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
-    let _ = (sclk <-- i.clock) in
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
@@ -100,6 +99,9 @@ module Make (X : Config) = struct
                             [dataToSend <-- display_rom ~index:column_index.value;];
                         ];
                       bitCounter <-- (bitCounter.value +:. 1);
+                      sclk <-- ~:(sclk.value);
+                      sdin <-- bit dataToSend.value 7;
+                      dataToSend <-- mux2 (dc.value)(lsbs (display_rom ~index:column_index.value) @: zero 1)(lsbs (command_rom ~index:command_index.value) @: zero 1);
                       when_ (bitCounter.value ==: (of_int ~width:4 8))
                         [ when_ (dc.value ==: gnd)
                           [
@@ -112,10 +114,6 @@ module Make (X : Config) = struct
                           ];
                           bitCounter <-- (of_int ~width:4 0);
                         ];
-                      (*sclk <-- bit counter 0;*)
-                      sdin <-- (bit dataToSend.value 0);
-                      (*dataToSend <-- (zero 1) @: (msbs dataToSend.value);*)
-                      dataToSend <-- (lsbs dataToSend.value) @: zero 1;
                     ]);  
       ]
     ];
