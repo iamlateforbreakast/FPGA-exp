@@ -72,8 +72,8 @@ module Make (X : Config) = struct
     let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let sdin = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let data_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
-    let nb_bytes = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
+    let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
+    let column_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
     let data_to_send = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let bit_counter = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
     
@@ -112,7 +112,7 @@ module Make (X : Config) = struct
     ; O.io_reset = reset.value
     ; O.debug1 = command_index.value
     ; O.debug2 = column_index.value
-    ; O.debug3 = dataToSend.value
-    ; O.debug4 = bitCounter.value}
+    ; O.debug3 = data_to_send.value
+    ; O.debug4 = bit_counter.value}
 
 end
