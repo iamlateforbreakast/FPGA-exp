@@ -60,27 +60,36 @@ module Make (X : Config) = struct
   *)
 
     (* State machine definition *)
-    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    
     let counter = reg_fb reg_sync_spec 
       ~enable:vdd 
       ~width:33 
       ~f:(fun c -> (c +:. 1)) in
-
+    let clk_counter = reg_fb reg_sync_spec
+      ~enable:vdd 
+      ~width:4 
+      ~f:(fun c -> mux2 (c ==:. 2)(zero 4)(c +:. 1)) in
+    let clk3 = reg_fb reg_sync_spec
+      ~enable:vdd 
+      ~width:1
+      ~f:(fun _ -> mux2 (clk_counter ==:. 0)(vdd)(gnd)) in
+    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:clk3 in
+    (* Outputs *)
+    (* Registers *)
   
-    let cs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let reset = Variable.wire ~default:vdd in
-    let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let sdin = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let dc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
-    let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
-    let column_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
-    let data_to_send = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
-    let bit_counter = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
+    let cs = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
+    let reset = Variable.wire ~default:clk3 in
+    let sdin = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
+    let dc = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
+    let command_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
+    let column_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:10 in
+    let data_to_send = Variable.reg ~enable:clk3 reg_sync_spec ~width:8 in
+    let bit_counter = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
     
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power, [sclk <--. 0; reset <-- vdd; cs <--. 1; dc <--. 0;
+        (Init_power, [reset <-- vdd; cs <--. 1; dc <--. 0;
                          if_ (counter <=:. X.startup_wait) [reset <-- vdd][reset <-- gnd];
                          when_ (counter >:. (X.startup_wait * 3)) 
                            [ reset <-- vdd
@@ -95,7 +104,6 @@ module Make (X : Config) = struct
                            [dc <--. 1; data_to_send <-- display_rom ~index:column_index.value; sm.set_next Send_data;]
                            [column_index <--. 0; sm.set_next Load_display]]);
         (Send_data,   [ bit_counter <-- (bit_counter.value +:. 1);
-                      sclk <-- ~:(sclk.value);
                       sdin <-- bit data_to_send.value 7;
                       data_to_send <-- sll data_to_send.value 1;
                       when_ (bit_counter.value ==: (of_int ~width:4 8)) 
@@ -105,8 +113,8 @@ module Make (X : Config) = struct
                       ]);  
       ]
     ];
-    { O.io_sclk = sclk.value
-    ; O.io_sdin = sdin.value
+    { O.io_sclk = clk3
+    ; O.io_sdin = bit data_to_send.value 7
     ; O.io_cs = cs.value
     ; O.io_dc = dc.value
     ; O.io_reset = reset.value
