@@ -32,7 +32,7 @@ module Make (X : Config) = struct
   end
 
   module States = struct
-    type t = Init_power | Load_command | Load Display | Send_data | Select_data
+    type t = Init_power | Load_command | Load_display | Send_data | Select_data
     [@@deriving sexp_of, compare, enumerate]
   end
   
@@ -86,23 +86,23 @@ module Make (X : Config) = struct
                            [ reset <-- vdd
                            ; cs <--. 0
                            ; sm.set_next Load_command]]);
-        (Load_command, ( bit_counter <--. 0
+        (Load_command, [ bit_counter <--. 0
                        ; if_ (command_index.value <=: (of_int ~width:4 2)) 
-                           [dc <--. 0;  data_to_send <-- command_rom ~index:command_index.value; sm.next Send_data);]
-                           [sm.next Load_display]);
-        (Load_display, ( bit_counter <--. 0
+                           [dc <--. 0;  data_to_send <-- command_rom ~index:command_index.value; sm.set_next Send_data;]
+                           [sm.set_next Load_display]]);
+        (Load_display, [ bit_counter <-- (of_int ~width:4 0)
                        ; if_ (column_index.value <=: of_int ~width:10 (128*8 - 1))
-                           [dc <--. 1; data_to_send <-- display_rom ~index:column_index.value; sm.next Send_data);]
-                           [column_index <--. 0; sm.next Load_display]);
-        (Send_data,   bit_counter <-- (bit_counter.value +:. 1);
+                           [dc <--. 1; data_to_send <-- display_rom ~index:column_index.value; sm.set_next Send_data;]
+                           [column_index <--. 0; sm.set_next Load_display]]);
+        (Send_data,   [ bit_counter <-- (bit_counter.value +:. 1);
                       sclk <-- ~:(sclk.value);
-                      sdin <-- bit dataToSend.value 7;
-                      data_to_send <-- rll data_to_send.value;
+                      sdin <-- bit data_to_send.value 7;
+                      data_to_send <-- sll data_to_send.value 1;
                       when_ (bit_counter.value ==: (of_int ~width:4 8)) 
-                        [ bit_counter <-- (of_int ~width:4 0); ]);
-        (Select_data, when_ (dc ==:. 1) [ column_index <-- (column_index.value +:. 1); sm.next Load_display ];
-                      when_ (dc ==:. 0) [ command_index <-- (command_index.value +:. 1); sm.next Load_command ];
-                    );  
+                        [ bit_counter <-- (of_int ~width:4 0); sm.set_next Select_data]]);
+        (Select_data, [when_ (dc.value ==: vdd) [ column_index <-- (column_index.value +:. 1); sm.set_next Load_display ];
+                      when_ (dc.value ==: gnd) [ command_index <-- (command_index.value +:. 1); sm.set_next Load_command ];
+                      ]);  
       ]
     ];
     { O.io_sclk = sclk.value
