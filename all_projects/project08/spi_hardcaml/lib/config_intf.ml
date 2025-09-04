@@ -2,6 +2,7 @@
 module type S = sig
   val file_name : string
   val startup_wait : int
+  val commands : int list
 end
 
 module type Config = sig

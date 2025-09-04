@@ -4,13 +4,10 @@ open Hardcaml
 module type Config = Config.S
 
 module Make (X : Config) = struct
-
-  (* let startup_wait_parameter = Parameter.create ~name:"STARTUP_WAIT" ~value:(Parameter.Value.Int 10_000_000)
-  *)
   
   module I = struct
     type 'a t =
-      { clock : 'a [@bits 1]
+      { clock : 'a [@bits 1] (* Need to be called clock for simulation *)
       ; i_reset : 'a [@bits 1]
       } 
     [@@deriving hardcaml]
@@ -20,13 +17,13 @@ module Make (X : Config) = struct
     type 'a t =
       { io_sclk : 'a [@bits 1]
       ; io_sdin : 'a [@bits 1]
-      ; io_cs : 'a [@bits 1]
-      ; io_dc : 'a [@bits 1]
+      ; io_cs :   'a [@bits 1]
+      ; io_dc :   'a [@bits 1]
       ; io_reset : 'a [@bits 1]
-      ; debug1 : 'a [@bits 4]  (* For debugging purposes *)
-      ; debug2 : 'a [@bits 10]  (* For debugging purposes *)
-      ; debug3 : 'a [@bits 8]  (* For debugging purposes *)
-      ; debug4: 'a [@bits 4]
+      ; debug1 :  'a [@bits 4]  (* For debugging purposes *)
+      ; debug2 :  'a [@bits 10]  (* For debugging purposes *)
+      ; debug3 :  'a [@bits 8]  (* For debugging purposes *)
+      ; debug4:   'a [@bits 4]   (* For debugging purposes *)
       }
     [@@deriving hardcaml]
   end
@@ -36,10 +33,9 @@ module Make (X : Config) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
   
-  let command_rom ~index =
+    let command_rom ~index =
     let open Signal in
-    let commands = [0xAE; 0x11; 0x3A; 0xAF] in
-    let rom = List.map (fun c -> of_int ~width:8 c) commands in
+    let rom = List.map (fun c -> of_int ~width:8 c) X.commands in
     mux index rom
   
   let display_rom ~index =
@@ -54,10 +50,6 @@ module Make (X : Config) = struct
     let { I.clock; i_reset } = i in
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:clock ~clear:i_reset () in
-  (*
-    let state = reg ~width:State.width clk in
-    let pixel_counter = reg ~width:10 clk in
-  *)
 
     (* State machine definition *)
     
@@ -78,7 +70,7 @@ module Make (X : Config) = struct
     (* Registers *)
   
     let cs = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let reset = Variable.wire ~default:clk3 in
+    let reset = Variable.reg ~enable:clock reg_sync_spec ~width:1 in
     let sdin = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
     let dc = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
     let command_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
@@ -89,14 +81,14 @@ module Make (X : Config) = struct
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power, [reset <-- vdd; cs <--. 1; dc <--. 0;
-                         if_ (counter <=:. X.startup_wait) [reset <-- vdd][reset <-- gnd];
+        (Init_power, [reset <-- gnd; cs <--. 1; dc <--. 0;
+                         if_ (counter <=:. X.startup_wait) [reset <-- gnd][reset <-- vdd];
                          when_ (counter >:. (X.startup_wait * 3)) 
-                           [ reset <-- vdd
+                           [ reset <-- gnd
                            ; cs <--. 0
                            ; sm.set_next Load_command]]);
         (Load_command, [ bit_counter <--. 0
-                       ; if_ (command_index.value <=: (of_int ~width:4 2)) 
+                       ; if_ (command_index.value <=: (of_int ~width:4 (List.length X.commands))) 
                            [dc <--. 0;  data_to_send <-- command_rom ~index:command_index.value; sm.set_next Send_data;]
                            [sm.set_next Load_display]]);
         (Load_display, [ bit_counter <-- (of_int ~width:4 0)

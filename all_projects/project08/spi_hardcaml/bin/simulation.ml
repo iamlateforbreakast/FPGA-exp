@@ -7,6 +7,7 @@ open Project8_lib
 module My_config = struct
   let file_name = "image.hex"
   let startup_wait = 1
+  let commands = [ 0xAE; 0x11; 0XAF]
 end
 
 module MyScreen = Screen.Make(My_config)
