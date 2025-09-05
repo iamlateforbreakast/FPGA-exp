@@ -7,23 +7,19 @@ module Make (X : Config) = struct
   
   module I = struct
     type 'a t =
-      { clock : 'a [@bits 1] (* Need to be called clock for simulation *)
-      ; i_reset : 'a [@bits 1]
+      { clock :    'a [@bits 1]  (* Need to be called clock for simulation *)
+      ; i_reset :  'a [@bits 1]
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { io_sclk : 'a [@bits 1]
-      ; io_sdin : 'a [@bits 1]
-      ; io_cs :   'a [@bits 1]
-      ; io_dc :   'a [@bits 1]
+      { io_sclk :  'a [@bits 1]
+      ; io_sdin :  'a [@bits 1]
+      ; io_cs :    'a [@bits 1]
+      ; io_dc :    'a [@bits 1]
       ; io_reset : 'a [@bits 1]
-      ; debug1 :  'a [@bits 4]  (* For debugging purposes *)
-      ; debug2 :  'a [@bits 10]  (* For debugging purposes *)
-      ; debug3 :  'a [@bits 8]  (* For debugging purposes *)
-      ; debug4:   'a [@bits 4]   (* For debugging purposes *)
       }
     [@@deriving hardcaml]
   end
@@ -33,7 +29,7 @@ module Make (X : Config) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
   
-    let command_rom ~index =
+  let command_rom ~index =
     let open Signal in
     let rom = List.map (fun c -> of_int ~width:8 c) X.commands in
     mux index rom
@@ -47,9 +43,9 @@ module Make (X : Config) = struct
   let create (_scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Always in
     let open Signal in
-    let { I.clock; i_reset } = i in
+    (* let { I.clock; i_reset } = i in *)
     (* Create synchronous registers *)
-    let reg_sync_spec = Reg_spec.create ~clock:clock ~clear:i_reset () in
+    let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
 
     (* State machine definition *)
     
@@ -70,14 +66,18 @@ module Make (X : Config) = struct
     (* Registers *)
   
     let cs = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let reset = Variable.reg ~enable:clock reg_sync_spec ~width:1 in
+    let _dbg_cs = Signal.(cs.value -- "dbg_cs") in
+    let reset = Variable.reg ~enable:i.clock reg_sync_spec ~width:1 in
     let sdin = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
     let dc = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
     let command_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
+    let _dbg_command_index = Signal.(command_index.value -- "dbg_command_index") in
     let column_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:10 in
+    let _dbg_column_index = Signal.(column_index.value -- "dbg_column_index") in
     let data_to_send = Variable.reg ~enable:clk3 reg_sync_spec ~width:8 in
+    let _dbg_data_to_send = Signal.(data_to_send.value -- "dbg_data_to_send") in
     let bit_counter = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
-    
+    let _dbg_bit_counter = Signal.(bit_counter.value -- "dbg_bit_counter") in
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
@@ -110,9 +110,6 @@ module Make (X : Config) = struct
     ; O.io_cs = cs.value
     ; O.io_dc = dc.value
     ; O.io_reset = reset.value
-    ; O.debug1 = command_index.value
-    ; O.debug2 = column_index.value
-    ; O.debug3 = data_to_send.value
-    ; O.debug4 = bit_counter.value}
+    }
 
 end
