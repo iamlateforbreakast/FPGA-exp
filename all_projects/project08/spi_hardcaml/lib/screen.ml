@@ -56,8 +56,8 @@ module Make (X : Config) = struct
     let _dbg_counter = Signal.(counter -- "dbg_counter") in
     let clk_counter = reg_fb reg_sync_spec
       ~enable:vdd 
-      ~width:4 
-      ~f:(fun c -> mux2 (c ==:. 2)(zero 4)(c +:. 1)) in
+      ~width:10
+      ~f:(fun c -> mux2 (c ==:. (X.clk_div - 1))(zero 10)(c +:. 1)) in
     let clk3 = reg_fb reg_sync_spec
       ~enable:vdd 
       ~width:1
