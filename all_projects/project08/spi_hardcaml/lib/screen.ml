@@ -51,32 +51,36 @@ module Make (X : Config) = struct
     
     let counter = reg_fb reg_sync_spec 
       ~enable:vdd 
-      ~width:33 
-      ~f:(fun c -> (c +:. 1)) in
+      ~width:16 
+      ~f:(fun c -> mux2 (c ==:. (X.clk_div * 2)) (zero 16) (c +:. 1)) in
     let _dbg_counter = Signal.(counter -- "dbg_counter") in
-    let clk_counter = reg_fb reg_sync_spec
+
+    let sm_pulse = reg_fb reg_sync_spec 
       ~enable:vdd 
-      ~width:10
-      ~f:(fun c -> mux2 (c ==:. (X.clk_div - 1))(zero 10)(c +:. 1)) in
-    let clk3 = reg_fb reg_sync_spec
+      ~width:1 
+      ~f:(fun _ -> mux2 (counter ==:. (X.clk_div - 1)) vdd gnd) in
+    let _dbg_sm_pulse = Signal.(sm_pulse -- "dbg_sm_pulse") in
+    let sclk_pulse = reg_fb reg_sync_spec 
       ~enable:vdd 
-      ~width:1
-      ~f:(fun _ -> mux2 (clk_counter ==:. 0)(vdd)(gnd)) in
-    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:clk3 in
+      ~width:1 
+      ~f:(fun _ -> mux2 (counter ==:. (X.clk_div * 2 - 1)) vdd gnd) in
+    let _dbg_sclk_pulse = Signal.(sm_pulse -- "dbg_clk_pulse") in
+    
+    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:sm_pulse in
     (* Outputs *)
     (* Registers *)
   
-    let ncs = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let nreset = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let sdin = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let ndc = Variable.reg ~enable:clk3 reg_sync_spec ~width:1 in
-    let command_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
+    let ncs = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
+    let nreset = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
+    let sdin = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
+    let ndc = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
+    let command_index = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:4 in
     let _dbg_command_index = Signal.(command_index.value -- "dbg_command_index") in
-    let column_index = Variable.reg ~enable:clk3 reg_sync_spec ~width:10 in
+    let column_index = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:10 in
     let _dbg_column_index = Signal.(column_index.value -- "dbg_column_index") in
-    let data_to_send = Variable.reg ~enable:clk3 reg_sync_spec ~width:8 in
+    let data_to_send = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:8 in
     let _dbg_data_to_send = Signal.(data_to_send.value -- "dbg_data_to_send") in
-    let bit_counter = Variable.reg ~enable:clk3 reg_sync_spec ~width:4 in
+    let bit_counter = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:4 in
     let _dbg_bit_counter = Signal.(bit_counter.value -- "dbg_bit_counter") in
     (* The program block with a call to [compile]. *)
     compile [
@@ -104,7 +108,7 @@ module Make (X : Config) = struct
                       ]);  
       ]
     ];
-    { O.io_sclk = clk3
+    { O.io_sclk = sclk_pulse
     ; O.io_sdin = bit data_to_send.value 7
     ; O.io_cs = ~:(ncs.value)
     ; O.io_dc = ~:(ndc.value)

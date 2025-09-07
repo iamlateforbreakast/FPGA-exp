@@ -6,8 +6,8 @@ open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
-  let startup_wait = 3
-  let clk_div = 4
+  let startup_wait = 1
+  let clk_div = 4 (* SPI clock = 27MHz / 4 *)
   let commands = [ 0xAE; 0x11; 0XAF]
 end
 
