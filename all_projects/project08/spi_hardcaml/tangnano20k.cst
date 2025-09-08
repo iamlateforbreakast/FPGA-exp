@@ -1,0 +1,33 @@
+// On board LEDs
+IO_LOC "leds[5]" 20;
+IO_PORT "leds[5]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+IO_LOC "leds[4]" 19;
+IO_PORT "leds[4]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+IO_LOC "leds[3]" 18;
+IO_PORT "leds[3]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+IO_LOC "leds[2]" 17;
+IO_PORT "leds[2]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+IO_LOC "leds[1]" 16;
+IO_PORT "leds[1]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+IO_LOC "leds[0]" 15;
+IO_PORT "leds[0]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
+
+// Clock
+IO_LOC "clock" 4;
+IO_PORT "clock" PULL_MODE=UP;
+
+// two on-board buttons
+IO_LOC "i_reset" 87;
+IO_PORT "i_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+
+// connection to the external SPI
+IO_LOC "io_sclk" 42;
+IO_PORT "io_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "io_sdin" 41;
+IO_PORT "io_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "io_reset" 56;
+IO_PORT "io_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "io_dc" 54;
+IO_PORT "io_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "io_cs" 51;
+IO_PORT "io_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
