@@ -18,8 +18,9 @@ end
 
 module Circuit = Circuit.With_interface(I)(O)
 
-let create (_scope : Scope.t) (_i : _ I.t) =
-  { O.clkout = Signal.gnd; O.lock = Signal.gnd }
+let create (_scope : Scope.t) (i : _ I.t) =
+  let module Inst = Instantiation.With_interface(I)(O) in
+  Inst.create ~name:"gowin_rpll" i
 
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in

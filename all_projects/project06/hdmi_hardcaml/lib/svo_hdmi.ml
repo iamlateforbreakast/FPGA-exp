@@ -33,15 +33,18 @@ module Make (X : Config.S) = struct
   module Tmds = Svo_tmds.Make(X)
 
   let create (scope : Scope.t) (i : _ I.t) =
-    let clk_counter = reg_fb
+    let wait_time = 32_000_000 in
+    let _clk_counter = reg_fb
                        (Reg_spec.create ~clock:i.clk ~clear:gnd ())
                        ~enable:vdd
                        ~width:32
                        ~f:(fun d -> 
                         mux2 (d ==:. wait_time) (zero 32) (d +:. 1)) in
-    let locked_q = reg_fb
-	                (Reg_spec.create ~clock:i.clk ~clear:gnd ())
-				    ~enable:vdd
+    let _locked_q = reg_fb
+	                (Reg_spec.create ~clock:i.clk ~clear:gnd ()) in
+
+    
+
 		            
     let tcard = Tcard.hierarchical scope (
 	  Tcard.I.{ resetn=i.resetn
