@@ -1,4 +1,4 @@
-name: Project8
+name: Project06
 run-name: ${{ github.actor }} is generating the Verilog files. 🚀
 
 on: [push]
