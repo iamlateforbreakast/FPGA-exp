@@ -14,9 +14,9 @@ Projects
 3. [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03)
 4. [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04)
 5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05)
-6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06)
+6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml)
 7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07)
-8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) [![Project8](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
+8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
 9. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09)
 10. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10)
 
