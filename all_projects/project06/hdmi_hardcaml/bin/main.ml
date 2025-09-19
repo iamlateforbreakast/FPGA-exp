@@ -37,7 +37,8 @@ let create (scope: Scope.t) (input: _ I.t)=
     (Gowin_rpll.I.{clkin = input.clkin}) in
   let clkdiv = Gowin_clkdiv.hierarchical scope 
     (Gowin_clkdiv.I.{ hclkin = rpll.clkout
-                    ; resetn = rpll.lock }) in
+                    ; resetn = rpll.lock 
+                    ; calib = Signal.vdd }) in
   (* Instantiate the HDMI module with the required inputs *)
   let hdmi = Hdmi.hierarchical scope 
     (Hdmi.I.{ clk = Signal.gnd
