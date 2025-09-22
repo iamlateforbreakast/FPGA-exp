@@ -52,64 +52,67 @@ module Make (X : Config) = struct
     let counter = reg_fb reg_sync_spec 
       ~enable:vdd 
       ~width:16 
-      ~f:(fun c -> mux2 (c ==:. (X.clk_div * 2)) (zero 16) (c +:. 1)) in
+      ~f:(fun c -> mux2 (c <:. (X.clk_div * 2 - 1)) (c +:. 1)(zero 16)) in
     let _dbg_counter = Signal.(counter -- "dbg_counter") in
-
-    let sm_pulse = reg_fb reg_sync_spec 
-      ~enable:vdd 
-      ~width:1 
-      ~f:(fun _ -> mux2 (counter ==:. (X.clk_div - 1)) vdd gnd) in
-    let _dbg_sm_pulse = Signal.(sm_pulse -- "dbg_sm_pulse") in
-    let sclk_pulse = reg_fb reg_sync_spec 
-      ~enable:vdd 
-      ~width:1 
-      ~f:(fun _ -> mux2 (counter ==:. (X.clk_div * 2 - 1)) vdd gnd) in
-    let _dbg_sclk_pulse = Signal.(sm_pulse -- "dbg_clk_pulse") in
     
-    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:sm_pulse in
+    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
     (* Outputs *)
     (* Registers *)
   
-    let ncs = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
-    let nreset = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
-    let sdin = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
-    let ndc = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:1 in
-    let command_index = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:4 in
+    let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let ncs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let nreset = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let reset_counter = Variable.reg ~enable:vdd reg_sync_spec ~width:24 in
+    let _dbg_reset_counter = Signal.(reset_counter.value -- "dbg_reset_counter") in
+    let sdin = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let ndc = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    let command_index = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
     let _dbg_command_index = Signal.(command_index.value -- "dbg_command_index") in
-    let column_index = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:10 in
+    let column_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
     let _dbg_column_index = Signal.(column_index.value -- "dbg_column_index") in
-    let data_to_send = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:8 in
+    let data_to_send = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let _dbg_data_to_send = Signal.(data_to_send.value -- "dbg_data_to_send") in
-    let bit_counter = Variable.reg ~enable:sm_pulse reg_sync_spec ~width:4 in
+    let bit_counter = Variable.reg ~enable:vdd reg_sync_spec ~width:4 in
     let _dbg_bit_counter = Signal.(bit_counter.value -- "dbg_bit_counter") in
     (* The program block with a call to [compile]. *)
     compile [
       sm.switch [
-        (Init_power, [ ncs <--. 1;
-                       when_ (counter >:. X.startup_wait) [nreset <-- vdd];
-                       when_ (counter >:. (X.startup_wait * 2)) 
-                         [ nreset <-- gnd
-                         ; sm.set_next Load_command]]);
-        (Load_command, [ bit_counter <--. 0
-                       ; if_ (command_index.value <=: (of_int ~width:4 (List.length X.commands))) 
-                           [ndc <--. 1;  data_to_send <-- command_rom ~index:command_index.value; sm.set_next Send_data;]
-                           [sm.set_next Load_display]]);
-        (Load_display, [ bit_counter <-- (of_int ~width:4 0)
-                       ; if_ (column_index.value <=: of_int ~width:10 (128*8 - 1))
-                           [ndc <--. 0; data_to_send <-- display_rom ~index:column_index.value; sm.set_next Send_data;]
-                           [column_index <--. 0; sm.set_next Load_display]]);
-        (Send_data,   [ bit_counter <-- (bit_counter.value +:. 1);
-                      sdin <-- bit data_to_send.value 7;
-                      data_to_send <-- sll data_to_send.value 1;
-                      when_ (bit_counter.value ==: (of_int ~width:4 8)) 
-                        [ bit_counter <-- (of_int ~width:4 0); sm.set_next Select_data]]);
-        (Select_data, [when_ (ndc.value ==: gnd) [ column_index <-- (column_index.value +:. 1); sm.set_next Load_display ];
-                      when_ (ndc.value ==: vdd) [ command_index <-- (command_index.value +:. 1); sm.set_next Load_command ];
-                      ]);  
+        (Init_power, 
+          [ sclk <-- vdd; sdin <-- vdd
+          ; ncs <-- gnd; reset_counter <-- (reset_counter.value +:. 1)
+          ; when_ (reset_counter.value ==:. X.startup_wait) [nreset <-- vdd]
+          ; when_ (reset_counter.value ==:. X.startup_wait * 2) [nreset <-- gnd;]
+          ; when_ (reset_counter.value ==:. X.startup_wait * 3) [sdin <-- gnd; sm.set_next Load_command]]);
+        (Load_command, 
+          [ sclk <-- gnd; ncs <-- vdd; reset_counter <--. 0; bit_counter <--. 0
+          ; if_ (command_index.value <=: (of_int ~width:4 (List.length X.commands))) 
+              [ndc <--. 1;  data_to_send <-- command_rom ~index:command_index.value; sm.set_next Send_data;]
+              [sm.set_next Load_display]]);
+        (Load_display, 
+          [ ncs <-- vdd; bit_counter <-- (of_int ~width:4 0)
+          ; if_ (column_index.value <=: of_int ~width:10 (128*8 - 1))
+              [ndc <--. 0; data_to_send <-- display_rom ~index:column_index.value; sm.set_next Send_data;]
+              [column_index <--. 0; sm.set_next Load_display]]);
+        (Send_data,
+          [ if_ (counter <=:. (X.clk_div - 1)) [sclk <-- gnd] [sclk <-- vdd]
+          ; when_ (counter ==:. (X.clk_div - 2)) 
+                [ bit_counter <-- (bit_counter.value +:. 1)
+                ; sdin <-- bit data_to_send.value 7
+                ; data_to_send <-- sll data_to_send.value 1
+                ; when_ (bit_counter.value ==: (of_int ~width:4 8)) 
+                  [ bit_counter <-- (of_int ~width:4 0); sm.set_next Select_data]]]);
+        (Select_data, 
+          [ if_ (counter <=:. (X.clk_div - 1)) [sclk <-- vdd] [sclk <-- gnd]
+          ; sclk <-- gnd; ncs <-- gnd
+          ; when_ (ndc.value ==: gnd)
+              [ column_index <-- (column_index.value +:. 1); sm.set_next Load_display ]
+          ; when_ (ndc.value ==: vdd) 
+              [ command_index <-- (command_index.value +:. 1); sm.set_next Load_command ];
+          ]);
       ]
     ];
-    { O.io_sclk = sclk_pulse
-    ; O.io_sdin = bit data_to_send.value 7
+    { O.io_sclk = sclk.value
+    ; O.io_sdin = sdin.value
     ; O.io_cs = ~:(ncs.value)
     ; O.io_dc = ~:(ndc.value)
     ; O.io_reset = ~:(nreset.value)

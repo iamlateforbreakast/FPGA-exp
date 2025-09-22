@@ -6,7 +6,7 @@ open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
-  let startup_wait = 1
+  let startup_wait = 10
   let clk_div = 4 (* SPI clock = 27MHz / 4 *)
   let commands = [ 0xAE; 0x11; 0XAF]
 end
@@ -37,7 +37,7 @@ let testbench n =
   waves
 
 let () =
-  let waves = testbench 200 in
+  let waves = testbench 1000 in
   Hardcaml_waveterm_interactive.run ~wave_width:5 ~signals_width:30 waves
  
      
