@@ -1,12 +1,11 @@
-project3/_build/
-project3/counter.v
+_build
 
-project6/hdmi_hardcaml/_build/
-
-**/_build/
+project03/counter.v
 
 *.fs
 
 *.opam
 
 *.json
+
+*.vcd
