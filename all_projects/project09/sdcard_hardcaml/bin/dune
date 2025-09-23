@@ -1,0 +1,10 @@
+(executable
+ (public_name sdcard_hardcaml)
+ (name generate)
+ (libraries project09_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
+
+(executable
+ (name simulate)
+ (libraries project09_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
