@@ -1,5 +1,7 @@
 _build
 
+verilog_out
+
 project03/counter.v
 
 *.fs
