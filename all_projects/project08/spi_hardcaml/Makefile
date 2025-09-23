@@ -24,7 +24,7 @@ verilog_out: $(SOURCES)
 	dune exec ./bin/generate.exe
 
 clean:
-	rm -f *.json *.fs ./verilog_out
+	rm -rf *.json *.fs ./verilog_out
 	dune clean
 
 .PHONY: all clean verilog_out
