@@ -9,6 +9,7 @@ The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/t
 Projects
 --------
 
+| P  | Desc. | Test |
 | -- | ------------------------------------------ | ------ |
 | 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | TBD |
 | 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | TBD |
