@@ -9,17 +9,18 @@ The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/t
 Projects
 --------
 
-1. [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01)
-2. [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02)
-3. [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03)
-4. [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04)
-5. [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05)
-6. [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml)
-7. [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07)
-8. [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml)
-9. [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09)
-10. [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10)
-11. [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11)
+| -- | ------------------------------------------ | ------ |
+| 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | TBD |
+| 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | TBD |
+| 3 | [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03) | TBD |
+| 4 | [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04) | TBD |
+| 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | TBD |
+| 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
+| 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | TBD |
+| 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml) |
+| 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | TBD |
+| 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | TBD |
+| 11 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | TBD |
 
 Interesting Resources
 ---------------------
