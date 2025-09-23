@@ -6,7 +6,7 @@ module My_config = struct
   let file_name = "image.hex"
   let startup_wait = 10_000_000
   let clk_div = 4
-  let commands = [ 0xAE; 0x11; 0XAF]
+  let commands = [ 0xAE; 0x81; 0x7F; 0xA4; 0XAF ]
 
 end
 

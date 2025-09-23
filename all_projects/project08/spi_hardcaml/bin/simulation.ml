@@ -8,7 +8,7 @@ module My_config = struct
   let file_name = "image.hex"
   let startup_wait = 10
   let clk_div = 4 (* SPI clock = 27MHz / 4 *)
-  let commands = [ 0xAE; 0x11; 0XAF]
+  let commands = [ 0xAE; 0x80; 0XAF]
 end
 
 module MyScreen = Screen.Make(My_config)
