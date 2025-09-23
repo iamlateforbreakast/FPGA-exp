@@ -14,7 +14,7 @@ IO_PORT "leds[0]" PULL_MODE=UP DRIVE=8 BANK_VCCIO=1.8;
 
 // Clock
 IO_LOC "clock" 4;
-IO_PORT "clock" PULL_MODE=UP;
+IO_PORT "clock" PULL_MODE=UP BANK_VCCIO=1.8;
 
 // two on-board buttons
 IO_LOC "i_reset" 87;
