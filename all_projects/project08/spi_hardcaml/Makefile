@@ -17,10 +17,10 @@ $(PROJECT)_pnr.json : $(PROJECT).json
 	--vopt cst=tangnano20k.cst \
 	--device $(DEVICE)
 
-$(PROJECT).json : verilog_out
+$(PROJECT).json : verilog_out/$(TOP_MODULE).v
 	yosys -q -p "read_verilog $(VERILOG_FILES); synth_gowin -top $(TOP_MODULE) -json $@"
 
-verilog_out: $(SOURCES)
+verilog_out/$(TOP_MODULE).v: $(SOURCES)
 	dune exec ./bin/generate.exe
 
 clean:
