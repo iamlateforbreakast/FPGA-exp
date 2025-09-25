@@ -1,7 +1,6 @@
-(* simulation.ml *)
+(* testbench.ml *)
 
 open Hardcaml
-open Hardcaml_waveterm
 open Project8_lib
 
 module My_config = struct
@@ -13,38 +12,43 @@ end
 
 module MyScreen = Screen.Make(My_config)
 
-module Simulator = Cyclesim.With_interface(I)(O)
+module Simulator = Cyclesim.With_interface(MyScreen.I)(MyScreen.O)
 
 let testbench () =
   let scope = Scope.create 
       ~auto_label_hierarchical_ports:true
       ~flatten_design:true () in
-  let sim = Simulator.create create in
-  let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
+  let sim = Simulator.create (MyScreen.create scope) in
+  let _inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
   let outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
-  let step =
+  let step () =
     (* inputs.clear := if clear=1 then Bits.vdd else Bits.gnd;
     inputs.incr := if incr=1 then Bits.vdd else Bits.gnd; *)
     Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
-      outputs.io_sclk outputs.io_stdin outputs.io_cs outputs.io_dc outputs.io_reset;
+      (Bits.to_int !(outputs.io_sclk))
+      (Bits.to_int !(outputs.io_sdin))
+      (Bits.to_int !(outputs.io_cs))
+      (Bits.to_int !(outputs.io_dc))
+      (Bits.to_int !(outputs.io_reset));
+
     Cyclesim.cycle sim
   
   in
-  step;
-  step;
-  step;
-  step;
-  step;
-  step;
+  step();
+  step();
+  step();
+  step();
+  step();
+  step();
 ;;
-let%expect_test "counter" =
+let%expect_test "screen" =
   testbench ();
   [%expect {|
-    clear=0 incr=0 dout=0
-    clear=0 incr=1 dout=0
-    clear=0 incr=1 dout=1
-    clear=1 incr=0 dout=2
-    clear=0 incr=0 dout=0
-    clear=0 incr=0 dout=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
   |}]
 ;;
