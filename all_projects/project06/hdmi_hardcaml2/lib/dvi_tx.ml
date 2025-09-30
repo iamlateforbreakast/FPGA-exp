@@ -33,7 +33,7 @@ module Make (X : Config) = struct
   let create (_scope : Scope.t) (i : _ I.t) =
     let module ClkObuf = Instantiation.With_interface(I)(O) in
     Clk_Obuf.create ~name:"ELVDS_OBUF" ~instance:"clk_obuf" ~parameters i;
-    let module BluObuf = Instantiation.
+
 end
 (*
 

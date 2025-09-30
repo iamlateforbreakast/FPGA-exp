@@ -59,9 +59,9 @@ module Make (X : Config) = struct
                 ; i_rgb_vs = timing_gen.o_vsync
                 ; i_rgb_hs = timing_gen.o_hsync
                 ; i_rgb_de = timing_gen.o_data_en
-                ; i_rgb_r =
-                ; i_rgb_g =
-                ; i_rgb_b = }) in
+                ; i_rgb_r = color_r
+                ; i_rgb_g = color_g
+                ; i_rgb_b = color_b }) in
               
     {
       O.tmds_clk_n = dvi_tx.tmds_clk_n;

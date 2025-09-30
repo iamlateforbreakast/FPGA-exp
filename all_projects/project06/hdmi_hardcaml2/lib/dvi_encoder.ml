@@ -24,7 +24,6 @@ module Make (X : Config) = struct
 
   let create (scope : Scope.t) (i : _ I.t) =
     let open Signal in
-
     (* 'ones' function translated *)
     let ones data =
       tree ~f:(+:) (List.init (width data) ~f:(fun n -> data.:(n)))
@@ -33,6 +32,21 @@ module Make (X : Config) = struct
     (* Combinational logic from 'assign' and 'function' statements *)
     let ones_in_data = ones i.data in
 
+    let h_sync_time = 40 in
+    let h_bporch_time = 220 in
+    let h_fporch_time = 110 in
+    let h_lborder_time = 0 in
+    let h_rborder_time = 0 in
+    let h_addr_time = 1280 in
+    let v_sync_time = 5 in
+    let v_bporch_time = 20 in
+    let v_fporch_time = 5 in
+    let v_tborder_time = 0 in
+    let v_bborder_time = 0 in
+    let v_addr_time = 720 in
+
+    let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time;
+    let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time;
     let qm_0 = 
       (one 1) @: (tree ~f:(^:) (List.init 8 ~f:(fun n -> i.data.:(n)))) @:
       (tree ~f:(^:) (List.init 7 ~f:(fun n -> i.data.:(n)))) @:
@@ -67,10 +81,10 @@ module Make (X : Config) = struct
         if_ ~:i.de [
           bias_reg <--. 0;
           switch i.control [
-            of_int 0, [encoded_reg <--. 10'b1101010100];
-            of_int 1, [encoded_reg <--. 10'b0010101011];
-            of_int 2, [encoded_reg <--. 10'b0101010100];
-            of_int 3, [encoded_reg <--. 10'b1010101011];
+            of_int 0, [encoded_reg <--. Bits.of_string "1101010100"];
+            of_int 1, [encoded_reg <--. Bits.of_string "0010101011"];
+            of_int 2, [encoded_reg <--. Bits.of_string "0101010100"];
+            of_int 3, [encoded_reg <--. Bits.of_string "1010101011"];
           ];
           ] [
         if_ ((bias_reg ==:. of_int ~width:5 0) |: (ones_in_qm ==:. of_int ~width:4 4)) [
@@ -86,7 +100,6 @@ module Make (X : Config) = struct
         ];
       ];
     ];
-  ];
 
   { O.encoded = encoded_reg.value }
 

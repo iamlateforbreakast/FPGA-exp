@@ -7,7 +7,7 @@
  (preprocess (pps ppx_jane ppx_hardcaml)))
 
  (executable
-  (name simulation)
-  (modules simulation)
+  (name simulate)
+  (modules simulate)
   (libraries project06_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
   (preprocess (pps ppx_jane ppx_hardcaml)))
