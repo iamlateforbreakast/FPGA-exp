@@ -1,6 +1,4 @@
 (* gowin_clkdiv.ml *)
-
-(* gowin_clkdiv.ml *)
 open Hardcaml
 
 module I = struct
@@ -19,17 +17,6 @@ module O = struct
   [@@deriving hardcaml]
 end
 
-(*
-CLKDIV u_clkdiv
-(.RESETN(hdmi4_rst_n)
-,.HCLKIN(serial_clk) //clk  x5
-,.CLKOUT(pix_clk)    //clk  x1
-,.CALIB (1'b1)
-);
-defparam u_clkdiv.DIV_MODE="5";
-defparam u_clkdiv.GSREN="false";
-*)
-
 let parameters = 
   List.map
   (fun (name, value) -> Parameter.create ~name ~value)
@@ -38,13 +25,9 @@ let parameters =
     "GSREN", Parameter.Value.Bool false;  (* Global Set/Reset Enable *)
   ]
 
-  (*
-let create (_scope : Scope.t) (_i : _ I.t) =
-  { O.clkout = Signal.gnd } *)
-
 let create (_scope : Scope.t) (i : _ I.t) =
   let module Inst = Instantiation.With_interface(I)(O) in
-  Inst.create ~name:"CLK_DIV" ~parameters i
+  Inst.create ~name:"CLK_DIV" ~instance:"div_by_5" ~parameters i
 
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
