@@ -53,7 +53,7 @@ module Make (X : Config) = struct
             ; locked = rpll.lock }) in
     {
       O.tmds_clk_n = dvi_tx.tmds_clk_n;
-      O.tmds_clk_p = clkdiv.clkout;
+      O.tmds_clk_p = dvi_tx.tmds_clk_p;
       O.tmds_d_n = dvi_tx.tmds_d_n;
       O.tmds_d_p = dvi_tx.tmds_d_p;
     }
