@@ -39,6 +39,7 @@ let parameters =
     "CLKFB_SEL", Parameter.Value.String "internal";  (* Feedback Clock *)
     "CLKOUT_BYPASS", Parameter.Value.Bool false;  (* CLKOUT Bypass *)
     "CLKOUTP_BYPASS", Parameter.Value.Bool false; (* CLKOUTP Bypass *)
+    "CLKOUTD_BYPASS", Parameter.Value.Bool false; (* CLKOUTD BYpass *)
     "DYN_SDIV_SEL", Parameter.Value.Int 2;  (* Dynamic Secondary Divider Selection *)
     "CLKOUTD_SRC", Parameter.Value.String "CLKOUT";  (* Secondary Output Clock Source *)
     "CLKOUTD3_SRC", Parameter.Value.String "CLKOUT"; (* Tertiary Output Clock Source *)
