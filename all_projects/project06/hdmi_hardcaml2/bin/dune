@@ -1,1 +1,13 @@
 
+(executable
+ (public_name hdmi_hardcaml2)
+ (name generate)
+ (modules generate)
+ (libraries project06_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
+
+ (executable
+  (name simulation)
+  (modules simulation)
+  (libraries project06_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
+  (preprocess (pps ppx_jane ppx_hardcaml)))
