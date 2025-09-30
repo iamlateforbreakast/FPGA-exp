@@ -37,20 +37,32 @@ module Make (X : Config) = struct
 
   let create (scope: Scope.t) (input: _ I.t)=
     let open module Signal in
+    let open module Always in
+    let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
+    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    let color_r = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let color_g = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let color_b = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let rpll = Gowin_rpll.hierarchical scope 
       (Gowin_rpll.I.{clkin = input.clock}) in
     let clkdiv = Gowin_clkdiv.hierarchical scope 
       (Gowin_clkdiv.I.{ hclkin = rpll.clkout
-                    ; resetn = rpll.lock 
-                    ; calib = Signal.vdd }) in
+                      ; resetn = vdd
+                      ; calib = gnd }) in
+    let timing_gen = Vesa.hierarchical scope
+      (Vesa.I.{ clock = clkdiv.clkout; i_resetn = vdd}) in
     (* Instantiate the HDMI module with the required inputs *)
     let dvi_tx = Dvi_tx.hierarchical scope 
-      (Dvi_tx.I.{ clk = Signal.gnd
-            ; resetn = Signal.vdd
-            ; out_axis_tready = Signal.gnd
-            ; clk_pixel = clkdiv.clkout
-            ; clk_5x_pixel = rpll.clkout
-            ; locked = rpll.lock }) in
+      (Dvi_tx.I.{ i_serial_clk = Signal.gnd
+                ; i_resetn = Signal.vdd
+                ; i_rgb_clk = rpll.clkout
+                ; i_rgb_vs = timing_gen.o_vsync
+                ; i_rgb_hs = timing_gen.o_hsync
+                ; i_rgb_de = timing_gen.o_data_en
+                ; i_rgb_r =
+                ; i_rgb_g =
+                ; i_rgb_b = }) in
+              
     {
       O.tmds_clk_n = dvi_tx.tmds_clk_n;
       O.tmds_clk_p = dvi_tx.tmds_clk_p;
