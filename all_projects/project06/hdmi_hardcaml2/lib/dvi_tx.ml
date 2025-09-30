@@ -1,5 +1,5 @@
 (* dvi_tx.ml *)
-open hardcaml
+open Hardcaml
 
 module type Config = Config.S
 

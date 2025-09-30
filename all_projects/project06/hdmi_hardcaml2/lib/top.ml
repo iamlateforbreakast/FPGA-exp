@@ -1,5 +1,5 @@
 (* top.ml *)
-open hardcaml
+open Hardcaml
 
 module type Config = Config.S
 
@@ -36,8 +36,8 @@ module Make (X : Config) = struct
   module Hdmi = Svo_hdmi.Make(My_config)
 
   let create (scope: Scope.t) (input: _ I.t)=
-    let open module Signal in
-    let open module Always in
+    let open Signal in
+    let open Always in
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
     let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
     let color_r = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
