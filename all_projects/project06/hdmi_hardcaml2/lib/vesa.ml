@@ -26,6 +26,21 @@ module Make (X : Config) = struct
 
   let create (_scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Signal in
+    let h_sync_time = 40 in
+    let h_bporch_time = 220 in
+    let h_fporch_time = 110 in
+    let h_lborder_time = 0 in
+    let h_rborder_time = 0 in
+    let h_addr_time = 1280 in
+    let v_sync_time = 5 in
+    let v_bporch_time = 20 in
+    let v_fporch_time = 5 in
+    let v_tborder_time = 0 in
+    let v_bborder_time = 0 in
+    let v_addr_time = 720 in
+
+    let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time in
+    let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
     let column = reg_fb reg_sync_spec 
       ~enable:vdd 
