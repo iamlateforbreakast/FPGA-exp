@@ -41,7 +41,14 @@ module Make (X : Config) = struct
 
     let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time in
     let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
-    
+
+    (* wire v_en = (row_addr_int < v_addr_time); *)
+    let v_en = wire 12 in
+    Signal.(v_en <--. (row_addr_int < v_addr_time));;
+    (* wire h_en = (col_addr_int < h_addr_time); *)
+    let h_en = wire 12 in
+    Signal.(h_en <--. (col_addr_int < h_addr_time));;
+
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
     let column = reg_fb reg_sync_spec 
       ~enable:vdd 
@@ -68,7 +75,7 @@ module Make (X : Config) = struct
     let row_addr_int = col_counter -:. (h_sync_time + h_bporch_time + h_lborder_time ) in
     let col_addr_int = row_counter -:. (v_sync_time + v_bporch_time + v_tborder_time ) in
 
-    (* column <= col_addr_int[10:0]; *)
+    (* vsync <= (row_counter < v_sync_time); *)
     let vsync = reg reg_sync_spec 
       ~enable:vdd 
       ~width:1
@@ -81,16 +88,9 @@ module Make (X : Config) = struct
       ~width:1
       ~f:(fun c -> mux2 (c <:. (X.clk_div * 2 - 1)) (c +:. 1)(zero 16)) in
     let _dbg_counter = Signal.(hsync -- "dbg_hsync") in
-    
-    {O.o_column = column; O.o_row = row; o_vsync = vsync; o_hsync = hsync; o_data_en = gnd}
 
-
-
-
-  
-    
-    row <= row_addr_int[10:0];
-    data_en <= v_en & h_en;
-    vsync <= (row_counter < v_sync_time);
+    (* data_en <= v_en & h_en; *)
+    (* row <= row_addr_int[10:0]; *)
+    {O.o_column = column; O.o_row = row; o_vsync = vsync; o_hsync = hsync; o_data_en = (h_en & v_en)}
 end
 
