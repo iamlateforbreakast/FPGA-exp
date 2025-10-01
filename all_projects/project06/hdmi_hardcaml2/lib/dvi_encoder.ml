@@ -50,7 +50,7 @@ let create (_scope : Scope.t) (i : _ I.t) =
     let disparity = (concat_lsb [ones_in_qm; gnd]) -: of_int ~width:5 8 in
     let open Always in
     let bias_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:8 in
-    let encoded_reg = Variable.reg ~enable:vdd  (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) in
+    let encoded_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:8 in
     
       compile [
         if_ ~:(i.de) [
@@ -63,11 +63,11 @@ let create (_scope : Scope.t) (i : _ I.t) =
           ];
           ] [
         if_ ((bias_reg.value ==:. 0) |: (ones_in_qm ==:. 4)) [
-          encoded_reg <-- (mux2 qm.:(8) (one 1 @: ~:(one 1) @: qm.:(0,8)) (~:(one 1) @: one 1 @: ~:(qm.:(0,8))));
-          bias_reg <-- (mux2 qm.:(8) (bias_reg +: disparity) (bias_reg -: disparity));
+          encoded_reg <-- (mux2 qm.:(8) (one 1 @: ~:(one 1) @: (select qm 7 0)) (~:(one 1) @: one 1 @: ~:(select qm 7 0)));
+          bias_reg <-- (mux2 qm.:(8) (bias_reg.value +: disparity) (bias_reg.value -: disparity));
         ] [
-          let invert = bias_reg.:(4) ^: (ones_in_qm.:(3,2) !=:. of_int ~width:2 0) in
-          encoded_reg <-- (invert @: qm.:(8) @: (qm.:(0,8) ^: (repeat invert 8)));
+          let invert = (bias_reg.value .:(4)) ^: ((select ones_in_qm 3 2) !=:. 0) in
+          encoded_reg <-- (invert @: (select qm.:(8)) @: ((select qm 7 0) ^: (repeat invert 8)));
           bias_reg <--. (mux2 invert 
             (bias_reg +: (qm.:(8) @: gnd) -: disparity)
             (bias_reg -: (~:qm.:(8) @: gnd) +: disparity)
