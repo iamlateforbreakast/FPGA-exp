@@ -56,16 +56,10 @@ module Make (X : Config) = struct
     let v_en = row_addr_int <:. v_addr_time in
     let h_en = col_addr_int <:. h_addr_time in
 
-    let column = reg_fb reg_sync_spec 
-      ~enable:vdd 
-      ~width:12
-      ~f:(fun c -> mux2 (c <:. (640 * 2 - 1)) (c +:. 1)(zero 12)) in
+    let column = Signal.slice col_addr_int 10 0 inlet column = Signal.slice col_addr_int 10 0 in
     let _dbg_counter = Signal.(column -- "dbg_column") in
     
-    let row = reg_fb reg_sync_spec 
-      ~enable:vdd 
-      ~width:12
-      ~f:(fun c -> mux2 (c <:. (480 * 2 - 1)) (c +:. 1)(zero 12)) in
+    let row = Signal.slice row_addr_int 10 0 in
 
     (* vsync <= (row_counter < v_sync_time); *)
     let vsync = row_counter <:. v_sync_time in
