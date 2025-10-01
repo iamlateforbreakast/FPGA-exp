@@ -14,6 +14,7 @@ module MyScreen = Screen.Make(My_config)
 
 module Simulator = Cyclesim.With_interface(MyScreen.I)(MyScreen.O)
 
+
 let testbench () =
   let scope = Scope.create 
       ~auto_label_hierarchical_ports:true
@@ -24,23 +25,25 @@ let testbench () =
   let step () =
     (* inputs.clear := if clear=1 then Bits.vdd else Bits.gnd;
     inputs.incr := if incr=1 then Bits.vdd else Bits.gnd; *)
-    Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
+    let _ = Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
       (Bits.to_int !(outputs.io_sclk))
       (Bits.to_int !(outputs.io_sdin))
       (Bits.to_int !(outputs.io_cs))
       (Bits.to_int !(outputs.io_dc))
       (Bits.to_int !(outputs.io_reset));
+  let check_init_state _cycle =
+    assert (Bits.to_int !(outputs.io_sclk) = 1);
+    assert (Bits.to_int !(outputs.io_sdin) = 1);
+    assert (Bits.to_int !(outputs.io_cs) = 1);
+    assert (Bits.to_int !(outputs.io_dc) = 1);
+    assert (Bits.to_int !(outputs.io_reset) = 1);
+    () in
 
-    Cyclesim.cycle sim
-  
-  in
-  step();
-  step();
-  step();
-  step();
-  step();
-  step();
-;;
+  for cycle = 0 to My_config.startup_wait * 3 do
+    Cyclesim.cycle sim;
+    check_init_state cycle;
+  done;
+
 let%expect_test "screen" =
   testbench ();
   [%expect {|
@@ -51,4 +54,3 @@ let%expect_test "screen" =
     io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
     io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
   |}]
-;;

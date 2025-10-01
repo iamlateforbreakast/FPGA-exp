@@ -1,52 +1,34 @@
 (* dvi_encoder.ml *)
 open Hardcaml
-module type Config = Config.S
-
-module Make (X : Config) = struct
   
-  module I = struct
-    type 'a t =
-      { rst_n : 'a
-      ; pix_clk : 'a
-      ; de : 'a
-      ; control : 'a [@bits 2]
-      ; data : 'a [@bits 8]
-      } 
-    [@@deriving hardcaml]
-  end
+module I = struct
+  type 'a t =
+    { rst_n : 'a
+    ; pix_clk : 'a
+    ; de : 'a
+    ; control : 'a [@bits 2]
+    ; data : 'a [@bits 8]
+    } 
+  [@@deriving hardcaml]
+end
 
-  module O = struct
-    type 'a t =
-      { encoded : 'a [@bits 10];
-      }
-    [@@deriving hardcaml]
-  end
+module O = struct
+  type 'a t =
+    { encoded : 'a [@bits 10];
+    }
+  [@@deriving hardcaml]
+end
 
-  let create (_scope : Scope.t) (i : _ I.t) =
-    let open Signal in
-    (* 'ones' function translated *)
-    let ones data =
-      tree ~f:(+:) (List.init (width data) ~f:(fun n -> data.:(n)))
-    in
+let create (_scope : Scope.t) (_i : _ I.t) =
+  let open Signal in
+  (* 'ones' function translated *)
+  (* let ones data =
+    tree ~f:(+:) (List.init (width data) ~f:(fun n -> data.:(n))) in *)
+  { O.encoded = gnd }
 
-    (* Combinational logic from 'assign' and 'function' statements *)
-    let ones_in_data = ones i.data in
-
-    let h_sync_time = 40 in
-    let h_bporch_time = 220 in
-    let h_fporch_time = 110 in
-    let h_lborder_time = 0 in
-    let h_rborder_time = 0 in
-    let h_addr_time = 1280 in
-    let v_sync_time = 5 in
-    let v_bporch_time = 20 in
-    let v_fporch_time = 5 in
-    let v_tborder_time = 0 in
-    let v_bborder_time = 0 in
-    let v_addr_time = 720 in
-
-    let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time in
-    let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
+let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
+  let module H = Hierarchy.In_scope(I)(O) in
+  H.hierarchical ~scope ~name:"dvi_encoder" ~instance:"inst" create i
     (*
     let qm_0 = 
       (one 1) @: (tree ~f:(^:) (List.init 8 ~f:(fun n -> i.data.:(n)))) @:
@@ -102,6 +84,3 @@ module Make (X : Config) = struct
       ];
     ];
 *)
-  { O.encoded = gnd }
-
-end
