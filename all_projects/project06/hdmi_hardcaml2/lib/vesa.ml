@@ -78,5 +78,10 @@ module Make (X : Config) = struct
 
     (* row <= row_addr_int[10:0]; *)
     {O.o_column = column; O.o_row = row; o_vsync = vsync; o_hsync = hsync; o_data_en = data_en}
-end
 
+
+  let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
+    let module H = Hierarchy.In_scope(I)(O) in
+      H.hierarchical ~scope ~name:"vesa" ~instance:"inst" create i
+
+end
