@@ -1,5 +1,5 @@
 (* dvi_encoder.ml *)
-
+open Hardcaml
 module type Config = Config.S
 
 module Make (X : Config) = struct
@@ -22,7 +22,7 @@ module Make (X : Config) = struct
     [@@deriving hardcaml]
   end
 
-  let create (scope : Scope.t) (i : _ I.t) =
+  let create (_scope : Scope.t) (i : _ I.t) =
     let open Signal in
     (* 'ones' function translated *)
     let ones data =
@@ -45,8 +45,9 @@ module Make (X : Config) = struct
     let v_bborder_time = 0 in
     let v_addr_time = 720 in
 
-    let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time;
-    let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time;
+    let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time in
+    let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
+    (*
     let qm_0 = 
       (one 1) @: (tree ~f:(^:) (List.init 8 ~f:(fun n -> i.data.:(n)))) @:
       (tree ~f:(^:) (List.init 7 ~f:(fun n -> i.data.:(n)))) @:
@@ -100,10 +101,7 @@ module Make (X : Config) = struct
         ];
       ];
     ];
+*)
+  { O.encoded = gnd }
 
-  { O.encoded = encoded_reg.value }
-
-let circuit_dvi_encoder scope = 
-  let module I = I in
-  let module O = O in
-  Circuit.create_exn ~name:"dvi_encoder" (create scope)
+end

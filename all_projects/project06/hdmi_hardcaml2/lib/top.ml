@@ -24,22 +24,12 @@ module Make (X : Config) = struct
 
   module My_config = struct
     let svo_mode = "640x480V"
-    let svo_frame_rate = 60
-    let svo_bits_per_pixel = 24
-    let svo_bits_per_red = 8
-    let svo_bits_per_green = 8
-    let svo_bits_per_blue = 8
-    let svo_bits_per_alpha = 0
-    let svo_hor_pixels = 640
   end
-
-  module Hdmi = Svo_hdmi.Make(My_config)
 
   let create (scope: Scope.t) (input: _ I.t)=
     let open Signal in
     let open Always in
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
-    let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
     let color_r = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let color_g = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let color_b = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in

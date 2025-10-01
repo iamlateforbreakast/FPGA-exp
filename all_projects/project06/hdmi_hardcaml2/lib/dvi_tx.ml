@@ -24,15 +24,20 @@ module Make (X : Config) = struct
     type 'a t =
       { o_tmds_clk_p :  'a [@bits 1]
       ; o_tmds_clk_n :  'a [@bits 1]
-      ; o_tmds_clk_p :  'a [@bits 3]
-      ; o_tmds_clk_n :  'a [@bits 3]
+      ; o_tmds_d_p :    'a [@bits 3]
+      ; o_tmds_d_n :    'a [@bits 3]
       }
     [@@deriving hardcaml]
   end
 
-  let create (_scope : Scope.t) (i : _ I.t) =
-    let module ClkObuf = Instantiation.With_interface(I)(O) in
-    Clk_Obuf.create ~name:"ELVDS_OBUF" ~instance:"clk_obuf" ~parameters i;
+  let create (scope : Scope.t) (i : _ I.t) =
+    let open Signal in
+    let clk_ser = Gowin_oser10.hierarchical scope (
+	  Gowin_oser10.I.{ reset=i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
+                            d0=one 1; d1=one 1; d2=one 1; d3=one 1; d4=one 1;
+                            d5=one 1; d6=one 1; d7=one 1; d8=one 1; d9=one 1 }) in
+    {O.o_tmds_clk_n = gnd; O.o_tmds_clk_p = vdd; O.o_tmds_d_n = gnd; O.o_tmds_d_p = vdd}
+    (* The following is the Verilog code we want to translate to Hardcaml*)
 
 end
 (*
