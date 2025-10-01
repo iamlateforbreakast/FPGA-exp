@@ -56,7 +56,11 @@ module Make (X : Config) = struct
                   ; i_rgb_r = color_r.value
                   ; i_rgb_g = color_g.value
                   ; i_rgb_b = color_b.value }) in
-              
+    let _ = Always.compile [
+    color_r <--.  255;  (* Red = 255 *)
+    color_g <--.  0;    (* Green = 0 *)
+    color_b <--.  0;    (* Blue = 0 *)
+    ] in
     {
       O.o_tmds_clk_n = dvi_tx.o_tmds_clk_n;
       O.o_tmds_clk_p = dvi_tx.o_tmds_clk_p;

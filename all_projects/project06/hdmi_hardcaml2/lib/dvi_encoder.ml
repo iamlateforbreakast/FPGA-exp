@@ -24,7 +24,7 @@ let create (_scope : Scope.t) (_i : _ I.t) =
   (* 'ones' function translated *)
   (* let ones data =
     tree ~f:(+:) (List.init (width data) ~f:(fun n -> data.:(n))) in *)
-  { O.encoded = gnd }
+  { O.encoded = zero 10 }
 
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
