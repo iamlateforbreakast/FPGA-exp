@@ -47,15 +47,15 @@ module Make (X : Config) = struct
       (MyVesa.I.{ clock = clkdiv.clkout; i_resetn = vdd}) in
     (* Instantiate the HDMI module with the required inputs *)
     let dvi_tx = MyDvi_tx.hierarchical scope 
-      (MyDvi_tx.I.{ i_serial_clk = Signal.gnd
-                ; i_resetn = Signal.vdd
-                ; i_rgb_clk = rpll.clkout
-                ; i_rgb_vs = timing_gen.o_vsync
-                ; i_rgb_hs = timing_gen.o_hsync
-                ; i_rgb_de = timing_gen.o_data_en
-                ; i_rgb_r = color_r.value
-                ; i_rgb_g = color_g.value
-                ; i_rgb_b = color_b.value }) in
+      (MyDvi_tx.I.{ i_serial_clk = rpll.clkout
+                  ; i_resetn = Signal.vdd
+                  ; i_rgb_clk = clkdiv.clkout
+                  ; i_rgb_vs = timing_gen.o_vsync
+                  ; i_rgb_hs = timing_gen.o_hsync
+                  ; i_rgb_de = timing_gen.o_data_en
+                  ; i_rgb_r = color_r.value
+                  ; i_rgb_g = color_g.value
+                  ; i_rgb_b = color_b.value }) in
               
     {
       O.o_tmds_clk_n = dvi_tx.o_tmds_clk_n;
