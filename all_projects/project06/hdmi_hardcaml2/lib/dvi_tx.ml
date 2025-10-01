@@ -51,14 +51,14 @@ module Make (X : Config) = struct
                     ; data = i.i_rgb_g
                     ; control = zero 2}) in
     let ser_blue = Gowin_oser10.hierarchical scope (
-    Gowin_oser10.I.{ reset=i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
+    Gowin_oser10.I.{ reset=~:i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
                       d0=encoder_blue.encoded.:(0); d1=encoder_blue.encoded.:(1);
                       d2=encoder_blue.encoded.:(2); d3=encoder_blue.encoded.:(3);
                       d4=encoder_blue.encoded.:(4); d5=encoder_blue.encoded.:(5);
                       d6=encoder_blue.encoded.:(6); d7=encoder_blue.encoded.:(7);
                       d8=encoder_blue.encoded.:(8); d9=encoder_blue.encoded.:(9) }) in
     let ser_green = Gowin_oser10.hierarchical scope (
-    Gowin_oser10.I.{ reset=i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
+    Gowin_oser10.I.{ reset=~:i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
                       d0=encoder_green.encoded.:(0); d1=encoder_green.encoded.:(1);
                       d2=encoder_green.encoded.:(2); d3=encoder_green.encoded.:(3);
                       d4=encoder_green.encoded.:(4); d5=encoder_green.encoded.:(5);
@@ -72,14 +72,14 @@ module Make (X : Config) = struct
                       d6=encoder_red.encoded.:(6); d7=encoder_red.encoded.:(7);
                       d8=encoder_red.encoded.:(8); d9=encoder_red.encoded.:(9) }) in
     let clk_ser = Gowin_oser10.hierarchical scope (
-	  Gowin_oser10.I.{ reset=i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
-                            d0=one 1; d1=one 1; d2=one 1; d3=one 1; d4=one 1;
+	  Gowin_oser10.I.{ reset=~:i.i_resetn; pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
+                            d0=zero 1; d1=zero 1; d2=zero 1; d3=zero 1; d4=zero 1;
                             d5=one 1; d6=one 1; d7=one 1; d8=one 1; d9=one 1 }) in
-    let _clk_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=clk_ser.q }) in
-    let _blue_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_blue.q }) in
-    let _green_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_green.q }) in
-    let _red_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_red.q }) in 
-    {O.o_tmds_clk_n = gnd; O.o_tmds_clk_p = vdd; O.o_tmds_d_n = gnd; O.o_tmds_d_p = vdd}
+    let clk_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=clk_ser.q }) in
+    let blue_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_blue.q }) in
+    let green_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_green.q }) in
+    let red_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_red.q }) in 
+    {O.o_tmds_clk_n = clk_obuf.ob; O.o_tmds_clk_p = clk_obuf.o; O.o_tmds_d_n = ser_blu.ob @: ser_green.ob @: ser_red; O.o_tmds_d_p = ser_blu.o @: ser_green.o @: ser_red}
     (* The following is the Verilog code we want to translate to Hardcaml*)
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
