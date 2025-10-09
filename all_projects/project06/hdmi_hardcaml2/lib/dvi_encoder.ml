@@ -23,55 +23,54 @@ let create (_scope : Scope.t) (i : _ I.t) =
   let open Signal in
   (* 'ones' function translated *)
   let ones_in_data = popcount i.data in
-  let qm_0 = 
+  let qm_0 =
       (one 1) @: 
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @: (i.data.:(3)) @: (i.data.:(4)) @: (i.data.:(5)) @: (i.data.:(6)) @: (i.data.:(7)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @: (i.data.:(3)) @: (i.data.:(4)) @: (i.data.:(5)) @: (i.data.:(6)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @: (i.data.:(3)) @: (i.data.:(4)) @: (i.data.:(5)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @: (i.data.:(3)) @: (i.data.:(4)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @: (i.data.:(3)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @: (i.data.:(2)) @:
-      (i.data.:(0)) @: (i.data.:(1)) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2)) ^: (i.data.:(3)) ^: (i.data.:(4)) ^: (i.data.:(5)) ^: (i.data.:(6)) ^: (i.data.:(7))) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2)) ^: (i.data.:(3)) ^: (i.data.:(4)) ^: (i.data.:(5)) ^: (i.data.:(6))) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2)) ^: (i.data.:(3)) ^: (i.data.:(4)) ^: (i.data.:(5))) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2)) ^: (i.data.:(3)) ^: (i.data.:(4))) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2)) ^: (i.data.:(3))) @:
+      ((i.data.:(0)) ^: (i.data.:(1)) ^: (i.data.:(2))) @:
+      ((i.data.:(0)) ^: (i.data.:(1))) @:
       (i.data.:(0))
     in
   let qm_1 = 
       (one 1) @: 
-      (i.data.:(0)) @: (~:(~:(i.data.:(1)))) @: (~:(i.data.:(2))) @: (~:(i.data.:(3))) @: (~:(i.data.:(4))) @: (~:(i.data.:(5))) @: (~:(i.data.:(6))) @: (~:(i.data.:(7))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @: (~:(i.data.:(2))) @: (~:(i.data.:(3))) @: (~:(i.data.:(4))) @: (~:(i.data.:(5))) @: (~:(i.data.:(6))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @: (~:(i.data.:(2))) @: (~:(i.data.:(3))) @: (~:(i.data.:(4))) @: (~:(i.data.:(5))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @: (~:(i.data.:(2))) @: (~:(i.data.:(3))) @: (~:(i.data.:(4))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @: (~:(i.data.:(2))) @: (~:(i.data.:(3))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @: (~:(i.data.:(2))) @:
-      (i.data.:(0)) @: (~:(i.data.:(1))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2))) ^: (~:(i.data.:(3))) ^: (~:(i.data.:(4))) ^: (~:(i.data.:(5))) ^: (~:(i.data.:(6))) ^: (~:(i.data.:(7)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2))) ^: (~:(i.data.:(3))) ^: (~:(i.data.:(4))) ^: (~:(i.data.:(5))) ^: (~:(i.data.:(6)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2))) ^: (~:(i.data.:(3))) ^: (~:(i.data.:(4))) ^: (~:(i.data.:(5)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2))) ^: (~:(i.data.:(3))) ^: (~:(i.data.:(4)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2))) ^: (~:(i.data.:(3)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1))) ^: (~:(i.data.:(2)))) @:
+      ((i.data.:(0)) ^: (~:(i.data.:(1)))) @:
       (i.data.:(0))
-    in
-    let qm = mux2 (ones_in_data >:. 4 |: (ones_in_data ==:. 4 &: ~:(i.data.:(0)))) qm_1 qm_0 in
+  in
+    let qm = mux2 ((ones_in_data >:. 4) |: ((ones_in_data ==:. 4) &: ~:(i.data.:(0)))) qm_1 qm_0 in
     let ones_in_qm = popcount (select qm 7 0) in
-    let disparity = (concat_lsb [ones_in_qm; gnd]) -: of_int ~width:5 8 in
+    let disparity = (concat_lsb [ones_in_qm; gnd]) -: (of_int ~width:5 8) in
     let open Always in
-    let bias_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:8 in
-    let encoded_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:8 in
-    
+    let bias_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:5 in
+    let encoded_reg = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:10 in
+    let invert = Variable.reg ~enable:vdd (Reg_spec.create ~clock:i.pix_clk ~clear:~:(i.rst_n) ()) ~width:1 in
       compile [
         if_ ~:(i.de) [
           bias_reg <--. 0;
           switch i.control [
-            of_int 0, [encoded_reg <-- of_string "1101010100"];
-            of_int 1, [encoded_reg <-- of_string "0010101011"];
-            of_int 2, [encoded_reg <-- of_string "0101010100"];
-            of_int 3, [encoded_reg <-- of_string "1010101011"];
+            of_int ~width:2 0, [encoded_reg <-- of_string "1101010100"];
+            of_int ~width:2 1, [encoded_reg <-- of_string "0010101011"];
+            of_int ~width:2 2, [encoded_reg <-- of_string "0101010100"];
+            of_int ~width:2 3, [encoded_reg <-- of_string "1010101011"];
           ];
           ] [
         if_ ((bias_reg.value ==:. 0) |: (ones_in_qm ==:. 4)) [
           encoded_reg <-- (mux2 qm.:(8) (one 1 @: ~:(one 1) @: (select qm 7 0)) (~:(one 1) @: one 1 @: ~:(select qm 7 0)));
           bias_reg <-- (mux2 qm.:(8) (bias_reg.value +: disparity) (bias_reg.value -: disparity));
         ] [
-          let invert = (bias_reg.value .:(4)) ^: ((select ones_in_qm 3 2) !=:. 0) in
-          encoded_reg <-- (invert @: (select qm.:(8)) @: ((select qm 7 0) ^: (repeat invert 8)));
-          bias_reg <--. (mux2 invert 
-            (bias_reg +: (qm.:(8) @: gnd) -: disparity)
-            (bias_reg -: (~:qm.:(8) @: gnd) +: disparity)
-          );
+          (* let invert = (bias_reg.value.:(4)) ^: ((select ones_in_qm 3 2) <>:. 0); *)
+          encoded_reg <-- (invert.value @: (qm.:(8)) @: ((select qm 7 0) ^: (repeat invert.value 8)));
+          bias_reg <-- (mux2 invert.value 
+            (bias_reg.value +: ((zero 3) @: (qm.:(8)) @: gnd) -: disparity)
+            (bias_reg.value -: ((zero 3) @: (~:qm.:(8)) @: gnd) +: disparity));
         ];
       ];
     ];
@@ -80,58 +79,3 @@ let create (_scope : Scope.t) (i : _ I.t) =
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
   H.hierarchical ~scope ~name:"dvi_encoder" ~instance:"inst" create i
-    (*
-    let qm_0 = 
-      (one 1) @: (tree ~f:(^:) (List.init 8 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 7 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 6 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 5 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 4 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 3 ~f:(fun n -> i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 2 ~f:(fun n -> i.data.:(n)))) @:
-      (i.data.:(0))
-    in
-
-    let qm_1 = 
-      (zero 1) @: (tree ~f:(^:) (List.init 8 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 7 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 6 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 5 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 4 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 3 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (tree ~f:(^:) (List.init 2 ~f:(fun n -> if n=0 then i.data.:(0) else ~:i.data.:(n)))) @:
-      (i.data.:(0))
-    in
-
-    let qm = mux2 (ones_in_data >:. 4 |: (ones_in_data ==:. 4 &: ~:(i.data.:(0)))) qm_1 qm_0 in
-    let ones_in_qm = ones qm.:(0,8) in
-    let disparity = (concat_lsb [ones_in_qm; gnd]) -: of_int ~width:5 8 in
-
-    let bias_reg = reg_fb (Reg_spec.create ~clock:i.pix_clk ~clear_to:(zero 5) ~clear:~:i.rst_n ()) in
-    let encoded_reg = reg_fb (Reg_spec.create ~clock:i.pix_clk ~clear_to:(zero 10) ~clear:~:i.rst_n ()) in
-
-    let open Always in
-      compile [
-        if_ ~:i.de [
-          bias_reg <--. 0;
-          switch i.control [
-            of_int 0, [encoded_reg <--. Bits.of_string "1101010100"];
-            of_int 1, [encoded_reg <--. Bits.of_string "0010101011"];
-            of_int 2, [encoded_reg <--. Bits.of_string "0101010100"];
-            of_int 3, [encoded_reg <--. Bits.of_string "1010101011"];
-          ];
-          ] [
-        if_ ((bias_reg ==:. of_int ~width:5 0) |: (ones_in_qm ==:. of_int ~width:4 4)) [
-          encoded_reg <--. (mux2 qm.:(8) (one 1 @: ~:(one 1) @: qm.:(0,8)) (~:(one 1) @: one 1 @: ~:(qm.:(0,8))));
-          bias_reg <--. (mux2 qm.:(8) (bias_reg +: disparity) (bias_reg -: disparity));
-        ] [
-          let invert = bias_reg.:(4) ^: (ones_in_qm.:(3,2) !=:. of_int ~width:2 0) in
-          encoded_reg <--. (invert @: qm.:(8) @: (qm.:(0,8) ^: (repeat invert 8)));
-          bias_reg <--. (mux2 invert 
-            (bias_reg +: (qm.:(8) @: gnd) -: disparity)
-            (bias_reg -: (~:qm.:(8) @: gnd) +: disparity)
-          );
-        ];
-      ];
-    ];
-*)
