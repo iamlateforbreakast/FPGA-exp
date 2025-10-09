@@ -3,15 +3,15 @@ open Hardcaml
 
 module I = struct
   type 'a t =
-    { clkin : 'a
+    { clkin : 'a [@rtlname "CLKIN"]
     } 
   [@@deriving hardcaml]
 end
 
 module O = struct
   type 'a t =
-    { lock : 'a
-    ; clkout : 'a
+    { lock : 'a [@rtlname "LOCK"]
+    ; clkout : 'a [@rtlname "CLKOUT"]
     }
   [@@deriving hardcaml]
 end

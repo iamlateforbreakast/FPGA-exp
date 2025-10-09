@@ -27,7 +27,7 @@ let parameters =
 
 let create (_scope : Scope.t) (i : _ I.t) =
   let module Inst = Instantiation.With_interface(I)(O) in
-  Inst.create ~name:"CLK_DIV" ~instance:"div_by_5" ~parameters i
+  Inst.create ~name:"CLKDIV" ~instance:"div_by_5" ~parameters i
 
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
