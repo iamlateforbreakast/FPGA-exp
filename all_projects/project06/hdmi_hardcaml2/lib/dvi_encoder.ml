@@ -66,7 +66,7 @@ let create (_scope : Scope.t) (i : _ I.t) =
           encoded_reg <-- (mux2 qm.:(8) (one 1 @: ~:(one 1) @: (select qm 7 0)) (~:(one 1) @: one 1 @: ~:(select qm 7 0)));
           bias_reg <-- (mux2 qm.:(8) (bias_reg.value +: disparity) (bias_reg.value -: disparity));
         ] [
-          (* let invert = (bias_reg.value.:(4)) ^: ((select ones_in_qm 3 2) <>:. 0); *)
+          invert <-- (bias_reg.value.:(4)) ^: ((select ones_in_qm 3 2) <>:. 0);
           encoded_reg <-- (invert.value @: (qm.:(8)) @: ((select qm 7 0) ^: (repeat invert.value 8)));
           bias_reg <-- (mux2 invert.value 
             (bias_reg.value +: ((zero 3) @: (qm.:(8)) @: gnd) -: disparity)
