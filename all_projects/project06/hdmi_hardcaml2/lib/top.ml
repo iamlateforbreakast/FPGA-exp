@@ -18,6 +18,7 @@ module Make (X : Config) = struct
       ; o_tmds_clk_n :  'a [@bits 1] (* output O_tmds_clk_n; *)
       ; o_tmds_data_p : 'a [@bits 3] (* output [2:0] O_tmds_data_p; *)
       ; o_tmds_data_n : 'a [@bits 3] (* output [2:0] O_tmds_data_n; *)
+      ; o_led : 'a [@bits 1]         (* output O_led; *)
       }
     [@@deriving hardcaml]
   end
@@ -66,5 +67,6 @@ module Make (X : Config) = struct
       O.o_tmds_clk_p = dvi_tx.o_tmds_clk_p;
       O.o_tmds_data_n = dvi_tx.o_tmds_d_n;
       O.o_tmds_data_p = dvi_tx.o_tmds_d_p;
+      O.o_led = vdd;  (* Always on *)
     }
 end
