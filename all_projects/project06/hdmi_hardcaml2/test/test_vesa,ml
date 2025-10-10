@@ -4,15 +4,12 @@ open Hardcaml
 open Project06_lib
 
 module My_config = struct
-  let file_name = "image.hex"
-  let startup_wait = 10
-  let clk_div = 4 (* SPI clock = 27MHz / 4 *)
-  let commands = [ 0xAE; 0x80; 0XAF]
+  let svo_mode = "640x480"
 end
 
-module MyScreen = Screen.Make(My_config)
+module MyVesa = Vesa.Make(My_config)
 
-module Simulator = Cyclesim.With_interface(MyScreen.I)(MyScreen.O)
+module Simulator = Cyclesim.With_interface(MyScreen.I)(MyVesa.O)
 
 
 let testbench () =
@@ -20,37 +17,28 @@ let testbench () =
       ~auto_label_hierarchical_ports:true
       ~flatten_design:true () in
   let sim = Simulator.create (MyScreen.create scope) in
-  let _inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
-  let outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
+  let inputs : _ Vesa.I.t = Cyclesim.inputs sim in
+  let outputs : _ Vesa.O.t = Cyclesim.outputs sim in
   let step () =
-    (* inputs.clear := if clear=1 then Bits.vdd else Bits.gnd;
-    inputs.incr := if incr=1 then Bits.vdd else Bits.gnd; *)
-    let _ = Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
-      (Bits.to_int !(outputs.io_sclk))
-      (Bits.to_int !(outputs.io_sdin))
-      (Bits.to_int !(outputs.io_cs))
-      (Bits.to_int !(outputs.io_dc))
-      (Bits.to_int !(outputs.io_reset));
-  let check_init_state _cycle =
-    assert (Bits.to_int !(outputs.io_sclk) = 1);
-    assert (Bits.to_int !(outputs.io_sdin) = 1);
-    assert (Bits.to_int !(outputs.io_cs) = 1);
-    assert (Bits.to_int !(outputs.io_dc) = 1);
-    assert (Bits.to_int !(outputs.io_reset) = 1);
-    () in
+    inputs.i_resetn = 1;
+    let _ = Printf.printf "o_column=%i o_row=%i o_vsync=%i o_hsync=%i o_data_en=%i\n"
+      (Bits.to_int !(outputs.o_column))
+      (Bits.to_int !(outputs.o_row))
+      (Bits.to_int !(outputs.o_vsync))
+      (Bits.to_int !(outputs.o_hsync))
+      (Bits.to_int !(outputs.o_data_en));
 
-  for cycle = 0 to My_config.startup_wait * 3 do
+  for cycle = 0 to 1000 do
     Cyclesim.cycle sim;
-    check_init_state cycle;
   done;
 
 let%expect_test "vesa" =
   testbench ();
   [%expect {|
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
+    o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
   |}]
