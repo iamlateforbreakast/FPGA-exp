@@ -54,3 +54,7 @@ List of project tagged #GOWIN on github
 
 https://github.com/topics/gowin?o=desc&s=forks
 
+Gowin PLL calculator
+
+https://juj.github.io/gowin_fpga_code_generators/pll_calculator.html
+
