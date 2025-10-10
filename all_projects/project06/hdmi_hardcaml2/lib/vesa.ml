@@ -43,18 +43,28 @@ module Make (X : Config) = struct
     let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
     let reset = ~:(i.i_resetn) in
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
+    (* col_counter from 0 to h_total_time - 1 *)
     let col_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
-    ~f:(fun c -> mux2 (c >=:. (h_total_time - 1)) (zero 12) (c +:. 1)) in
-   let row_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
-    ~f:(fun c -> mux2 ((c >=:. (h_total_time - 1)) &: (c >=:. (v_total_time - 1))) (zero 12)
-                     (mux2 (c >=:. (h_total_time - 1)) (c +:. 1) c)) in
+      ~f:(fun c -> mux2 (c >=:. h_total_time) (zero 12) (c +:. 1)) in
+    let _dbg_col_counter = Signal.(col_counter -- "dbg_col_counter") in
+    (* row_counter from 0 to v_total_time - 1 *)
+
+    let last_column = col_counter >=:. (h_total_time - 1) in
+    let row_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
+      ~f:(fun c -> mux2 (last_column &: (c >=:. (v_total_time - 1))) (zero 12)
+                     (mux2 (last_column) (c +:. 1) c)) in
+    let _dbg_row_counter = Signal.(row_counter -- "dbg_row_counter") in
     let col_addr_int = col_counter -:. (h_sync_time + h_bporch_time + h_lborder_time ) in
+    let _dbg_col_addr_int = Signal.(col_addr_int -- "dbg_col_addr_int") in
     let row_addr_int = row_counter -:. (v_sync_time + v_bporch_time + v_tborder_time ) in
+    let _dbg_row_addr_int = Signal.(row_addr_int -- "dbg_row_addr_int") in
+
     (* wire v_en = (row_addr_int < v_addr_time); *)
     (* wire h_en = (col_addr_int < h_addr_time); *)
     let v_en = row_addr_int <:. v_addr_time in
+    let _dbg_v_en = Signal.(v_en -- "dbg_v_en") in
     let h_en = col_addr_int <:. h_addr_time in
-
+    let _dbg_h_en = Signal.(h_en -- "dbg_h_en") in
     let column = select col_addr_int 10 0 in
     let _dbg_counter = Signal.(column -- "dbg_column") in
     

@@ -34,5 +34,5 @@ let testbench n =
   waves
 
 let () =
-  let waves = testbench 1000 in
+  let waves = testbench 1500000 in
   Hardcaml_waveterm_interactive.run ~wave_width:5 ~signals_width:30 waves
