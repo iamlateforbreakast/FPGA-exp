@@ -5,7 +5,7 @@ VERILOG_FILES = ./verilog_out/hdmi_top.v \
 		./verilog_out/dvi_tx.v \
 		./verilog_out/dvi_encoder.v \
 		./verilog_out/gowin_clkdiv.v \
-		./verilog_out/gowin_elvds_obuf.v \
+		./verilog_out/gowin_tlvds_obuf.v \
 		./verilog_out/gowin_oser10.v \
 		./verilog_out/gowin_rpll.v
 SOURCES = ./lib/top.ml \
@@ -19,7 +19,7 @@ CONSTRAINT_FILE = tangnano20k.cst
 all: $(PROJECT).fs
 
 $(PROJECT).fs: $(PROJECT)_pnr.json
-	gowin_pack -d $(DEVICE) -o TBD $@
+	gowin_pack -d $(DEVICE) -o $@ $<
 
 $(PROJECT)_pnr.json : $(PROJECT).json
 	nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
