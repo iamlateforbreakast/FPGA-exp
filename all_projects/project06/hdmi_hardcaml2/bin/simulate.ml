@@ -1,6 +1,7 @@
 (* simulate.ml *)
 
 open Hardcaml
+open Hardcaml_waveterm
 open Project06_lib
 
 module My_config = struct
@@ -9,7 +10,7 @@ end
 
 module MyVesa = Vesa.Make(My_config)
 
-module Simulator = Cyclesim.With_interface(MyScreen.I)(MyVesa.O)
+module Simulator = Cyclesim.With_interface(MyVesa.I)(MyVesa.O)
 
 let testbench n =
   let scope = 
@@ -19,12 +20,12 @@ let testbench n =
   let oc = open_out "vesa.vcd" in
   let sim = 
     Simulator.create
-      ~config:Cyclesim.Config.trace_all (MyScreen.create scope) |> Vcd.wrap oc in
-  let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
-  let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
+      ~config:Cyclesim.Config.trace_all (MyVesa.create scope) |> Vcd.wrap oc in
+  let inputs : _ MyVesa.I.t = Cyclesim.inputs sim in
+  let _outputs : _ MyVesa.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
-  inputs.i_reset := Bits.vdd;
+  inputs.i_resetn := Bits.vdd;
 
   for _i = 0 to n do
     Cyclesim.cycle sim
