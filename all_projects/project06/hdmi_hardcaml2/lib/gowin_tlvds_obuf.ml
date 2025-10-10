@@ -18,8 +18,8 @@ end
 
 let create (_scope : Scope.t) (i : _ I.t) =
   let module Inst = Instantiation.With_interface(I)(O) in
-  Inst.create ~name:"ELVDS_OBUF" ~instance:"inst" i
+  Inst.create ~name:"TLVDS_OBUF" ~instance:"inst" i
 
 let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
   let module H = Hierarchy.In_scope(I)(O) in
-  H.hierarchical ~scope ~name:"gowin_elvds_obuf" ~instance:"inst" create i
+  H.hierarchical ~scope ~name:"gowin_tlvds_obuf" ~instance:"inst" create i

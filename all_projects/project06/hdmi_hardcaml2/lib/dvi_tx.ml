@@ -75,10 +75,10 @@ module Make (X : Config) = struct
 	  Gowin_oser10.I.{ reset=(~:(i.i_resetn)); pclk=i.i_rgb_clk; fclk=i.i_serial_clk;
                             d0=zero 1; d1=zero 1; d2=zero 1; d3=zero 1; d4=zero 1;
                             d5=one 1; d6=one 1; d7=one 1; d8=one 1; d9=one 1 }) in
-    let clk_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=clk_ser.q }) in
-    let blue_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_blue.q }) in
-    let green_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_green.q }) in
-    let red_obuf = Gowin_elvds_obuf.hierarchical scope (Gowin_elvds_obuf.I.{ i=ser_red.q }) in 
+    let clk_obuf = Gowin_tlvds_obuf.hierarchical scope (Gowin_tlvds_obuf.I.{ i=clk_ser.q }) in
+    let blue_obuf = Gowin_tlvds_obuf.hierarchical scope (Gowin_tlvds_obuf.I.{ i=ser_blue.q }) in
+    let green_obuf = Gowin_tlvds_obuf.hierarchical scope (Gowin_tlvds_obuf.I.{ i=ser_green.q }) in
+    let red_obuf = Gowin_tlvds_obuf.hierarchical scope (Gowin_tlvds_obuf.I.{ i=ser_red.q }) in 
     { O.o_tmds_clk_n = clk_obuf.ob
     ; O.o_tmds_clk_p = clk_obuf.o
     ; O.o_tmds_d_n = red_obuf.ob @: green_obuf.ob @: blue_obuf.ob
