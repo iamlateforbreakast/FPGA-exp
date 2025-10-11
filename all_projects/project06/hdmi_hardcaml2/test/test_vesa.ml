@@ -31,11 +31,11 @@ let testbench () =
   for _cycle = 0 to 1000 do
     Cyclesim.cycle sim;
     step();
-  done;
+  done;;
 
-  let _ = testbench () in Printf.printf "Done\n"
-  (*
-  let%expect_test "vesa" =
+(*let _ = testbench () in Printf.printf "Done\n"*)
+
+let%expect_test "vesa" =
   testbench ();
   [%expect {|
     o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
@@ -45,4 +45,3 @@ let testbench () =
     o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
     o_column=0 o_row=0 o_vsync=0 o_hsync=0 o_data_en=0
   |}]
-    *)
