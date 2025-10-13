@@ -41,7 +41,7 @@ module Make (X : Config) = struct
 
     let h_total_time = h_sync_time + h_bporch_time + h_fporch_time + h_lborder_time + h_rborder_time + h_addr_time in
     let v_total_time = v_sync_time + v_bporch_time + v_fporch_time + v_tborder_time + v_bborder_time + v_addr_time in
-    let reset = ~:(i.i_resetn) in
+    let reset = ~:(i.i_resetn) -- "reset" in
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
     (* col_counter from 0 to h_total_time - 1 *)
     let col_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
