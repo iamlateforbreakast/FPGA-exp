@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup OCAML and Opam environment
         uses: ocaml/setup-ocaml@v3
