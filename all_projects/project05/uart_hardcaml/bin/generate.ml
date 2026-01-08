@@ -1,6 +1,6 @@
 (* generate.ml *)
 open Hardcaml
-open Project8_lib
+open Project05_lib
 
 module My_config = struct
   let startup_wait = 10_000_000
