@@ -1,5 +1,5 @@
 (library
   (name project05_lib)
-  (modules config_intf config screen)
+  (modules config_intf config uart)
   (libraries hardcaml)
   (preprocess (pps ppx_jane ppx_hardcaml)))

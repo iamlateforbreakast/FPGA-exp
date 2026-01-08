@@ -1,6 +1,11 @@
-(lang dune 3.19)
+(lang dune 3.16)
+
+(name project05)
+
+(generate_opam_files true)
+
 (package
-  (name uart_hardcaml)
+  (name project05)
   (synopsis "A simple demo of TX/RX UART")
   (description "outputs a message and echo characters received.")
   )
