@@ -1,0 +1,6 @@
+(lang dune 3.19)
+(package
+  (name uart_harcaml)
+  (synopsis "A simple demo of TX/RX UART")
+  (description "outputs a message and echo characters received.")
+  )
