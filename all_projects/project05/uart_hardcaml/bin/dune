@@ -2,11 +2,11 @@
  (public_name uart_hardcaml)
  (name generate)
  (modules generate)
- (libraries project8_lib hardcaml)
+ (libraries project05_lib hardcaml)
  (preprocess (pps ppx_jane ppx_hardcaml)))
 
 (executable
  (name simulation)
  (modules simulation)
- (libraries project8_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
+ (libraries project05_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
  (preprocess (pps ppx_jane ppx_hardcaml)))
