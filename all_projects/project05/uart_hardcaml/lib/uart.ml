@@ -1,6 +1,7 @@
 (* uart.ml *)
 open Hardcaml
 open Signal
+open Uart_tx
 
 module Make (Config : Config.S) = struct
   open Config
@@ -33,13 +34,13 @@ module Make (Config : Config.S) = struct
     let spec_with_clear = Reg_spec.create ~clear ~clock () in
     (* let sm = State_machine.create (module State) spec_with_clear in*)
     
-    (* let tx =
+    let tx =
       Uart_tx.hierarchical
         ~build_mode
         scope
         { Uart_tx.I.clock
         ; clear
-        a }*)
+        } in
     { O.tx_pin = vdd; rx_pin = vdd }
     
   let hierarchical ?instance ~build_mode scope =
