@@ -21,12 +21,16 @@ module Make (X : Config.S) = struct
     [@@deriving hardcaml]
   end
 
+  let color_rom ~index =
+    let open Signal in
+    let rom = List.map (fun c -> of_int ~width:24 c) X.colors in
+    mux index rom
+	
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
     let ws2812 = Ws2812.hierarchical scope (
 	     Ws2812.I.{ resetn=i.resetn; clock=i.clock }) in
     let sync_spec = Reg_spec.create ~clock:input.clk ~reset:input.reset () in
-    let colors = [ 0xFF0000, 0x00FF00, 0x0000FF ] in
     let counter_1s = reg_fb sync_spec
                        ~enable:vdd
                        ~width:32
