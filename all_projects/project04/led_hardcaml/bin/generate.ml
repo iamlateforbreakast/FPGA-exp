@@ -9,11 +9,11 @@ module My_config = struct
 end
 
 let () =
-  let module MyLed = Led.Make(My_config) in
-  let module TopCircuit = Circuit.With_interface(MyLed.I)(MyLed.O) in
+  let module MyWs2812 = Top.Make(My_config) in
+  let module TopCircuit = Circuit.With_interface(MyWs2812.I)(MyWs2812.O) in
   let scope = Scope.create ~flatten_design:false () in
   (* let scope = Scope.create ~flatten_design:true ~auto_label_hierarchical_ports:true () *)
-  let circuit = TopCircuit.create_exn ~name:"led" (MyLed.create scope) in
+  let circuit = TopCircuit.create_exn ~name:"led" (MyWs2812.create scope) in
   (* let create = Top.hierarchical ~build_mode:Simulation scope in *)
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)
