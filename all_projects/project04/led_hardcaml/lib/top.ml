@@ -9,7 +9,7 @@ module Make (X : Config.S) = struct
   module I = struct
     type 'a t =
       { clock : 'a
-      ; resetn : 'a
+      ; reset : 'a
       } 
     [@@deriving hardcaml]
   end
@@ -28,17 +28,18 @@ module Make (X : Config.S) = struct
 	
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
+    let wait_time = 26_999_999 in
     let ws2812 = Ws2812.hierarchical scope (
-	     Ws2812.I.{ resetn=i.resetn; clock=i.clock }) in
+	     Ws2812.I.{ resetn=input.resetn; clock=input.clock }) in
     let sync_spec = Reg_spec.create ~clock:input.clk ~reset:input.reset () in
-    let counter_1s = reg_fb sync_spec
-                       ~enable:vdd
-                       ~width:32
+    let counter_1s = reg_fb sync_spec 
+                       ~enable:vdd 
+                       ~width:32 
                        ~f:(fun d -> mux2 (d ==:. wait_time) (zero 32) (d +:. 1)) in
     let color_index = reg_fb sync_spec
                         ~enable: vdd
-                        ~width:6 in
-                        ~f:(fun d -> mux2 (counter_1s ==:. 0)(mux 2 (d ==:. 2)(zero 6)(d +:. 1)) d) in
+                        ~width:6
+                        ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. 2) (zero 6) (d +:. 1)) d) in
 
     (* Return circuit output value *)
     { O.leds = color_index.value }
