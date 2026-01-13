@@ -30,7 +30,7 @@ module Make (X : Config.S) = struct
     mux index rom
 	
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let wait_time = 26_999_999 in
+    let wait_time = X.clk_fre - 1 in
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
     let counter_1s = reg_fb sync_spec 
                        ~enable:vdd 
