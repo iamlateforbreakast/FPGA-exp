@@ -40,10 +40,14 @@ module Make (X : Config.S) = struct
                         ~enable: vdd
                         ~width:6
                         ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. 2) (zero 6) (d +:. 1)) d) in
-	let _dbg_color_index = Signal.(color_index.value -- "dbg_color_index") in
-    let ws2812 = MyWs2812.hierarchical scope (
-	     MyWs2812.I.{ reset=input.reset; clock=input.clock; color=color_rom ~index:color_index }) in
+	  let current_color = reg_fb sync_spec
+                          ~enable: vdd 
+                          ~width:24
+                          ~f:(fun _d -> color_rom ~index:color_index) in
 
+    let _dbg_color_index = Signal.(color_index -- "dbg_color_index") in
+    let ws2812 = MyWs2812.hierarchical scope (
+	     MyWs2812.I.{ reset=input.reset; clock=input.clock; color=current_color }) in
     (* Return circuit output value *)
     { O.leds = zero 6; O.ws2812 = ws2812.data }  (* Placeholder for actual LED output *)
 
