@@ -8,7 +8,7 @@ module Make (X : Config) = struct
   
   module I = struct
   type 'a t = {
-    clk   : 'a;
+    clock   : 'a;
     reset : 'a;
     color : 'a; [@bits 24]
   } [@@deriving hardcaml]
@@ -26,4 +26,5 @@ module Make (X : Config) = struct
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
     H.hierarchical ~scope ~name:"ws2812" ~instance:"inst1" create i
+
 end

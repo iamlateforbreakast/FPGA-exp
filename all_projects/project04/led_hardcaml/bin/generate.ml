@@ -3,9 +3,10 @@ open Hardcaml
 open Project04_lib
 
 module My_config = struct
-  let startup_wait = 10_000_000
-  let clk_div = 4
-  let commands = [ 0xAE; 0x81; 0x7F; 0xA6; 0x20; 0x00; 0xDB; 0x20; 0xD9; 0x22; 0x8D; 0x14; 0xA4; 0XAF ]
+  let clk_fre = 10_000_000
+  let ws2812_num = 0
+  let ws2812_width = 6
+  let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
 end
 
 let () =
@@ -13,7 +14,7 @@ let () =
   let module TopCircuit = Circuit.With_interface(MyWs2812.I)(MyWs2812.O) in
   let scope = Scope.create ~flatten_design:false () in
   (* let scope = Scope.create ~flatten_design:true ~auto_label_hierarchical_ports:true () *)
-  let circuit = TopCircuit.create_exn ~name:"led" (MyWs2812.create scope) in
+  let circuit = TopCircuit.create_exn ~name:"top_level" (MyWs2812.create scope) in
   (* let create = Top.hierarchical ~build_mode:Simulation scope in *)
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)

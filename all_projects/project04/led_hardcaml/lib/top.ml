@@ -17,9 +17,12 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { leds : 'a[@bits 6]
+      ; led_data : 'a
       }
     [@@deriving hardcaml]
   end
+
+  module MyWs2812 = Ws2812.Make(X)
 
   let color_rom ~index =
     let open Signal in
@@ -27,11 +30,8 @@ module Make (X : Config.S) = struct
     mux index rom
 	
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let open Always in
     let wait_time = 26_999_999 in
-    let ws2812 = Ws2812.hierarchical scope (
-	     Ws2812.I.{ resetn=input.resetn; clock=input.clock }) in
-    let sync_spec = Reg_spec.create ~clock:input.clk ~reset:input.reset () in
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
     let counter_1s = reg_fb sync_spec 
                        ~enable:vdd 
                        ~width:32 
@@ -40,9 +40,11 @@ module Make (X : Config.S) = struct
                         ~enable: vdd
                         ~width:6
                         ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. 2) (zero 6) (d +:. 1)) d) in
+    let ws2812 = MyWs2812.hierarchical scope (
+	     MyWs2812.I.{ reset=input.reset; clock=input.clock; color=color_rom ~index:color_index }) in
 
     (* Return circuit output value *)
-    { O.leds = color_index.value }
+    { O.leds = zero 6; O.led_data = ws2812.data }  (* Placeholder for actual LED output *)
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
