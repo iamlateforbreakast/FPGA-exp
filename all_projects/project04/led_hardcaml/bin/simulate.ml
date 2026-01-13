@@ -5,27 +5,27 @@ open Hardcaml_waveterm
 open Project04_lib
 
 module My_config = struct
-  let file_name = "image.hex"
-  let startup_wait = 10
-  let clk_div = 4 (* SPI clock = 27MHz / 4 *)
-  let commands = [ 0xAE; 0x80; 0XAF]
+  let clk_fre = 27_000_000
+  let ws2812_num = 0
+  let ws2812_width = 6
+  let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
 end
 
-module MyScreen = Screen.Make(My_config)
+module MyWs2812 = Top.Make(My_config) in
 
-module Simulator = Cyclesim.With_interface (MyScreen.I)(MyScreen.O)
+module Simulator = Cyclesim.With_interface (MyWs2812.I)(MyWs2812.O)
 
 let testbench n =
   let scope = 
     Scope.create 
       ~auto_label_hierarchical_ports:true
       ~flatten_design:true () in
-  let oc = open_out "screen.vcd" in
+  let oc = open_out "ws2812.vcd" in
   let sim = 
     Simulator.create
-      ~config:Cyclesim.Config.trace_all (MyScreen.create scope) |> Vcd.wrap oc in
-  let inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
-  let _outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
+      ~config:Cyclesim.Config.trace_all (MyWs2812.create scope) |> Vcd.wrap oc in
+  let inputs : _ MyWs2812.I.t = Cyclesim.inputs sim in
+  let _outputs : _ MyWs2812.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
   inputs.i_reset := Bits.gnd;
