@@ -3,7 +3,7 @@ open Hardcaml
 open Project04_lib
 
 module My_config = struct
-  let clk_fre = 10_000_000
+  let clk_fre = 27_000_000
   let ws2812_num = 0
   let ws2812_width = 6
   let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
