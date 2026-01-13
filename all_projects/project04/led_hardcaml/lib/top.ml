@@ -40,6 +40,7 @@ module Make (X : Config.S) = struct
                         ~enable: vdd
                         ~width:6
                         ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. 2) (zero 6) (d +:. 1)) d) in
+	let _dbg_color_index = Signal.(color_index.value -- "dbg_color_index") in
     let ws2812 = MyWs2812.hierarchical scope (
 	     MyWs2812.I.{ reset=input.reset; clock=input.clock; color=color_rom ~index:color_index }) in
 
