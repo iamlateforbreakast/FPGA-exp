@@ -1,10 +1,10 @@
 DEVICE = GW2AR-LV18QN88C8/I7
 FAMILY = GW2A-18C
-TOP_MODULE = top
-VERILOG_FILES = ./verilog_out/ws2812.v ./verilog_out/top.v
-SOURCES = ./led_hardcaml/lib/top.ml ./led_hardcaml/lib/ws2812.ml ./led_hardcaml/bin/generate.ml
+TOP_MODULE = top_level
+VERILOG_FILES = ./verilog_out/ws2812.v ./verilog_out/top_level.v
+SOURCES = ./lib/top.ml ./lib/ws2812.ml ./bin/generate.ml
 PROJECT = led_hardcaml
-CONSTRAINT_FILE = tangnano20k.cst
+CONSTRAINT_FILE = ../tangnano20k.cst
 
 all: $(PROJECT).fs
 
@@ -12,19 +12,19 @@ $(PROJECT).fs: $(PROJECT)_pnr.json
 	gowin_pack -d $(DEVICE) -o $@ $<
 
 $(PROJECT)_pnr.json : $(PROJECT).json
-	nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
+	~/Tools/nextpnr/build/nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
         --vopt family=$(FAMILY) \
-	--vopt cst=tangnano20k.cst \
+	--vopt cst=$(CONSTRAINT_FILE) \
 	--device $(DEVICE)
 
 $(PROJECT).json : verilog_out/$(TOP_MODULE).v
 	yosys -q -p "read_verilog $(VERILOG_FILES); synth_gowin -top $(TOP_MODULE) -json $@"
 
 verilog_out/$(TOP_MODULE).v: $(SOURCES)
-	dune exec ./led_hardcaml/bin/generate.exe
+	dune exec ./bin/generate.exe
 
 clean:
-	rm -rf *.json *.fs ./led_hardcaml/verilog_out
+	rm -rf *.json *.fs ./verilog_out
 	dune clean
 
 .PHONY: all clean verilog_out

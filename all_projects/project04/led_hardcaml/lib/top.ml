@@ -17,7 +17,7 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { leds : 'a[@bits 6]
-      ; led_data : 'a
+      ; ws2812 : 'a
       }
     [@@deriving hardcaml]
   end
@@ -44,7 +44,7 @@ module Make (X : Config.S) = struct
 	     MyWs2812.I.{ reset=input.reset; clock=input.clock; color=color_rom ~index:color_index }) in
 
     (* Return circuit output value *)
-    { O.leds = zero 6; O.led_data = ws2812.data }  (* Placeholder for actual LED output *)
+    { O.leds = zero 6; O.ws2812 = ws2812.data }  (* Placeholder for actual LED output *)
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
