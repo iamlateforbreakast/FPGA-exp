@@ -11,7 +11,7 @@ module My_config = struct
   let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
 end
 
-module MyWs2812 = Top.Make(My_config) in
+module MyWs2812 = Top.Make(My_config)
 
 module Simulator = Cyclesim.With_interface (MyWs2812.I)(MyWs2812.O)
 
@@ -28,7 +28,7 @@ let testbench n =
   let _outputs : _ MyWs2812.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
-  inputs.i_reset := Bits.gnd;
+  inputs.reset := Bits.gnd;
 
   for _i = 0 to n do
     Cyclesim.cycle sim
