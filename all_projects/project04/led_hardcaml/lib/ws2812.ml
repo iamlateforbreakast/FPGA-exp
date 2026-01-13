@@ -20,8 +20,16 @@ module Make (X : Config) = struct
     } [@@deriving hardcaml]
   end
 
-  let create (_scope: Scope.t) (_i: Signal.t I.t) : Signal.t O.t =
-    {O.data = gnd}
+  module State = struct
+    type t = IDLE | DATA_SEND | BIT_SEND_HIGH | BIT_SEND_LOW
+    [@@deriving enumerate, compare]
+  end
+  
+  let create (_scope: Scope.t) (input: Signal.t I.t) : Signal.t O.t =
+    open Always in
+    let sync_spec = Reg_spc.create ~clock:input.clock ~reset:input.reset () in
+    let data_reg = Always.Variable.reg sync_spec ~width:1 in
+    { O.data = data_reg }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
