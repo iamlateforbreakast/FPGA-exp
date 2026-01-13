@@ -1,6 +1,5 @@
 (* ws2812.ml *)
 open Hardcaml
-open Signal
 
 module type Config = Config.S
 
@@ -26,10 +25,9 @@ module Make (X : Config) = struct
   end
   
   let create (_scope: Scope.t) (input: Signal.t I.t) : Signal.t O.t =
-    open Always in
-    let sync_spec = Reg_spc.create ~clock:input.clock ~reset:input.reset () in
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
     let data_reg = Always.Variable.reg sync_spec ~width:1 in
-    { O.data = data_reg }
+    { O.data = data_reg.value }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
