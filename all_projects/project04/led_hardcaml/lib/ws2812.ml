@@ -45,6 +45,9 @@ module Make (X : Config) = struct
     let ws_data     = Always.Variable.reg sync_spec ~width:24 in
     let ws_valid    = Always.Variable.reg sync_spec ~width:1 in
 
+    (* debug *)
+    let _dbg_ws_data = Signal.(ws_data.value -- "ws_data") in
+    
     (* Helper to index the data bit *)
     let current_bit_is_high = mux bit_send.value (bits_msb ws_data.value) in
 
