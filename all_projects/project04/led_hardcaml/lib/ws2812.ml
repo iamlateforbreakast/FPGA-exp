@@ -35,7 +35,7 @@ module Make (X : Config) = struct
     let delay_1_low  = Int.of_float (f *. 0.40) - 1 in
     let delay_0_high = Int.of_float (f *. 0.40) - 1 in
     let delay_0_low  = Int.of_float (f *. 0.85) - 1 in
-    let delay_reset  = (X.clk_fre / 10) - 1 in
+    let delay_reset  = (X.clk_fre / 1_000) - 1 in
 
     (* Registers *)
     let bit_send    = Always.Variable.reg sync_spec ~width:9 in

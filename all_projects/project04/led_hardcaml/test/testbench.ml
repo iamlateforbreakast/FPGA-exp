@@ -4,7 +4,7 @@ open Hardcaml
 open Project04_lib
 
 module My_config = struct
-  let clk_fre = 27
+  let clk_fre = 27_000_000
   let cycle_delay = 27_000_000
   let ws2812_num = 0
   let ws2812_width = 6
@@ -35,9 +35,18 @@ let testbench () =
   step 0;
   inputs.reset := Bits.gnd;
 
-  for cycle = 1 to 26 do
+  for _cycle_reset = 1 to ((My_config.clk_fre/1000) - 1) do
     Cyclesim.cycle sim;
-    step cycle;
+  done;
+  step ((My_config.clk_fre/1000) - 1);
+
+  for byte = 0 to 2 do
+    for bit = 0 to 7 do
+      for cycle = 0 to 31 do
+        Cyclesim.cycle sim;
+        step (cycle + bit * 32 + byte * 8 * 32 + (My_config.clk_fre/1000));
+      done;
+    done;
   done;
   () 
 
