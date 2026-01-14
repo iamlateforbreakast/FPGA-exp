@@ -42,10 +42,18 @@ let testbench () =
 
   for byte = 0 to 2 do
     for bit = 0 to 7 do
-      for cycle = 0 to 31 do
+      for _cycle = 0 to 6 do
         Cyclesim.cycle sim;
-        step (cycle + bit * 32 + byte * 8 * 32 + (My_config.clk_fre/1000));
       done;
+      step (6 + bit * 32 + byte * 8 * 32 + (My_config.clk_fre/1000));
+      for _cycle = 7 to 19 do
+        Cyclesim.cycle sim;
+      done;
+      step (19 + bit * 32 + byte * 8 * 32 + (My_config.clk_fre/1000));
+      for _cycle = 20 to 31 do
+        Cyclesim.cycle sim;
+      done;
+      step (31 + bit * 32 + byte * 8 * 32 + (My_config.clk_fre/1000));
     done;
   done;
   () 
