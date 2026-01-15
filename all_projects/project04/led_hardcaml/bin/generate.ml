@@ -7,7 +7,7 @@ module My_config = struct
   let cycle_delay = 27_000_000
   let ws2812_num = 0
   let ws2812_width = 24
-  let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
+  let colors = [ 0xFF0000; 0x000000; 0x00FF00; 0x000000; 0x0000FF; 0x000000 ]  (* Red, Green, Blue *)
   let is_simulation = false
 end
 

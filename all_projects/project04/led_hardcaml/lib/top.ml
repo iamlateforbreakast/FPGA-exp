@@ -32,6 +32,7 @@ module Make (X : Config.S) = struct
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let wait_time  = if (X.is_simulation = false) then X.cycle_delay - 1 
 	                 else (X.cycle_delay / 300_000) - 1 in
+    let nb_colors = List.length X.colors - 1 in
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
     let counter_1s = reg_fb sync_spec 
@@ -41,7 +42,7 @@ module Make (X : Config.S) = struct
     let color_index = reg_fb sync_spec
                         ~enable: vdd
                         ~width:6
-                        ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. 2) (zero 6) (d +:. 1)) d) in
+                        ~f:(fun d -> mux2 (counter_1s ==:. wait_time)(mux2 (d ==:. nb_colors) (zero 6) (d +:. 1)) d) in
 	  let current_color = reg_fb sync_spec
                           ~enable: vdd 
                           ~width:24
