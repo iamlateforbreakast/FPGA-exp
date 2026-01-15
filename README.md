@@ -11,8 +11,8 @@ Projects
 
 | P  | Desc. | Status | Test |
 | -- | ------------------------------------------ | ------- | ------ |
-| 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | Not started | TBD |
-| 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | Not started | TBD |
+| 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | Not started | N/A |
+| 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | Not started | N/A |
 | 3 | [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03) | Started | TBD |
 | 4 | [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04) | Started | [![Project04](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml) |
 | 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | Not started | TBD |
