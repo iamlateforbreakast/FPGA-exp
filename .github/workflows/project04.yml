@@ -1,0 +1,36 @@
+name: Project04
+run-name: ${{ github.actor }} is generating the Verilog files. 🚀
+
+on: [push]
+
+jobs:
+  Project06-Build-And-Generate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 5
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+
+      - name: Setup OCAML and Opam environment
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+          allow-prerelease-opam: true
+      - name: Install Hardcaml and dependencies
+        # Use working-directory to ensure correct path
+        working-directory: all_projects/project04/led_hardcaml
+        run: |
+          # Install dependencies required by the .opam file
+          opam install . --deps-only --with-test
+          opam install hardcaml ppx_hardcaml
+      - name: Generate Verilog
+        # Use working-directory to ensure correct path
+        working-directory: all_projects/project06/led_hardcaml
+        run: opam exec -- dune build 
