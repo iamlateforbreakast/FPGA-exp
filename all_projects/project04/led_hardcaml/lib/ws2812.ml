@@ -30,13 +30,19 @@ module Make (X : Config) = struct
     let sm = Always.State_machine.create(module State) sync_spec in
     
     (* Constants calculations *)
-    let f = float_of_int X.clk_fre /. 1_000_000. in
-    let delay_1_high = Int.of_float (f *. 0.85) - 1 in
-    let delay_1_low  = Int.of_float (f *. 0.40) - 1 in
-    let delay_0_high = Int.of_float (f *. 0.40) - 1 in
-    let delay_0_low  = Int.of_float (f *. 0.85) - 1 in
-    let delay_reset  = (X.clk_fre / 1_000) - 1 in
-
+    let (delay_1_high, delay_1_low, delay_0_high, delay_0_low, delay_reset) =
+      if X.is_simulation = false then
+        let f = float_of_int X.clk_fre /. 1_000_000. in
+        let d1h = Int.of_float (f *. 0.85) - 1 in
+        let d1l = Int.of_float (f *. 0.40) - 1 in
+        let d0h = Int.of_float (f *. 0.40) - 1 in
+        let d0l = Int.of_float (f *. 0.85) - 1 in
+        let dr  = (X.clk_fre / 1_000) - 1 in
+        (d1h, d1l, d0h, d0l, dr)
+      else
+        (2, 1, 1, 2, 6)
+      in
+    
     (* Registers *)
     let bit_send    = Always.Variable.reg sync_spec ~width:9 in
     let data_send   = Always.Variable.reg sync_spec ~width:9 in
