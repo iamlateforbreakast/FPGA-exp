@@ -8,6 +8,7 @@ module My_config = struct
   let ws2812_num = 0
   let ws2812_width = 6
   let colors = [ 0xFF0000; 0x00FF00; 0x0000FF ]  (* Red, Green, Blue *)
+  let is_simulation = false
 end
 
 let () =
