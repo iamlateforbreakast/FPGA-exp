@@ -5,6 +5,7 @@ module type S = sig
   val ws2812_num : int
   val ws2812_width : int
   val colors : int list
+  val is_simulation: bool
 end
 
 module type Config = sig
