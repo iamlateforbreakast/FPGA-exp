@@ -52,10 +52,16 @@ module Make (X : Config) = struct
     let ws_valid    = Always.Variable.reg sync_spec ~width:1 in
 
     (* debug *)
-    let _dbg_ws_data = Signal.(ws_data.value -- "ws_data") in
+    let _ = Signal.(bit_send.value -- "bit_send") in
+    let _ = Signal.(data_send.value -- "data_send") in
+    let _ = Signal.(clk_count.value -- "clk_count") in
+    let _ = Signal.(data_reg.value -- "data_reg") in
+    let _ = Signal.(ws_data.value -- "ws_data") in
+    let _ = Signal.(ws_valid.value -- "ws_valid") in
+    (* let _ = Signal.(sm.current_state.value -- "current_state") in *)
     
     (* Helper to index the data bit *)
-    let current_bit_is_high = mux bit_send.value (bits_msb ws_data.value) in
+    let current_bit_is_high = mux bit_send.value (bits_msb ws_data.value) -- "current_bit" in
 
     (* Logic Description *)
     Always.(compile [
@@ -66,7 +72,7 @@ module Make (X : Config) = struct
             clk_count <-- clk_count.value +:. 1;
           ] [
             clk_count <-- zero 32;
-            if_ (ws_data.value <>: input.color |: ~:(ws_valid.value)) [
+            if_ (~:(ws_valid.value)) [
               ws_valid <-- vdd;
               ws_data  <-- input.color;
               sm.set_next DATA_SEND;
@@ -75,7 +81,7 @@ module Make (X : Config) = struct
         ];
 
         DATA_SEND, [
-          if_ ((data_send.value >:. X.ws2812_num) &: 
+          if_ ((data_send.value >=:. X.ws2812_num) &: 
             (bit_send.value ==:. X.ws2812_width)) [
               clk_count <-- zero 32;
               data_send <-- zero 9;
@@ -111,6 +117,7 @@ module Make (X : Config) = struct
           ] [
             clk_count <-- zero 32;
             bit_send  <-- bit_send.value +:. 1;
+            ws_valid <-- gnd;
             sm.set_next DATA_SEND;
           ];
         ];
