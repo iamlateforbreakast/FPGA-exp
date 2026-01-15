@@ -4,7 +4,7 @@ run-name: ${{ github.actor }} is generating the Verilog files. 🚀
 on: [push]
 
 jobs:
-  Project06-Build-And-Generate:
+  Project04-Build-And-Generate:
     strategy:
       fail-fast: false
       matrix:
@@ -32,5 +32,5 @@ jobs:
           opam install hardcaml ppx_hardcaml
       - name: Generate Verilog
         # Use working-directory to ensure correct path
-        working-directory: all_projects/project06/led_hardcaml
+        working-directory: all_projects/project04/led_hardcaml
         run: opam exec -- dune build 
