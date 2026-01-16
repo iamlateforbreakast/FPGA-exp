@@ -1,15 +1,18 @@
 (* simulate.ml *)
 
 open Hardcaml
+open Hardcaml_waveterm
 open Project05_lib
 
 module My_config = struct
-  let startup_wait = 10
-  let clk_div = 4 (* SPI clock = 27MHz / 4 *)
-  let commands = [ 0xAE; 0x80; 0XAF]
+  let clk_fre = 10
+  let uart_fre = 1
+  let cycle_period = 1
+  let message = "Hello world!"
+  let is_simulation = true
 end
 
-module MyUart = Uart.Make(My_config)
+module MyUart = Top.Make(My_config)
 
 module Simulator = Cyclesim.With_interface (MyUart.I)(MyUart.O)
 
@@ -26,7 +29,7 @@ let testbench n =
   let _outputs : _ MyUart.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
-  inputs.i_reset := Bits.gnd;
+  inputs.reset := Bits.gnd;
 
   for _i = 0 to n do
     Cyclesim.cycle sim

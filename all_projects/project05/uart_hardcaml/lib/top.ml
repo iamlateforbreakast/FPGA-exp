@@ -24,12 +24,13 @@ module Make (X : Config.S) = struct
 
   let message_rom ~index =
     let open Signal in
-    let rom = X.message |> String.to_seq |> List.of_seq
+    let chars = X.message |> String.to_seq |> List.of_seq in
+    let rom = List.map (fun c -> of_char c) chars in
     mux index rom
 
-  let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let wait_time  = if (X.is_simulation = false) then 1
-	                   else (X.cycle_delay / X.clk_fre) - 1 in
+  let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
+    let _wait_time  = if (X.is_simulation = false) then 1
+	                   else (X.cycle_period / X.clk_fre) - 1 in
     { O.tx_pin = vdd; tx_valid = vdd }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
