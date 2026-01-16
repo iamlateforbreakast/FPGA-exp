@@ -7,6 +7,7 @@ module My_config = struct
   let uart_fre = 1_000_000
   let message = "Hello world!\n"
   let cycle_period = 10
+  let is_simulation = false
 end
 
 let () =
