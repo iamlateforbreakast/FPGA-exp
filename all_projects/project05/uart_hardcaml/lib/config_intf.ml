@@ -3,4 +3,5 @@ module type S = sig
   val uart_freq : int
   val message : string
   val cycle_period : int
+  val is_simulation : bool
 end
