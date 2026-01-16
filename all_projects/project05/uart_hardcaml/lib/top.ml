@@ -28,8 +28,8 @@ module Make (X : Config.S) = struct
     let rom = List.map (fun c -> of_char c) chars in
     mux index rom
 
-  let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
-    let sync_spec = Reg_spec.create ~clock ~reset () in
+  let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+    let _sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
 	(* Constants *)
     let _wait_time  = if (X.is_simulation = false) then 1
