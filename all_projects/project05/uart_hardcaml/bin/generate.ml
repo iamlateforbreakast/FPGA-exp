@@ -3,9 +3,10 @@ open Hardcaml
 open Project05_lib
 
 module My_config = struct
-  let startup_wait = 10_000_000
-  let clk_div = 4
-  let commands = [ 0xAE; 0x81; 0x7F; 0xA6; 0x20; 0x00; 0xDB; 0x20; 0xD9; 0x22; 0x8D; 0x14; 0xA4; 0XAF ]
+  let clk_fre = 27_000_000
+  let uart_fre = 1_000_000
+  let message = "Hello world!\n"
+  let cycle_period = 10
 end
 
 let () =
