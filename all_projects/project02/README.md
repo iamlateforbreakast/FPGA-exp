@@ -96,5 +96,17 @@ Type help to see all commands. "reboot" boots the FPGA and produces the followin
 
 ![Litex_Boot_Report on Tang nano 20k](./images/litex_boot.png)
 
+Knowledge base for Gowin nano tang
+---------------------------------------------
 
+Example of constraint file for 4 LVDSs
+From https://github.com/verilog-indeed/nano4k_hdmi_tx/blob/main/FPGADesign/nano4k_hdmi_tx/src/nano4k_hdmi_tx.cst
 
+IO_LOC "tmdsChannel_p[2]" 35,34;
+IO_PORT "tmdsChannel_p[2]" PULL_MODE=NONE DRIVE=3.5;
+IO_LOC "tmdsChannel_p[1]" 32,31;
+IO_PORT "tmdsChannel_p[1]" PULL_MODE=NONE DRIVE=3.5;
+IO_LOC "tmdsChannel_p[0]" 30,29;
+IO_PORT "tmdsChannel_p[0]" PULL_MODE=NONE DRIVE=3.5;
+IO_LOC "tmdsClockChannel_p" 28,27;
+IO_PORT "tmdsClockChannel_p" PULL_MODE=NONE DRIVE=3.5;
