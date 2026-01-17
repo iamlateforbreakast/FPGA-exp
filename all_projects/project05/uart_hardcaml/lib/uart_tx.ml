@@ -11,16 +11,16 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a
       ; resetn : 'a
-      ; tx_data : 'a [@bits 8]
-      ; tx_data_valid : 'a
+      ; data : 'a [@bits 8]
+      ; data_valid : 'a
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { tx_pin : 'a
-      ; tx_data_ready : 'a
+      { data : 'a
+      ; data_ready : 'a
       }
     [@@deriving hardcaml]
   end
@@ -32,7 +32,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
-    {O.tx_pin = vdd; tx_data_ready = vdd}
+    {O.data = vdd; data_ready = vdd}
   
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

@@ -1,7 +1,6 @@
 (* top.ml *)
 open Hardcaml
 open Signal
-open Uart_tx
 
 module type Config = Config.S
 
@@ -52,12 +51,16 @@ module Make (X : Config.S) = struct
 
     (* Instanciate UART TX *)
     let uart_tx = MyUart_tx.hierarchical scope (
-      MyUart_tx.I.{ baud_rate = const_int ~width:32 X.uart_baudrate
-        ; clk_freq = const_int ~width:32 X.clk_freq } 
+      MyUart_tx.I.{ clock = input.clock
+                  ; resetn = (~:(input.reset))
+                  ; data = tx_data.value
+                  ; data_valid = tx_data_valid.value
+                  } 
     )
     in
     (* Combinational logic for tx_str (ROM lookup) *)
     let tx_str = message_rom ~index:tx_cnt.value in
+    let tx_data_ready = uart_tx.data_ready in
 
     (* State Machine Logic *)
     Always.(compile [
@@ -70,36 +73,29 @@ module Make (X : Config.S) = struct
           tx_data <-- tx_str;
           if_ (tx_data_valid.value &: tx_data_ready) [
             if_ (tx_cnt.value <:. (data_num - 1)) [
-              tx_cnt <-- tx_cnt.value +: 1;
+              tx_cnt <-- tx_cnt.value +:. 1;
             ] [
               tx_cnt <-- zero 8;
-              tx_data_valid <-- Low;
+              tx_data_valid <-- gnd;
               sm.set_next WAIT;
             ];
           ] [
             if_ (~: (tx_data_valid.value)) [
-              tx_data_valid <-- High;
+              tx_data_valid <-- vdd;
             ] [];
           ];
         ];
         WAIT, [
-          wait_cnt <-- wait_cnt.value +: 1;
-          if_ (rx_data_valid) [
-            tx_data_valid <-- High;
-            tx_data <-- rx_data;
-          ] [
-            if_ (tx_data_valid.value &: tx_data_ready) [
-              tx_data_valid <-- Low;
-            ] [
-              if_ (wait_cnt.value >=: const_int ~width:32 clk_freq) [
-                sm.set_next SEND;
-              ] [];
-            ];
-          ];
+          wait_cnt <-- wait_cnt.value +:. 1;
+          if_ (wait_cnt.value >=: (of_int ~width:32 X.clk_fre)) [
+            sm.set_next SEND;
+          ] [];
         ];
       ];
-    ]);
-    { O.tx_pin = uart_tx.Uart_tx.data; tx_ready = uart_tx.Uart_tx.data_ready }
+    ];
+    );
+
+    { O.tx_pin = uart_tx.data; tx_ready = uart_tx.data_ready }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
