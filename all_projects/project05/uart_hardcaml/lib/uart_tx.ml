@@ -31,8 +31,66 @@ module Make (X : Config.S) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
 
-  let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
-    {O.data = vdd; data_ready = vdd}
+  let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.resetn () in
+    
+    (* Constants: Tang Nano 20K @ 27MHz, 115200 Baud *)
+    let clks_per_bit = X.clk_fre / X.baud_rate in
+    
+    (* FSM and Variables *)
+    let sm = Always.State_machine.create (module States) sync_spec in
+    let bit_cnt = Always.Variable.reg sync_spec ~enable:vdd ~width:3 in
+    let clk_cnt = Always.Variable.reg sync_spec ~enable:vdd ~width:16 in
+    let tx_reg  = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
+    let tx_pin  = Always.Variable.wire ~default:vdd in
+    let ready   = Always.Variable.wire ~default:gnd in
+
+    Always.(compile [
+      sm.switch [
+        S_IDLE, [
+          ready <-- vdd;
+          clk_cnt <-- zero 16;
+          bit_cnt <-- zero 3;
+          if_ input.data_valid [
+            tx_reg <-- input.data;
+            sm.set_next S_START;
+          ] [];
+        ];
+        S_START, [
+          tx_pin <-- gnd; (* Start bit is Low *)
+          if_ (clk_cnt.value ==: (of_int ~width:16 (clks_per_bit - 1))) [
+            clk_cnt <-- zero 16;
+            sm.set_next S_SEND_BYTE;
+          ] [
+            clk_cnt <-- clk_cnt.value +:. 1;
+          ];
+        ];
+        S_SEND_BYTE, [
+          (* Shift out data bits LSB first *)
+          tx_pin <-- (tx_reg.value >>: bit_cnt.value).:(0);
+          if_ (clk_cnt.value ==: (const_int ~width:16 (clks_per_bit - 1))) [
+            clk_cnt <-- zero 16;
+            if_ (bit_cnt.value ==: (const_int ~width:3 7)) [
+              sm.set_next S_STOP;
+            ] [
+              bit_cnt <-- bit_cnt.value +: 1;
+            ];
+          ] [
+            clk_cnt <-- clk_cnt.value +: 1;
+          ];
+        ];
+        S_STOP, [
+          tx_pin <-- vdd; (* Stop bit is High *)
+          if_ (clk_cnt.value ==: (const_int ~width:16 (clks_per_bit - 1))) [
+            sm.set_next S_IDLE;
+          ] [
+            clk_cnt <-- clk_cnt.value +: 1;
+          ];
+        ];
+      ];
+    ];);
+
+    { O.data = tx_pin.value; data_ready = ready.value }
   
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
