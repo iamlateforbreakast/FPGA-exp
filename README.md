@@ -15,7 +15,7 @@ Projects
 | 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | Not started | N/A |
 | 3 | [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03) | Started | TBD |
 | 4 | [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04) | Working | [![Project04](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml) |
-| 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | In progress| TBD |
+| 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | In progress| [![Project05](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml) |
 | 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | Started | [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
 | 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | Not started | TBD |
 | 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | Started | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project8.yml) |
