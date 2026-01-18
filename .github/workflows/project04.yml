@@ -27,7 +27,7 @@ jobs:
         run: |
           # Install dependencies required by the .opam file
           opam install . --deps-only --with-test
-          # opam install hardcaml ppx_hardcaml
+          opam install dune hardcaml ppx_hardcaml
       - name: Generate Verilog
         # Use working-directory to ensure correct path
         working-directory: all_projects/project04/led_hardcaml
