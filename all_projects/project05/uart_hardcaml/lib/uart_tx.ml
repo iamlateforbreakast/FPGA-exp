@@ -19,7 +19,7 @@ module Make (X : Config.S) = struct
 
   module O = struct
     type 'a t =
-      { data : 'a
+      { pin : 'a
       ; data_ready : 'a
       }
     [@@deriving hardcaml]
@@ -31,7 +31,7 @@ module Make (X : Config.S) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
 
-  let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+  let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.resetn () in
     
     (* Constants: Tang Nano 20K @ 27MHz, 115200 Baud *)
@@ -67,30 +67,30 @@ module Make (X : Config.S) = struct
         ];
         S_SEND_BYTE, [
           (* Shift out data bits LSB first *)
-          tx_pin <-- (tx_reg.value >>: bit_cnt.value).:(0);
-          if_ (clk_cnt.value ==: (const_int ~width:16 (clks_per_bit - 1))) [
+          tx_pin <-- mux (bit_cnt.value) (bits_lsb tx_reg.value);
+          if_ (clk_cnt.value ==: (of_int ~width:16 (clks_per_bit - 1))) [
             clk_cnt <-- zero 16;
-            if_ (bit_cnt.value ==: (const_int ~width:3 7)) [
+            if_ (bit_cnt.value ==: (of_int ~width:3 7)) [
               sm.set_next S_STOP;
             ] [
-              bit_cnt <-- bit_cnt.value +: 1;
+              bit_cnt <-- bit_cnt.value +:. 1;
             ];
           ] [
-            clk_cnt <-- clk_cnt.value +: 1;
+            clk_cnt <-- clk_cnt.value +:. 1;
           ];
         ];
         S_STOP, [
           tx_pin <-- vdd; (* Stop bit is High *)
-          if_ (clk_cnt.value ==: (const_int ~width:16 (clks_per_bit - 1))) [
+          if_ (clk_cnt.value ==: (of_int ~width:16 (clks_per_bit - 1))) [
             sm.set_next S_IDLE;
           ] [
-            clk_cnt <-- clk_cnt.value +: 1;
+            clk_cnt <-- clk_cnt.value +:. 1;
           ];
         ];
       ];
     ];);
 
-    { O.data = tx_pin.value; data_ready = ready.value }
+    { O.pin = tx_pin.value; data_ready = ready.value }
   
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

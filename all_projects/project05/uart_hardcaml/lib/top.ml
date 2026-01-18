@@ -44,10 +44,11 @@ module Make (X : Config.S) = struct
 
     (* Registers and State *)
     let sm = Always.State_machine.create (module State) sync_spec in
-    let tx_cnt = Always.Variable.wire ~default:(zero 8) in
-    let wait_cnt = Always.Variable.wire ~default:(zero 32) in
+    let tx_cnt = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
+    let wait_cnt = Always.Variable.reg sync_spec ~enable:vdd ~width:32 in
+    let tx_data_valid = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
+
     let tx_data = Always.Variable.wire ~default:(zero 8) in
-    let tx_data_valid = Always.Variable.wire ~default:(zero 1) in
 
     (* Instanciate UART TX *)
     let uart_tx = MyUart_tx.hierarchical scope (
@@ -95,7 +96,7 @@ module Make (X : Config.S) = struct
     ];
     );
 
-    { O.tx_pin = uart_tx.data; tx_ready = uart_tx.data_ready }
+    { O.tx_pin = uart_tx.pin; tx_ready = uart_tx.data_ready }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

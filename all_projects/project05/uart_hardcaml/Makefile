@@ -1,10 +1,10 @@
 DEVICE = GW2AR-LV18QN88C8/I7
 FAMILY = GW2A-18C
-TOP_MODULE = screen
-VERILOG_FILES = ./verilog_out/uart.v
-SOURCES = ./lib/screen.ml ./bin/generate.ml
+TOP_MODULE = top_level
+VERILOG_FILES = ./verilog_out/uart_tx.v ./verilog_out/top_level.v
+SOURCES = ./lib/top.ml ./lib/uart_tx.ml ./bin/generate.ml
 PROJECT = uart_hardcaml
-CONSTRAINT_FILE = tangnano20k.cst
+CONSTRAINT_FILE = ../tangnano20k.cst
 
 all: $(PROJECT).fs
 
@@ -12,9 +12,9 @@ $(PROJECT).fs: $(PROJECT)_pnr.json
 	gowin_pack -d $(DEVICE) -o $@ $<
 
 $(PROJECT)_pnr.json : $(PROJECT).json
-	nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
+	~/Tools/nextpnr/build/nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
         --vopt family=$(FAMILY) \
-	--vopt cst=tangnano20k.cst \
+	--vopt cst=$(CONSTRAINT_FILE) \
 	--device $(DEVICE)
 
 $(PROJECT).json : verilog_out/$(TOP_MODULE).v
