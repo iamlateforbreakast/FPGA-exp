@@ -16,7 +16,7 @@ let () =
   let module TopCircuit = Circuit.With_interface(MyUart.I)(MyUart.O) in
   let scope = Scope.create ~flatten_design:false () in
   (* let scope = Scope.create ~flatten_design:true ~auto_label_hierarchical_ports:true () *)
-  let circuit = TopCircuit.create_exn ~name:"top" (MyUart.create scope) in
+  let circuit = TopCircuit.create_exn ~name:"top_level" (MyUart.create scope) in
   (* let create = Top.hierarchical ~build_mode:Simulation scope in *)
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)

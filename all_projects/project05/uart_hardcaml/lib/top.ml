@@ -16,8 +16,7 @@ module Make (X : Config.S) = struct
 
   module O = struct
     type 'a t =
-      { tx_pin : 'a
-      ; tx_ready : 'a
+      { uart_tx : 'a
       }
     [@@deriving hardcaml]
   end
@@ -96,7 +95,7 @@ module Make (X : Config.S) = struct
     ];
     );
 
-    { O.tx_pin = uart_tx.pin; tx_ready = uart_tx.data_ready }
+    { O.uart_tx = uart_tx.pin }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
