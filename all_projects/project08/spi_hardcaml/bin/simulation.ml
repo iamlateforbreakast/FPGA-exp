@@ -9,6 +9,7 @@ module My_config = struct
   let startup_wait = 10
   let clk_div = 4 (* SPI clock = 27MHz / 4 *)
   let commands = [ 0xAE; 0x80; 0XAF]
+  let is_simulation = true
 end
 
 module MyScreen = Screen.Make(My_config)
