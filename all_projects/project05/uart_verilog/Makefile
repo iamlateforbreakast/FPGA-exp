@@ -1,37 +1,26 @@
-BOARD=tangnano9k
-FAMILY=GW1N-9C
-DEVICE=GW1NR-LV9QN88PC6/I5
+DEVICE = GW2AR-LV18QN88C8/I7
+FAMILY = GW2A-18C
+TOP_MODULE = uart_test
+VERILOG_FILES = ./uart_tx.v ./uart_rx.v ./uart_top.v
+PROJECT = uart_verilog
+CONSTRAINT_FILE = ../tangnano20k.cst
 
-all: uart.fs
+all: $(PROJECT).fs
 
-# Synthesis
-uart.json: uart.v
-	yosys -p "read_verilog screen.v; synth_gowin -top screen -json screen.json"
+$(PROJECT).fs: $(PROJECT)_pnr.json
+	gowin_pack -d $(DEVICE) -o $@ $<
 
-# Place and Route
-uart_pnr.json: uart.json
-	nextpnr-gowin --json uart.json --freq 27 --write uart_pnr.json --device ${DEVICE} --family ${FAMILY} --cst ${BOARD}.cst
+$(PROJECT)_pnr.json : $(PROJECT).json
+	~/Tools/nextpnr/build/nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
+        --vopt family=$(FAMILY) \
+	--vopt cst=$(CONSTRAINT_FILE) \
+	--device $(DEVICE)
 
-# Generate Bitstream
-uart.fs: uart_pnr.json
-	gowin_pack -d ${FAMILY} -o uart.fs uart_pnr.json
+$(PROJECT).json : $(VERILOG_FILES)
+	yosys -q -p "read_verilog $(VERILOG_FILES); synth_gowin -top $(TOP_MODULE) -json $@"
 
-# Program Board
-load: uart.fs
-	openFPGALoader -b ${BOARD} uart.fs -f
-
-
-# Generate Simulation
-uart_test.o: uart.v screen_tb.v
-	iverilog -o uart_test.o -s test uart.v uart_tb.v
-
-# Run Simulation
-test: screen_test.o
-	vvp screen_test.o
-
-# Cleanup build artifacts
 clean:
-	rm screen.vcd screen.fs screen_test.o
+	rm -rf *.json *.fs ./verilog_out
+	dune clean
 
-.PHONY: load clean test
-.INTERMEDIATE: screen_pnr.json screen.json screen_test.o
+.PHONY: all clean verilog_out

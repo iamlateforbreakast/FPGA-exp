@@ -1,6 +1,6 @@
 module uart_test(
-	input                        clk,
-	input                        rst,
+	input                        clock,
+	input                        reset,
 	input                        uart_rx,
 	output                       uart_tx
 );
@@ -25,7 +25,7 @@ wire rst_n = !rst;
 
 assign rx_data_ready = 1'b1;//always can receive data,
 
-always@(posedge clk or negedge rst_n)
+always@(posedge clock or negedge rst_n)
 begin
 	if(rst_n == 1'b0)
 	begin
@@ -113,7 +113,7 @@ uart_rx#
 	.BAUD_RATE(UART_FRE)
 ) uart_rx_inst
 (
-	.clk                        (clk                      ),
+	.clk                        (clock                    ),
 	.rst_n                      (rst_n                    ),
 	.rx_data                    (rx_data                  ),
 	.rx_data_valid              (rx_data_valid            ),
@@ -127,7 +127,7 @@ uart_tx#
 	.BAUD_RATE(UART_FRE)
 ) uart_tx_inst
 (
-	.clk                        (clk                      ),
+	.clk                        (clock                    ),
 	.rst_n                      (rst_n                    ),
 	.tx_data                    (tx_data                  ),
 	.tx_data_valid              (tx_data_valid            ),
