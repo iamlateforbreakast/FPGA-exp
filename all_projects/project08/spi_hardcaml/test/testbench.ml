@@ -1,48 +1,40 @@
 (* testbench.ml *)
-
 open Hardcaml
 open Project8_lib
 
 module My_config = struct
   let file_name = "image.hex"
   let startup_wait = 10
-  let clk_div = 4 (* SPI clock = 27MHz / 4 *)
-  let commands = [ 0xAE; 0x80; 0XAF]
+  let clk_div = 4 
+  let commands = [ 0xAE; 0x80; 0xAF ]
 end
 
 module MyScreen = Screen.Make(My_config)
-
 module Simulator = Cyclesim.With_interface(MyScreen.I)(MyScreen.O)
-
 
 let testbench () =
   let scope = Scope.create 
       ~auto_label_hierarchical_ports:true
       ~flatten_design:true () in
   let sim = Simulator.create (MyScreen.create scope) in
-  let _inputs : _ MyScreen.I.t = Cyclesim.inputs sim in
-  let outputs : _ MyScreen.O.t = Cyclesim.outputs sim in
-  let step () =
-    (* inputs.clear := if clear=1 then Bits.vdd else Bits.gnd;
-    inputs.incr := if incr=1 then Bits.vdd else Bits.gnd; *)
-    let _ = Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
+  let _inputs = Cyclesim.inputs sim in
+  let outputs = Cyclesim.outputs sim in
+
+  (* Define what happens every cycle *)
+  let print_outputs () =
+    Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
       (Bits.to_int !(outputs.io_sclk))
       (Bits.to_int !(outputs.io_sdin))
       (Bits.to_int !(outputs.io_cs))
       (Bits.to_int !(outputs.io_dc))
-      (Bits.to_int !(outputs.io_reset));
-  let check_init_state _cycle =
-    assert (Bits.to_int !(outputs.io_sclk) = 1);
-    assert (Bits.to_int !(outputs.io_sdin) = 1);
-    assert (Bits.to_int !(outputs.io_cs) = 1);
-    assert (Bits.to_int !(outputs.io_dc) = 1);
-    assert (Bits.to_int !(outputs.io_reset) = 1);
-    () in
-
-  for cycle = 0 to My_config.startup_wait * 3 do
+      (Bits.to_int !(outputs.io_reset))
+  in
+  
+  (* Run the simulation loop *)
+  for _cycle = 0 to My_config.startup_wait * 3 do
     Cyclesim.cycle sim;
-    check_init_state cycle;
-  done;
+    print_outputs (); (* Call the print function each cycle *)
+  done
 
 let%expect_test "screen" =
   testbench ();
