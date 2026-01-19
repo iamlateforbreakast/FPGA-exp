@@ -21,7 +21,7 @@ wire                             rx_data_ready;
 reg[31:0]                        wait_cnt;
 reg[3:0]                         state;
 
-wire rst_n = !rst;
+wire rst_n = !reset;
 
 assign rx_data_ready = 1'b1;//always can receive data,
 
