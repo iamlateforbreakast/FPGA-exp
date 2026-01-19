@@ -7,6 +7,7 @@ module My_config = struct
   let startup_wait = 10
   let clk_div = 4 
   let commands = [ 0xAE; 0x80; 0xAF ]
+  let is_simulation = false
 end
 
 module MyScreen = Screen.Make(My_config)
