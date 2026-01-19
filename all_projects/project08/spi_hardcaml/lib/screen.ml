@@ -25,7 +25,7 @@ module Make (X : Config) = struct
   end
 
   module States = struct
-    type t = Init_power | Load_command | Load_display | Send_data | Select_data
+    type t = Init_power | Load_command | Load_display | Wait_ram | Send_data | Select_data
     [@@deriving sexp_of, compare, enumerate]
   end
   
@@ -78,9 +78,11 @@ module Make (X : Config) = struct
     let _dbg_counter = Signal.(counter -- "dbg_counter") in
     
     let sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
-    (* Outputs *)
-    (* Registers *)
+
+    (* Instantiate the synchronous RAM *)
+    let ram_out = display_rom_alternate ~clock:i.clock ~read_address:column_index.value in
   
+    (* Registers *)
     let sclk = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let ncs = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
     let nreset = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
@@ -115,17 +117,22 @@ module Make (X : Config) = struct
           ; if_ (column_index.value <=: of_int ~width:10 (128*8 - 1))
               [ndc <--. 0; data_to_send <-- display_rom ~index:column_index.value; sm.set_next Send_data;]
               [column_index <--. 0; sm.set_next Load_display]]);
+        (Wait_ram, 
+          [ (* On this cycle, ram_out contains the data for the address set in Load_display *)
+            data_to_send <-- ram_out; 
+            sm.set_next Send_data 
+          ]);
         (Send_data,
-          [ if_ (counter <=:. (X.clk_div - 1)) [sclk <-- gnd] [sclk <-- vdd]
-          ; when_ (counter ==:. (X.clk_div - 2)) 
+          [ sclk <-- (counter >=:. X.clk_div)
+          ; when_ (counter ==:. (X.clk_div * 2 - 1)) 
                 [ bit_counter <-- (bit_counter.value +:. 1)
                 ; sdin <-- bit data_to_send.value 7
                 ; data_to_send <-- sll data_to_send.value 1
-                ; when_ (bit_counter.value ==: (of_int ~width:4 8)) 
-                  [ bit_counter <-- (of_int ~width:4 0); sm.set_next Select_data]]]);
+                ; when_ (bit_counter.value ==: 7) 
+                  [ sm.set_next Select_data]]]);
         (Select_data, 
-          [ if_ (counter <=:. (X.clk_div - 1)) [sclk <-- vdd] [sclk <-- gnd]
-          ; sclk <-- gnd; ncs <-- gnd
+          [ sclk <-- (counter >=:. X.clk_div)
+          ; ncs <-- gnd
           ; when_ (ndc.value ==: gnd)
               [ column_index <-- (column_index.value +:. 1); sm.set_next Load_display ]
           ; when_ (ndc.value ==: vdd) 
