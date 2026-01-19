@@ -33,6 +33,28 @@ module Make (X : Config) = struct
     let open Signal in
     let rom = List.map (fun c -> of_int ~width:8 c) X.commands in
     mux index rom
+
+  let display_rom_alternate ~clock ~read_address =
+    let open Signal in
+    (* 1. Prepare initial data (128 * 8 elements) *)
+    let initial_data = Array.init (128 * 8) (fun i -> 
+      of_int ~width:8 (i mod 256)) in
+
+    (* 2. Define the Read Port *)
+    let read_port = 
+      { read_clock = clock
+      ; read_address = read_address
+      ; read_enable = vdd
+      } 
+    in
+
+    (* 3. Create the memory. For a ROM, write_ports is an empty array. *)
+    (* initialize_with is often a parameter or a specialized constructor like Ram.create *)
+    let outputs = multiport_memory 1024
+      ~write_ports:[||]
+      ~read_ports:[| read_port |]
+    in
+    outputs.(0) (* Return data from the first (only) read port *)
   
   let display_rom ~index =
     let open Signal in
@@ -85,7 +107,7 @@ module Make (X : Config) = struct
           ; when_ (reset_counter.value ==:. X.startup_wait * 3) [sdin <-- gnd; sm.set_next Load_command]]);
         (Load_command, 
           [ sclk <-- gnd; ncs <-- vdd; reset_counter <--. 0; bit_counter <--. 0
-          ; if_ (command_index.value <=: (of_int ~width:4 (List.length X.commands))) 
+          ; if_ (command_index.value <=: (of_int ~width:4 (List.length X.commands - 1))) 
               [ndc <--. 1;  data_to_send <-- command_rom ~index:command_index.value; sm.set_next Send_data;]
               [sm.set_next Load_display]]);
         (Load_display, 
