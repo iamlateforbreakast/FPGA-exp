@@ -4,6 +4,7 @@ module type S = sig
   val startup_wait : int
   val clk_div : int
   val commands : int list
+  val is_simulation : bool
 end
 
 module type Config = sig
