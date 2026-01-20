@@ -45,6 +45,12 @@ module Make (X : Config.S) = struct
     let tx_pin  = Always.Variable.wire ~default:vdd in
     let ready   = Always.Variable.wire ~default:gnd in
 
+    (* Debug *)
+    let _ = Signal.(bit_cnt.value -- "bit_cnt") in
+    let _ = Signal.(clk_cnt.value -- "clk_cnt") in
+    let _ = Signal.(tx_reg.value -- "tx_reg") in
+    let _ = Signal.(sm.current -- "state") in
+    
     Always.(compile [
       sm.switch [
         S_IDLE, [

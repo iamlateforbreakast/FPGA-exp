@@ -4,7 +4,6 @@ open Project05_lib
 
 module My_config = struct
   let clk_fre = 27_000_000
-  let uart_fre = 1_000_000
   let baud_rate = 115_200
   let message = "Hello world!\n"
   let cycle_period = 10

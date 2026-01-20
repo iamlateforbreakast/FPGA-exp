@@ -5,10 +5,9 @@ open Hardcaml_waveterm
 open Project05_lib
 
 module My_config = struct
-  let clk_fre = 10
-  let uart_fre = 1
-  let baud_rate = 3
-  let cycle_period = 1
+  let clk_fre = 27_000_000 (* 10 *)
+  let baud_rate = 112500 (* 3 *)
+  let cycle_period = 10
   let message = "Hello world!"
   let is_simulation = true
 end
