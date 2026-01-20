@@ -3,7 +3,7 @@ module type S = sig
   val uart_fre : int
   val baud_rate : int
   val message : string
-  val cycle_period : int
+  val repeat_fre : int
   val is_simulation : bool
 end
 
