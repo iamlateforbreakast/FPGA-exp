@@ -3,10 +3,11 @@ open Hardcaml
 open Project05_lib
 
 module My_config = struct
-  let clk_fre = 27_000_000
+  let clk_fre = 27_000_000 (* Hz *)
+  let uart_fre = 50_000_000 (* Hz *)
   let baud_rate = 115_200
   let message = "Hello world!\n"
-  let cycle_period = 10
+  let repeat_fre = 1 (* Hz *)
   let is_simulation = false
 end
 
