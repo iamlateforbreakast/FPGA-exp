@@ -6,9 +6,10 @@ open Project05_lib
 
 module My_config = struct
   let clk_fre = 27_000_000 (* 10 *)
+  let uart_fre = 50_000_000 (* Hz *)
   let baud_rate = 112500 (* 3 *)
-  let cycle_period = 10
-  let message = "Hello world!"
+  let cycle_period = 1 (* Hz *)
+  let message = "Hello world!\n"
   let is_simulation = true
 end
 
