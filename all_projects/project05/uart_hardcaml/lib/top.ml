@@ -38,7 +38,7 @@ module Make (X : Config.S) = struct
 
 	  (* Constants *)
     let _wait_time  = if (X.is_simulation = false) then 1
-	                   else (X.cycle_period / X.clk_fre) - 1 in
+	                   else (X.clk_fre / X.repeat_fre) - 1 in
     let data_num = String.length X.message in
 
     (* Registers and State *)
