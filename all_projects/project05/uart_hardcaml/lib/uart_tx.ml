@@ -35,7 +35,7 @@ module Make (X : Config.S) = struct
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.resetn () in
     
     (* Constants: Tang Nano 20K @ 27MHz, 115200 Baud *)
-    let clks_per_bit = X.clk_fre / X.baud_rate in
+    let clks_per_bit = X.uart_fre / X.baud_rate in
     
     (* FSM and Variables *)
     let sm = Always.State_machine.create (module States) sync_spec in
