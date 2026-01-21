@@ -1,5 +1,5 @@
 (library
  (name testbench)
- (libraries project8_lib hardcaml)
+ (libraries project08_lib hardcaml)
  (inline_tests)
  (preprocess (pps ppx_inline_test ppx_expect)))
