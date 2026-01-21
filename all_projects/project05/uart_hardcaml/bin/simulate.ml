@@ -8,7 +8,7 @@ module My_config = struct
   let clk_fre = 27_000_000 (* Hz *)
   let uart_fre = 50_000_000 (* Hz *)
   let baud_rate = 10_000_000 (* 5 *)
-  let repeat_period = 1 (* Hz *)
+  let repeat_fre = 1 (* Hz *)
   let message = "Hello world!\n"
   let is_simulation = true
 end
