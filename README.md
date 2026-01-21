@@ -22,7 +22,8 @@ Projects
 | 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | TBD |
 | 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | TBD |
 | 11 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | TBD |
-| 12 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
+| 12 | [SDRam project] | Not started | TBD |
+| 13 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
 
 Interesting Resources
 ---------------------
