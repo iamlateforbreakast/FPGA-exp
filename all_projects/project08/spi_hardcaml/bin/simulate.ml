@@ -2,7 +2,7 @@
 
 open Hardcaml
 open Hardcaml_waveterm
-open Project8_lib
+open Project08_lib
 
 module My_config = struct
   let file_name = "image.hex"
