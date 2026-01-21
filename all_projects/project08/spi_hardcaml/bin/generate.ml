@@ -1,6 +1,6 @@
 (* main.ml *)
 open Hardcaml
-open Project8_lib
+open Project08_lib
 
 module My_config = struct
   let file_name = "image.hex"
@@ -29,7 +29,7 @@ module My_config = struct
 end
 
 let () =
-  let module MyScreen = Screen.Make(My_config) in
+  let module MyScreen = Top.Make(My_config) in
   let module TopCircuit = Circuit.With_interface(MyScreen.I)(MyScreen.O) in
   let scope = Scope.create ~flatten_design:false () in
   let circuit = TopCircuit.create_exn ~name:"screen" (MyScreen.create scope) in

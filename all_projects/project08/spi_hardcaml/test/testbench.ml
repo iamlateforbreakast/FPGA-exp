@@ -1,6 +1,6 @@
 (* testbench.ml *)
 open Hardcaml
-open Project8_lib
+open Project08_lib
 
 module My_config = struct
   let file_name = "image.hex"
@@ -10,7 +10,7 @@ module My_config = struct
   let is_simulation = false
 end
 
-module MyScreen = Screen.Make(My_config)
+module MyScreen = Top.Make(My_config)
 module Simulator = Cyclesim.With_interface(MyScreen.I)(MyScreen.O)
 
 let testbench () =
@@ -24,11 +24,11 @@ let testbench () =
   (* Define what happens every cycle *)
   let print_outputs () =
     Printf.printf "io_sclk=%i io_sdin=%i io_cs=%i io_dc=%i io_reset=%i\n"
-      (Bits.to_int !(outputs.io_sclk))
-      (Bits.to_int !(outputs.io_sdin))
-      (Bits.to_int !(outputs.io_cs))
-      (Bits.to_int !(outputs.io_dc))
-      (Bits.to_int !(outputs.io_reset))
+      (Bits.to_int !(outputs.o_sclk))
+      (Bits.to_int !(outputs.o_sdin))
+      (Bits.to_int !(outputs.o_cs))
+      (Bits.to_int !(outputs.o_dc))
+      (Bits.to_int !(outputs.o_reset))
   in
   
   (* Run the simulation loop *)

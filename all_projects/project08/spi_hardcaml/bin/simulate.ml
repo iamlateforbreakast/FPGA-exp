@@ -12,7 +12,7 @@ module My_config = struct
   let is_simulation = true
 end
 
-module MyScreen = Screen.Make(My_config)
+module MyScreen = Top.Make(My_config)
 
 module Simulator = Cyclesim.With_interface (MyScreen.I)(MyScreen.O)
 
