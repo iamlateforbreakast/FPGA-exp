@@ -29,7 +29,7 @@ module Make (X : Config.S) = struct
     let spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
   
     (* Define a divider constant in your Config *)
-    let divider_limit = 5 in
+    let divider_limit = 54 in
 
     (* Inside create function *)
     let clk_cnt = Always.Variable.reg spec ~width:8 in

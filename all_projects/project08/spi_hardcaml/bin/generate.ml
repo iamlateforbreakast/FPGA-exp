@@ -32,7 +32,7 @@ let () =
   let module MyScreen = Top.Make(My_config) in
   let module TopCircuit = Circuit.With_interface(MyScreen.I)(MyScreen.O) in
   let scope = Scope.create ~flatten_design:false () in
-  let circuit = TopCircuit.create_exn ~name:"screen" (MyScreen.create scope) in
+  let circuit = TopCircuit.create_exn ~name:"top_level" (MyScreen.create scope) in
   let database = Scope.circuit_database scope in
   (* Generate the circuit *)
   let output_dir = "verilog_out" in

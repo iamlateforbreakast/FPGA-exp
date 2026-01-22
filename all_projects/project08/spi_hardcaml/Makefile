@@ -1,8 +1,8 @@
 DEVICE = GW2AR-LV18QN88C8/I7
 FAMILY = GW2A-18C
-TOP_MODULE = screen
-VERILOG_FILES = ./verilog_out/screen.v
-SOURCES = ./lib/screen.ml ./bin/generate.ml
+TOP_MODULE = top_level
+VERILOG_FILES = ./verilog_out/top_level.v ./verilog_out/screen_spi.v
+SOURCES = ./lib/screen_spi.ml ./bin/generate.ml
 PROJECT = spi_hardcaml
 CONSTRAINT_FILE = tangnano20k.cst
 
