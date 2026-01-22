@@ -26,7 +26,7 @@ module Make (X : Config) = struct
   end
 
   module States = struct
-    type t = Init_power | Load_command | Load_display | Wait_ram | Send_data | Select_data
+    type t = INIT | SEND_CMD | WAIT_SPI_CMD | SEND_DATA | WAIT_SPI_DATA
     [@@deriving sexp_of, compare, enumerate]
   end
   
@@ -83,6 +83,30 @@ module Make (X : Config) = struct
       MyScreen.I.{ clock = i.clock; reset = i.i_reset; data_in = ram_out }
     ) in
 
+    compile [
+    state.switch [
+      IDLE, [
+          state.set_next SEND_CMD;
+          cmd_idx <--. 0;
+      ];
+      SEND_CMD, [
+        (* Logic to load init_cmds[cmd_idx] into an SPI shifter *)
+        dc_reg <-- gnd; 
+        state.set_next WAIT_SPI;
+      ];
+      WAIT_SPI_CMD, [
+        (* Wait for SPI module 'done' signal *)
+        if_ (cmd_idx.value ==:. (Array.length init_cmds - 1)) [
+          state.set_next SEND_DATA;
+        ] [
+          cmd_idx <-- (cmd_idx.value +:. 1);
+          state.set_next SEND_CMD;
+        ]
+      ];
+      SEND_DATA, [];
+      WAIT_SPI_DATA, [];
+    ]
+  ];
     (* The program block with a call to [compile]. *)
     
     { O.o_sclk = screen_spi.sclk
