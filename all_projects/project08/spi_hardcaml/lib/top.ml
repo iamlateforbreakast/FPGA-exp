@@ -35,6 +35,13 @@ module Make (X : Config) = struct
     let rom = List.map (fun c -> of_int ~width:8 c) X.commands in
     mux index rom
 
+  let display_rom ~index =
+    let open Signal in
+    let size = 128 * 8 in
+    let rom = List.init size (fun i -> of_int ~width:8 (i mod 256)) in
+    mux index rom
+
+  (*
   let display_rom (clock: Signal.t) (read_address: Signal.t) =
     let open Signal in
     (* 1. Prepare initial data (128 * 8 elements) *)
@@ -51,7 +58,7 @@ module Make (X : Config) = struct
       ()
     in
     outputs.(0) (* Return data from the first (only) read port *)
-  
+  *)
   module MyScreen = Screen_spi.Make(X)
 
   let create (scope: Scope.t) (i: _ I.t) : _ O.t =
