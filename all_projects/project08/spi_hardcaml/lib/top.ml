@@ -75,7 +75,8 @@ module Make (X : Config) = struct
     let column_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
 
     (* Instantiate the synchronous RAM *)
-    let ram_out = display_rom i.clock column_index.value in
+    (* let ram_out = display_rom i.clock column_index.value in *)
+    let ram_out = display_rom ~index:column_index.value in
 
     (* Intantiate the screen SPI controller *)
     let screen_spi = MyScreen.hierarchical scope (
