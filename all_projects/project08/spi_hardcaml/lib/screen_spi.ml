@@ -10,6 +10,7 @@ module Make (X : Config.S) = struct
       { clock   : 'a
       ; reset : 'a
       ; data_in : 'a [@bits 8]
+      ; data_valid : 'a
       } 
     [@@deriving sexp_of, hardcaml]
   end
@@ -20,6 +21,7 @@ module Make (X : Config.S) = struct
       ; sclk : 'a
       ; cs : 'a
       ; dc : 'a
+      ; ready : 'a
       }
     [@@deriving sexp_of, hardcaml]
   end
@@ -33,27 +35,34 @@ module Make (X : Config.S) = struct
     let running   = Always.Variable.reg spec ~width:1 in
     let sclk_reg  = Always.Variable.reg spec ~width:1 in
 
+    let _ = Signal.(sclk_reg.value -- "sclk_reg") in
+    let _ = Signal.(running.value -- "running") in
+    let _ = Signal.(bit_cnt.value -- "bit_cnt") in
+    let _ = Signal.(shift_reg.value -- "shift_reg") in
+
     Always.(compile [
-      if_ (~:(running.value) ) [
+      if_ (input.data_valid &: ~:(running.value) ) [
         shift_reg <-- input.data_in;
         bit_cnt   <--. 0;
-        running   <-- gnd;
+        running   <-- vdd;
       ] [
           (* Toggle clock and shift logic *)
           sclk_reg <-- ~:(sclk_reg.value);
           if_ (sclk_reg.value) [ (* Falling edge of SCLK *)
-              shift_reg <-- ((sll shift_reg.value 1) @: (zero 1)); (* Shift Left *)
+              shift_reg <-- (sll shift_reg.value 1); (* Shift Left *)
               bit_cnt   <-- (bit_cnt.value +:. 1);][];
           
           if_ (bit_cnt.value ==:. 8) [
-            running <-- vdd;
+            running <-- gnd;
           ] [];
         ]
       ]);
     { O.mosi = msb shift_reg.value
     ; sclk = sclk_reg.value
     ; cs = ~:(running.value)
-    ; dc = running.value }
+    ; dc = running.value 
+    ; ready = ~:(running.value)
+    }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

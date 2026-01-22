@@ -75,16 +75,16 @@ module Make (X : Config) = struct
     let dc_reg = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
 
     (* Mux between Command ROM and Data ROM based on state *)
-    let current_data = wire 8 in
+    let current_data = Variable.wire ~default:(zero 8) in
 
     (* Instantiate the screen SPI controller *)
     let screen_spi = MyScreen.hierarchical scope (
-      MyScreen.I.{ clock = i.clock; reset = i.i_reset; data_in = current_data }
+      MyScreen.I.{ clock = i.clock
+                 ; reset = i.i_reset
+                 ; data_in = Always.Variable.value current_data
+                 ; data_valid = (sm.is SEND_DATA  |: sm.is SEND_CMD)
+                 }
     ) in
-
-    (* Logic for SPI "done" signal - Assuming the SPI controller has a way to signal completion.
-       If your screen_spi doesn't have a 'done' output, you would typically add one. *)
-    let spi_done = wire 1 in (* Placeholder: replace with actual 'done' signal if available *)
 
     compile [
       sm.switch [
@@ -95,36 +95,37 @@ module Make (X : Config) = struct
         ];
         
         SEND_CMD, [
-          dc_reg $== gnd;
-          current_data <-- (command_rom cmd_idx);
+          dc_reg <--. 0;
+          current_data <-- (command_rom ~index:cmd_idx.value);
           sm.set_next WAIT_SPI_CMD;
         ];
         
         WAIT_SPI_CMD, [
-          if_ spi_done [
+          if_ screen_spi.ready [
             if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
               sm.set_next SEND_DATA;
             ] [
-              cmd_idx <--. cmd_idx.value +:. 1;
+              cmd_idx <-- (cmd_idx.value +:. 1);
               sm.set_next SEND_CMD;
             ]
-          ]
+          ][]
         ];
         
         SEND_DATA, [
-          dc_reg $== vdd;
+          dc_reg <--. 1;
+          current_data <-- (display_rom ~index:data_idx.value);
           sm.set_next WAIT_SPI_DATA;
         ];
         
         WAIT_SPI_DATA, [
-          if_ spi_done [
+          if_ screen_spi.ready [
             if_ (data_idx.value ==:. (128 * 8 - 1)) [
               sm.set_next INIT; (* Loop back or go to IDLE *)
             ] [
-              data_idx <--. data_idx.value +:. 1;
+              data_idx <-- (data_idx.value +:. 1);
               sm.set_next SEND_DATA;
             ]
-          ]
+          ][]
         ];
       ]
     ];
