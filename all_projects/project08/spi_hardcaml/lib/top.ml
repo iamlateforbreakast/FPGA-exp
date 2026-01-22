@@ -68,52 +68,72 @@ module Make (X : Config) = struct
     (* Create synchronous registers *)
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
 
-    (* State machine definition *)    
-    let _sm = Always.State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    (* State machine and Registers *)
+    let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
+    let data_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:13 in (* 128*8 = 1024 *)
+    let dc_reg = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
 
-    (* Registers *)
-    let column_index = Variable.reg ~enable:vdd reg_sync_spec ~width:10 in
+    (* Mux between Command ROM and Data ROM based on state *)
+    let current_data = wire 8 in
 
-    (* Instantiate the synchronous RAM *)
-    (* let ram_out = display_rom i.clock column_index.value in *)
-    let ram_out = display_rom ~index:column_index.value in
-
-    (* Intantiate the screen SPI controller *)
+    (* Instantiate the screen SPI controller *)
     let screen_spi = MyScreen.hierarchical scope (
-      MyScreen.I.{ clock = i.clock; reset = i.i_reset; data_in = ram_out }
+      MyScreen.I.{ clock = i.clock; reset = i.i_reset; data_in = current_data }
     ) in
 
+    (* Logic for SPI "done" signal - Assuming the SPI controller has a way to signal completion.
+       If your screen_spi doesn't have a 'done' output, you would typically add one. *)
+    let spi_done = wire 1 in (* Placeholder: replace with actual 'done' signal if available *)
+
     compile [
-    state.switch [
-      IDLE, [
-          state.set_next SEND_CMD;
-          cmd_idx <--. 0;
-      ];
-      SEND_CMD, [
-        (* Logic to load init_cmds[cmd_idx] into an SPI shifter *)
-        dc_reg <-- gnd; 
-        state.set_next WAIT_SPI;
-      ];
-      WAIT_SPI_CMD, [
-        (* Wait for SPI module 'done' signal *)
-        if_ (cmd_idx.value ==:. (Array.length init_cmds - 1)) [
-          state.set_next SEND_DATA;
-        ] [
-          cmd_idx <-- (cmd_idx.value +:. 1);
-          state.set_next SEND_CMD;
-        ]
-      ];
-      SEND_DATA, [];
-      WAIT_SPI_DATA, [];
-    ]
-  ];
-    (* The program block with a call to [compile]. *)
+      sm.switch [
+        INIT, [
+          cmd_idx   <--. 0;
+          data_idx  <--. 0;
+          sm.set_next SEND_CMD;
+        ];
+        
+        SEND_CMD, [
+          dc_reg $== gnd;
+          current_data <-- (command_rom cmd_idx);
+          sm.set_next WAIT_SPI_CMD;
+        ];
+        
+        WAIT_SPI_CMD, [
+          if_ spi_done [
+            if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
+              sm.set_next SEND_DATA;
+            ] [
+              cmd_idx <--. cmd_idx.value +:. 1;
+              sm.set_next SEND_CMD;
+            ]
+          ]
+        ];
+        
+        SEND_DATA, [
+          dc_reg $== vdd;
+          sm.set_next WAIT_SPI_DATA;
+        ];
+        
+        WAIT_SPI_DATA, [
+          if_ spi_done [
+            if_ (data_idx.value ==:. (128 * 8 - 1)) [
+              sm.set_next INIT; (* Loop back or go to IDLE *)
+            ] [
+              data_idx <--. data_idx.value +:. 1;
+              sm.set_next SEND_DATA;
+            ]
+          ]
+        ];
+      ]
+    ];
     
-    { O.o_sclk = screen_spi.sclk
-    ; O.o_sdin = screen_spi.mosi
-    ; O.o_cs = screen_spi.cs
-    ; O.o_dc = screen_spi.dc
-    ; O.o_reset = zero 1
+    { O.o_sclk  = screen_spi.sclk
+    ; O.o_sdin  = screen_spi.mosi
+    ; O.o_cs    = screen_spi.cs
+    ; O.o_dc    = dc_reg.value
+    ; O.o_reset = ~: (i.i_reset) (* Standard active-low reset for screens *)
     }
 
 end
