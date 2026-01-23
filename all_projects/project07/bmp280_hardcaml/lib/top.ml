@@ -17,7 +17,7 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { leds : 'a[@bits 6]
-      ; i2c 'a
+      ; i2c : 'a
       }
     [@@deriving hardcaml]
   end
@@ -32,7 +32,7 @@ module Make (X : Config.S) = struct
                        ~f:(fun d -> mux2 (d ==:. wait_time) (zero 32) (d +:. 1)) in
 
     let i2c_master = MyI2c_master.hierarchical scope (
-	     MyI2c_masterI.{ reset=input.reset; clock=input.clock; color=current_color }) in
+	     MyI2c_masterI.{ reset=input.reset; clock=input.clock }) in
     (* Return circuit output value *)
     { O.leds = zero 6; O.i2c_master = i2c_master.data }  (* Placeholder for actual LED output *)
 
