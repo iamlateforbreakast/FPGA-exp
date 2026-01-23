@@ -1,7 +1,11 @@
 (* i2c_master.ml *)
 open Hardcaml
 open Signal
-
+input clk, rst_n,
+    input [6:0] addr, [7:0] reg_addr, [7:0] din,
+    input rw, start,
+    output reg [7:0] dout, output reg done, ack_error,
+    inout sda, output scl
 module type Config = Config.S
 
 module Make (X : Config.S) = struct
@@ -10,14 +14,20 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a
       ; reset : 'a
+	  ; addr : 'a[@bits 6]
+	  ; reg_addr : 'a[@bits 6]
+	  ; din : 'a
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { sclk : 'a
-      ; i2c 'a
+      { scl : 'a
+      ; sda : 'a
+	  ; done : 'a
+	  ; ack_error : 'a
+	  ; dout : 'a[@bits76]
       }
     [@@deriving hardcaml]
   end
