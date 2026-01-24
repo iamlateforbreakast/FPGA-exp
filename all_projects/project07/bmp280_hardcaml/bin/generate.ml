@@ -4,6 +4,7 @@ open Project07_lib
 
 module My_config = struct
   let clk_fre = 27_000_000
+  let i2c_address = 0x76
   let is_simulation = false
 end
 

@@ -29,19 +29,24 @@ module Make (X : Config.S) = struct
     [@@deriving hardcaml]
   end
 
+  module States = struct
+    type t = INIT | SEND_CONFIG | WAIT_CONFIG | READ_DATA | WAIT_DATA
+    [@@deriving sexp_of, compare, enumerate]
+  end
+
   module MyI2c_master = I2c_master.Make(X)
 	
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
 	  let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
+    let sm = State_machine.create (module States) sync_spec ~enable:vdd in
     (*
     reg [3:0] state;
     reg start;
     wire done;
     reg [7:0] reg_addr, wdata;
     *)
-    let state = Variable.reg ~enable:vdd sync_spec ~width:4 in
     let start = Variable.reg ~enable:vdd sync_spec ~width:1 in
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
     let wdata = Variable.reg ~enable:vdd sync_spec ~width:8 in
@@ -49,13 +54,15 @@ module Make (X : Config.S) = struct
     let i2c_master = MyI2c_master.hierarchical _scope (
 	     MyI2c_master.I.{ reset=input.reset
                       ; clock=input.clock
-                      ; addr=input.addr
-                      ; reg_addr=reg_addr
-                      ; din=wdata
-                      ; start=start }) in
+                      ; addr=of_int ~width:8 X.i2c_address
+                      ; reg_addr=reg_addr.value
+                      ; din=wdata.value
+                      ; rw=one 1  (* 1 for write, 0 for read *)
+                      ; start=start.value 
+                      ; sda_in = zero 1 }) in
 
     compile [
-      state.switch [
+      sm.switch [
         0, [
           reg_addr <--. 0xF4;
           wdata    <--. 0x27;
