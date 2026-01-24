@@ -22,7 +22,9 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { leds : 'a[@bits 6]
-      ; i2c : 'a
+      ; scl : 'a
+      ; sda : 'a
+      ; output : 'a[@bits 20]
       }
     [@@deriving hardcaml]
   end
@@ -45,8 +47,33 @@ module Make (X : Config.S) = struct
     let wdata = Variable.reg ~enable:vdd sync_spec ~width:8 in
 
     let i2c_master = MyI2c_master.hierarchical _scope (
-	     MyI2c_master.I.{ reset=input.reset; clock=input.clock }) in
+	     MyI2c_master.I.{ reset=input.reset
+                      ; clock=input.clock
+                      ; addr=input.addr
+                      ; reg_addr=reg_addr
+                      ; din=wdata
+                      ; start=start }) in
 
+    compile [
+      state.switch [
+        0, [
+          reg_addr <--. 0xF4;
+          wdata    <--. 0x27;
+          start    <--. 1;
+          if_ i2c_master.ready [
+            state.set_next 1;
+          ][]
+        ];
+        1, [
+          reg_addr <--. 0xF7;  (* Pressure MSB *)
+          start    <--. 1;
+          if_ i2c_master.ready [
+            state.set_next 2;
+          ][]
+        ];
+        (* Continue sequencing through all 6 data registers *)
+      ]
+    ];
     (*
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) state <= 0;
@@ -65,7 +92,11 @@ module Make (X : Config.S) = struct
     *)
 
     (* Return circuit output value *)
-    { O.leds = zero 6; O.i2c_master = i2c_master.data }  (* Placeholder for actual LED output *)
+    { O.leds = zero 6
+    ; O.output = i2c_master.dout
+    ; O.scl = i2c_master.scl 
+    ; O.sda = i2c_master.data 
+    } 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
