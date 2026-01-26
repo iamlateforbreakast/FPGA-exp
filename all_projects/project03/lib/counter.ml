@@ -31,6 +31,6 @@ let create (i : _ I.t) =
                        ~width: 6
                        ~f:(fun d -> 
                         mux2 (clk_counter ==:. wait_time) (d +:. 1) d) in
-  { O.leds = ~:led_counter 
+  { O.leds = led_counter 
   }
  
