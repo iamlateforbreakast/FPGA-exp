@@ -25,6 +25,7 @@ module Make (X : Config.S) = struct
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let leds = MyLeds.hierarchical scope (
 	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
+    let _ = Signal.(leds.leds -- "dbg_leds") in
     (* Return circuit output value *)
     { O.leds = leds.leds }
 

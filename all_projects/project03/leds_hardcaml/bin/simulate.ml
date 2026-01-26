@@ -5,7 +5,7 @@ open Hardcaml_waveterm
 open Project03_lib
 
 module My_config = struct
-  let clk_fre = 27
+  let clk_fre = 5
   
   let pattern = [ 0x01; 0x02; 0x04; 0x08; 0x10; 0x20] 
   let is_simulation = true
