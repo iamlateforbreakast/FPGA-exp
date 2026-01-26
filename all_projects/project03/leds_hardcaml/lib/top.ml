@@ -1,5 +1,6 @@
 (* top.ml *)
 open Hardcaml
+open Signal
 
 module type Config = Config.S
 
@@ -27,7 +28,7 @@ module Make (X : Config.S) = struct
 	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
     let _ = Signal.(leds.leds -- "dbg_leds") in
     (* Return circuit output value *)
-    { O.leds = leds.leds }
+    { O.leds = (~:(leds.leds)) }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

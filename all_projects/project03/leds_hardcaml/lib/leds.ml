@@ -37,7 +37,7 @@ module Make (X : Config) = struct
                        ~width: 6
                        ~f:(fun d -> 
                         mux2 (clk_counter ==:. X.clk_fre) 
-                        (mux2 (d ==:. List.length X.pattern)(zero 6)(d +:. 1)) d) in
+                        (mux2 (d ==:. (List.length X.pattern - 1))(zero 6)(d +:. 1)) d) in
     let _ = Signal.(clk_counter -- "dbg_clk_counter") in
     let _ = Signal.(led_counter -- "dbg_led_counter") in
     { O.leds = pattern_rom ~index:led_counter
