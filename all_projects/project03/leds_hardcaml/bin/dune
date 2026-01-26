@@ -4,3 +4,9 @@
  (modules generate)
  (libraries project03_lib hardcaml)
  (preprocess (pps ppx_jane ppx_hardcaml)))
+ 
+(executable
+ (name simulate)
+ (modules simulate)
+ (libraries project03_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
