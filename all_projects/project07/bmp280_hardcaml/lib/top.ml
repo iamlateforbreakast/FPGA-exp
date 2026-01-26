@@ -54,7 +54,7 @@ module Make (X : Config.S) = struct
     let i2c_master = MyI2c_master.hierarchical _scope (
 	     MyI2c_master.I.{ reset=input.reset
                       ; clock=input.clock
-                      ; addr=of_int ~width:8 X.i2c_address
+                      ; addr=of_int ~width:7 X.i2c_address
                       ; reg_addr=reg_addr.value
                       ; din=wdata.value
                       ; rw=one 1  (* 1 for write, 0 for read *)
@@ -63,19 +63,19 @@ module Make (X : Config.S) = struct
 
     compile [
       sm.switch [
-        0, [
+        States.INIT, [
           reg_addr <--. 0xF4;
           wdata    <--. 0x27;
           start    <--. 1;
           if_ i2c_master.ready [
-            state.set_next 1;
+            sm.set_next States.SEND_CONFIG;
           ][]
         ];
-        1, [
+        States.SEND_CONFIG, [
           reg_addr <--. 0xF7;  (* Pressure MSB *)
           start    <--. 1;
           if_ i2c_master.ready [
-            state.set_next 2;
+            sm.set_next States.READ_DATA;
           ][]
         ];
         (* Continue sequencing through all 6 data registers *)
@@ -102,7 +102,7 @@ module Make (X : Config.S) = struct
     { O.leds = zero 6
     ; O.output = i2c_master.dout
     ; O.scl = i2c_master.scl 
-    ; O.sda = i2c_master.data 
+    ; O.sda = i2c_master.sda_out
     } 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =

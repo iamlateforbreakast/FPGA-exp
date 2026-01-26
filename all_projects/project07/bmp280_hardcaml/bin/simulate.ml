@@ -2,7 +2,7 @@
 
 open Hardcaml
 open Hardcaml_waveterm
-open Project04_lib
+open Project07_lib
 
 module My_config = struct
   let clk_fre = 27

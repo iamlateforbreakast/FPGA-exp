@@ -1,5 +1,5 @@
 (library
   (name project07_lib)
-  (modules config_intf config top i2c_master)
+  (modules config_intf config top i2c_master gowin_iobuf)
   (libraries hardcaml)
   (preprocess (pps ppx_jane ppx_hardcaml)))
