@@ -1,9 +1,10 @@
 (* generate.ml *)
 open Hardcaml
-open Project02_lib
+open Project03_lib
 
 module My_config = struct
   let clk_fre = 27_000_000
+  let pattern = [ 0x20; 0x10; 0x08; 0x04; 0x02; 0x01 ]
   let is_simulation = false
 end
 
