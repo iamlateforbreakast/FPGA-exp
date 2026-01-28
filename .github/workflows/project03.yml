@@ -23,12 +23,12 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
       - name: Install Hardcaml and dependencies
         # Use working-directory to ensure correct path
-        working-directory: all_projects/project03/led_hardcaml
+        working-directory: all_projects/project03/leds_hardcaml
         run: |
           # Install dependencies required by the .opam file
           # opam install . --deps-only --with-test
           opam install dune hardcaml ppx_hardcaml hardcaml_waveterm
       - name: Generate Verilog
         # Use working-directory to ensure correct path
-        working-directory: all_projects/project03/led_hardcaml
+        working-directory: all_projects/project03/leds_hardcaml
         run: opam exec -- dune build 
