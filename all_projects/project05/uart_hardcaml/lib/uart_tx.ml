@@ -43,12 +43,14 @@ module Make (X : Config.S) = struct
     let clk_cnt = Always.Variable.reg sync_spec ~enable:vdd ~width:16 in
     let tx_reg  = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
     let tx_pin  = Always.Variable.wire ~default:vdd in
-    let ready   = Always.Variable.wire ~default:gnd in
-
+    (* let ready   = Always.Variable.wire ~default:gnd in *)
+    let ready = sm.is S_IDLE in
+    
     (* Debug *)
     let _ = Signal.(bit_cnt.value -- "bit_cnt") in
     let _ = Signal.(clk_cnt.value -- "clk_cnt") in
     let _ = Signal.(tx_reg.value -- "tx_reg") in
+    let _ = Signal.(ready.value -- "ready") in
     let _ = Signal.(sm.current -- "state") in
     
     Always.(compile [
