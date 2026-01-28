@@ -64,34 +64,40 @@ module Make (X : Config.S) = struct
     Always.(compile [
       sm.switch [
         IDLE, [
+          tx_cnt <-- zero 8;
+          tx_data_valid <-- gnd;
           sm.set_next SEND;
         ];
+
         SEND, [
-          wait_cnt <-- zero 32;
           tx_data <-- tx_str;
-          if_ (tx_data_valid.value &: tx_data_ready) [
+          (* 1. Drive valid high immediately in this state *)
+          tx_data_valid <-- vdd; 
+
+          (* 2. Wait for the UART core to acknowledge the data *)
+          if_ (tx_data_ready) [
+            (* Character accepted! Move to next or finish *)
             if_ (tx_cnt.value <:. (data_num - 1)) [
               tx_cnt <-- tx_cnt.value +:. 1;
+              (* Stay in SEND to pulse valid for the next character *)
             ] [
               tx_cnt <-- zero 8;
               tx_data_valid <-- gnd;
               sm.set_next WAIT;
             ];
-          ] [
-            if_ (~: (tx_data_valid.value)) [
-              tx_data_valid <-- vdd;
-            ] [];
-          ];
+          ] [];
         ];
+
         WAIT, [
           wait_cnt <-- wait_cnt.value +:. 1;
+          (* Wait for 1 second before repeating the message *)
           if_ (wait_cnt.value >=: (of_int ~width:32 X.clk_fre)) [
+            wait_cnt <-- zero 32;
             sm.set_next SEND;
           ] [];
         ];
       ];
-    ];
-    );
+    ]);
 
     { O.uart_tx = uart_tx.pin }
 
