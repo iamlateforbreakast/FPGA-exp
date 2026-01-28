@@ -37,8 +37,6 @@ module Make (X : Config.S) = struct
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
 	  (* Constants *)
-    let _wait_time  = if (X.is_simulation = false) then 1
-	                   else (X.clk_fre / X.repeat_fre) - 1 in
     let data_num = String.length X.message in
 
     (* Registers and State *)
@@ -52,7 +50,7 @@ module Make (X : Config.S) = struct
     (* Instanciate UART TX *)
     let uart_tx = MyUart_tx.hierarchical scope (
       MyUart_tx.I.{ clock = input.clock
-                  ; resetn = (~:(input.reset))
+                  ; reset = input.reset
                   ; data = tx_data.value
                   ; data_valid = tx_data_valid.value
                   } 

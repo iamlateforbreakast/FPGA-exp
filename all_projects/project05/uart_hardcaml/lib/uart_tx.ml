@@ -10,7 +10,7 @@ module Make (X : Config.S) = struct
   module I = struct
     type 'a t =
       { clock : 'a
-      ; resetn : 'a
+      ; reset : 'a
       ; data : 'a [@bits 8]
       ; data_valid : 'a
       } 
@@ -32,7 +32,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.resetn () in
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
     
     (* Constants: Tang Nano 20K @ 27MHz, 115200 Baud *)
     let clks_per_bit = X.uart_fre / X.baud_rate in
