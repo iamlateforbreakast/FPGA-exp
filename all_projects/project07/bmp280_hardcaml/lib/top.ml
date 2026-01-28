@@ -60,7 +60,17 @@ module Make (X : Config.S) = struct
                       ; rw=one 1  (* 1 for write, 0 for read *)
                       ; start=start.value 
                       ; sda_in = zero 1 }) in
+					  
+    let sda_i = wire 1 in
+    let sda_o = Always.Variable.wire ~default:gnd in
+    let sda_oe = Always.Variable.wire ~default:gnd in
 
+	(* Instantiate the IOBUF for SDA *)
+    let iobuf_res = Instantiation.create ~name:"IOBUF" ~scope
+      ~inputs:[("I", sda_o.value); ("OEN", ~: (sda_oe.value))]
+      ~outputs:[("O", 1)] () in
+    sda_i <== (Map.find_exn iobuf_res "O");
+	
     compile [
       sm.switch [
         States.INIT, [
