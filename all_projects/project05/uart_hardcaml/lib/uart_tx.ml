@@ -98,7 +98,7 @@ module Make (X : Config.S) = struct
       ];
     ];);
 
-    { O.pin = tx_pin.value; data_ready = ready.value }
+    { O.pin = tx_pin.value; data_ready = ready }
   
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
