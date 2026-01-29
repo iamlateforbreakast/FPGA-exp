@@ -55,7 +55,6 @@ module Make (X : Config.S) = struct
     Always.(compile [
       sm.switch [
         S_IDLE, [
-          ready <-- vdd;
           clk_cnt <-- zero 16;
           bit_cnt <-- zero 3;
           if_ input.data_valid [
