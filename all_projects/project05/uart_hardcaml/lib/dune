@@ -1,5 +1,5 @@
 (library
   (name project05_lib)
-  (modules config_intf config top uart_tx)
+  (modules config_intf config top uart_tx leds)
   (libraries hardcaml)
   (preprocess (pps ppx_jane ppx_hardcaml)))
