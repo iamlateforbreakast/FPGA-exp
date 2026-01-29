@@ -6,8 +6,8 @@ open Project05_lib
 
 module My_config = struct
   let clk_fre = 27_000_000 (* Hz *)
-  let uart_fre = 50_000_000 (* Hz *)
-  let baud_rate = 10_000_000 (* 5 *)
+  let uart_fre = 27_000_000 (* Hz *)
+  let baud_rate = 2_700_000 (* 5 *)
   let repeat_fre = 1 (* Hz *)
   let message = "Hello world!\n"
   let pattern = [ 0x20; 0x10; 0x08; 0x04; 0x02; 0x01; 0x02; 0x04; 0x08; 0x10 ]
