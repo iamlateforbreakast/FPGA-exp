@@ -17,6 +17,7 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { uart_tx : 'a
+	  ; leds : 'a[@bits 6]
       }
     [@@deriving hardcaml]
   end
@@ -56,6 +57,10 @@ module Make (X : Config.S) = struct
                   } 
     )
     in
+    (* Instanciate leds *)
+	let leds = MyLeds.hierarchical scope (
+	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
+	
     (* Combinational logic for tx_str (ROM lookup) *)
     let tx_str = message_rom ~index:tx_cnt.value in
     let tx_data_ready = uart_tx.data_ready in
@@ -99,7 +104,7 @@ module Make (X : Config.S) = struct
       ];
     ]);
 
-    { O.uart_tx = uart_tx.pin }
+    { O.uart_tx = uart_tx.pin; leds = leds.leds }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
