@@ -50,7 +50,6 @@ module Make (X : Config.S) = struct
     let _ = Signal.(bit_cnt.value -- "bit_cnt") in
     let _ = Signal.(clk_cnt.value -- "clk_cnt") in
     let _ = Signal.(tx_reg.value -- "tx_reg") in
-    let _ = Signal.(ready.value -- "ready") in
     let _ = Signal.(sm.current -- "state") in
     
     Always.(compile [
