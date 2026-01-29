@@ -1,7 +1,9 @@
 name: Project06
 run-name: ${{ github.actor }} is generating the Verilog files. 🚀
 
-on: [push]
+on:
+  push:
+    paths: 'all_projects/project06/**' # Triggers only if update is project06
 
 jobs:
   Project06-Build-And-Generate:
