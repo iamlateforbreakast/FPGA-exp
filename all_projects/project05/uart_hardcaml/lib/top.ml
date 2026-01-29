@@ -23,6 +23,7 @@ module Make (X : Config.S) = struct
   end
   
   module MyUart_tx = Uart_tx.Make(X)
+  module MyLeds = Leds.Make(X)
 
   module State = struct
     type t = IDLE | SEND | WAIT [@@deriving sexp_of, enumerate, compare]
@@ -104,7 +105,7 @@ module Make (X : Config.S) = struct
       ];
     ]);
 
-    { O.uart_tx = uart_tx.pin; leds = leds.leds }
+    { O.uart_tx = uart_tx.pin; O.leds = (~:(leds.leds)) }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
