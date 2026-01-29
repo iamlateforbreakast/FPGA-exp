@@ -8,6 +8,7 @@ module My_config = struct
   let baud_rate = 115_200
   let message = "Hello world!\n"
   let repeat_fre = 1 (* Hz *)
+  let pattern = [ 0x20; 0x10; 0x08; 0x04; 0x02; 0x01; 0x02; 0x04; 0x08; 0x10 ]
   let is_simulation = false
 end
 
