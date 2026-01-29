@@ -4,6 +4,7 @@ module type S = sig
   val baud_rate : int
   val message : string
   val repeat_fre : int
+  val pattern : int list
   val is_simulation : bool
 end
 
