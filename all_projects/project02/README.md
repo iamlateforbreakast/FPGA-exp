@@ -1,3 +1,7 @@
+# Generate bitstream for Nano tang 20k using a full opwn source toolchain
+
+The goal of this project is to succesfully demonstrate the use of an open source toolchain to generate a simple bitstream on a Windows 11 computer using WSL Fedora 42.
+
 Install FTDI USB driver:
 ------------------------
 In theory, Windows 11 should recognise the Tang nano 20k board and expose the 2 serial communication ports. I had to install the drivers from Future tech to proceed.
