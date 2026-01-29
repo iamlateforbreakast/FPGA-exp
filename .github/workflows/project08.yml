@@ -1,7 +1,9 @@
 name: Project08
 run-name: ${{ github.actor }} is generating the Verilog files. 🚀
 
-on: [push]
+on:
+  push:
+    paths: 'all_projects/project08/**' # Triggers only if update is project08
 
 jobs:
   Project8-Build-And-Generate:
