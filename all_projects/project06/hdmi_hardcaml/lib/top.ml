@@ -40,9 +40,31 @@ module Make (X : Config.S) = struct
   module MyDvi_tx = Dvi_tx.Make(X)
   module MyLeds = Leds.Make(X)
 
+  let clkdiv ~div_mode ~hclkin ~resetn ~calib =
+    Instantiation.create
+      ()
+      ~name:"CLKDIV" (* Must match the Gowin primitive name *)
+      ~parameters:[ "DIV_MODE", Param_string div_mode ]
+      ~inputs:[
+        "HCLKIN", hclkin;
+        "RESETN", resetn;
+        "CALIB",  calib;
+      ]
+      ~outputs:[ "CLKOUT", 1 ]
+    |> fun outputs -> Map.find_exn outputs "CLKOUT"
+  
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
+    (* Instanciate the CLKDIV primitive *)
+	let my_clock_logic ~hclk ~res =
+      let divided_clk = clkdiv 
+        ~div_mode:"5" 
+        ~hclkin:hclk 
+        ~resetn:res 
+        ~calib:gnd (* Tie CALIB to ground if unused *)
+    in
+  
     (* Instanciate UART TX *)
     let dvi_tx = MyDvi_tx.hierarchical scope (
       MyDvi_tx.I.{ clock = input.clock
