@@ -54,14 +54,12 @@ module Make (X : Config.S) = struct
     |> fun outputs -> Map.find_exn outputs "CLKOUT"
   
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
     (* Instanciate the CLKDIV primitive *)
-	let my_clock_logic ~hclk ~res =
-      let divided_clk = clkdiv 
+	  let pixel_clk = clkdiv 
         ~div_mode:"5" 
-        ~hclkin:hclk 
-        ~resetn:res 
+        ~hclkin:input.clock
+        ~resetn:input.reset
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
@@ -75,7 +73,7 @@ module Make (X : Config.S) = struct
 	  let leds = MyLeds.hierarchical scope (
 	    MyLeds.I.{ reset=input.reset; clock=input.clock }) in
 
-    { O.tmds_clk_p = zero 1; tmds_clk_p = zero 3; uart_tx.pin; O.leds = (~:(leds.leds)) }
+    { O.tmds_clk_p = zero 1; tmds_data_p = zero 3; O.leds = (~:(leds.leds)) }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
