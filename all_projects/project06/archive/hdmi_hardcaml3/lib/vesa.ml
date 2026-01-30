@@ -20,6 +20,7 @@ module Make (X : Config) = struct
       ; o_vsync :    'a [@bits 1]
       ; o_hsync :    'a [@bits 1]
       ; o_data_en : 'a [@bits 1]
+      ; o_debug : 'a [@bits 12]
       }
     [@@deriving hardcaml]
   end
@@ -45,16 +46,17 @@ module Make (X : Config) = struct
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
     (* col_counter from 0 to h_total_time - 1 *)
     let col_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
-      ~f:(fun c -> mux2 (c >=:. h_total_time) (zero 12) (c +:. 1)) in
+      ~f:(fun c -> mux2 (c >=:. (h_total_time - 1))(zero 12)(c +:. 1)) in
     let _dbg_col_counter = Signal.(col_counter -- "dbg_col_counter") in
     (* row_counter from 0 to v_total_time - 1 *)
 
-    let last_column = col_counter >=:. (h_total_time - 1) in
+    let last_column = col_counter ==:. (h_total_time - 1) in
     let row_counter = reg_fb reg_sync_spec ~enable:vdd ~width:12
       ~f:(fun c -> mux2 (last_column &: (c >=:. (v_total_time - 1))) (zero 12)
                      (mux2 (last_column) (c +:. 1) c)) in
     let _dbg_row_counter = Signal.(row_counter -- "dbg_row_counter") in
-    let col_addr_int = col_counter -:. (h_sync_time + h_bporch_time + h_lborder_time ) in
+    (* let col_addr_int = col_counter -:. (h_sync_time + h_bporch_time + h_lborder_time ) in *)
+    let col_addr_int = col_counter -:. ( h_sync_time + h_bporch_time + h_lborder_time) in
     let _dbg_col_addr_int = Signal.(col_addr_int -- "dbg_col_addr_int") in
     let row_addr_int = row_counter -:. (v_sync_time + v_bporch_time + v_tborder_time ) in
     let _dbg_row_addr_int = Signal.(row_addr_int -- "dbg_row_addr_int") in
@@ -80,7 +82,7 @@ module Make (X : Config) = struct
     let data_en = v_en &: h_en in
 
     (* row <= row_addr_int[10:0]; *)
-    {O.o_column = column; O.o_row = row; o_vsync = vsync; o_hsync = hsync; o_data_en = data_en}
+    {O.o_column = column; O.o_row = row; o_vsync = vsync; o_hsync = hsync; o_data_en = data_en; o_debug = col_addr_int}
 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =

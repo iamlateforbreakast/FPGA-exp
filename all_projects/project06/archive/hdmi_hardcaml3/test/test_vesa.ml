@@ -19,18 +19,22 @@ let testbench () =
   let sim = Simulator.create (MyVesa.create scope) in
   let inputs : _ MyVesa.I.t = Cyclesim.inputs sim in
   let outputs : _ MyVesa.O.t = Cyclesim.outputs sim in
+  let _v = Cyclesim.lookup_reg_by_name sim "row_counter" in
   let step () =
     inputs.i_resetn := Bits.vdd;
-    Printf.printf "o_column=%i o_row=%i o_vsync=%i o_hsync=%i o_data_en=%i\n"
+    Printf.printf "o_column=%i o_row=%i o_vsync=%i o_hsync=%i o_data_en=%i o_debug=%i\n"
       (Bits.to_int !(outputs.o_column))
       (Bits.to_int !(outputs.o_row))
       (Bits.to_int !(outputs.o_vsync))
       (Bits.to_int !(outputs.o_hsync))
-      (Bits.to_int !(outputs.o_data_en));
+      (Bits.to_int !(outputs.o_data_en))
+      (Bits.to_int !(outputs.o_debug));
   in
-  for _cycle = 0 to 1000 do
-    Cyclesim.cycle sim;
-    step();
+  for _row = 0 to 1 do
+    for _column = 0 to 1649 do
+      Cyclesim.cycle sim;
+      step();
+    done;
   done;;
 
 (*let _ = testbench () in Printf.printf "Done\n"*)
