@@ -30,22 +30,23 @@ module Make (X : Config.S) = struct
     type 'a t =
       { tmds_clk_p : 'a
       ; tmds_data_p : 'a[@bits 3]
-	    ; leds : 'a[@bits 6]
+	  ; leds : 'a[@bits 6]
       }
     [@@deriving hardcaml]
   end
-  
+
+  module MyPattern = Test_pattern.Make(X)
+  module MyKey = Key_user_ctrl.Make(X)
+  module MyDvi_tx = Dvi_tx.Make(X)
   module MyLeds = Leds.Make(X)
 
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
     (* Instanciate UART TX *)
-    let uart_tx = MyUart_tx.hierarchical scope (
-      MyUart_tx.I.{ clock = input.clock
+    let dvi_tx = MyDvi_tx.hierarchical scope (
+      MyDvi_tx.I.{ clock = input.clock
                   ; reset = input.reset
-                  ; data = tx_data.value
-                  ; data_valid = tx_data_valid.value
                   })
     in
     (* Instanciate leds *)
