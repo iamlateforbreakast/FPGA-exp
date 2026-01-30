@@ -1,0 +1,11 @@
+(lang dune 3.16)
+
+(name project06)
+
+(generate_opam_files true)
+
+(package
+  (name project06)
+  (synopsis "A simple demo of DVI TX")
+  (description "Display a pattern on 640x480 DVI")
+  )
