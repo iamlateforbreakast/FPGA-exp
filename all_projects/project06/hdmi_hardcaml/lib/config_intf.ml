@@ -10,7 +10,6 @@ module type S = sig
   val v_bporch: int
   val hs_pol   : bool
   val vs_pol   : bool
-  val h_total : int
   val is_simulation : bool
   val pattern : int list
 end
@@ -18,3 +17,4 @@ end
 module type Config = sig
   module type S = S
 end
+

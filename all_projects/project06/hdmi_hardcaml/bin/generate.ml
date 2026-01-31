@@ -14,7 +14,6 @@ module My_config = struct
   let v_bporch = 5
   let hs_pol   = false
   let vs_pol   = false
-  let h_total  = 1440
   let is_simulation = false
   let pattern = [0;1;2;3;4;5;6;7]
 end
