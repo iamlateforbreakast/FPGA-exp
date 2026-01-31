@@ -42,8 +42,8 @@ module Make (X : Config.S) = struct
       ((h_cnt >=: (X.h_sync +: X.h_bporch)) &: (h_cnt <=: (X.h_sync +: X.h_bporch +: X.h_res -:. 1))) &:
       ((v_cnt >=: (X.v_sync +: X.v_bporch)) &: (v_cnt <=: (X.v_sync +: X.v_bporch +: X.v_res -:. 1)))
     in
-    let hs_w = ~: ((h_cnt >=: zero 12) &: (h_cnt <=: i.h_sync -:. 1)) in
-    let vs_w = ~: ((v_cnt >=: zero 12) &: (v_cnt <=: i.v_sync -:. 1)) in
+    let hs_w = ~: ((h_cnt >=: zero 12) &: (h_cnt <=: X.h_sync -:. 1)) in
+    let vs_w = ~: ((v_cnt >=: zero 12) &: (v_cnt <=: X.v_sync -:. 1)) in
 
     (* Pipeline Delays (N=5) *)
     let de_dn = pipeline spec ~n:5 de_w in
@@ -60,17 +60,17 @@ module Make (X : Config.S) = struct
     (* --- Pattern Logic (Example: Color Bar) --- *)
     let color_trig_num = always_fb ~width:12 ~f:(fun curr ->
       let de_active = pipeline spec ~n:1 de_w in
-      mux2 (~~ de_active) (select i.h_res 11 3 @: zero 3) curr (* Simplified scaling *)) spec
+      mux2 (~~ de_active) (select X.h_res 11 3 @: zero 3) curr (* Simplified scaling *)) spec
     in
 
     (* --- Output Assignment --- *)
     { O.
       de = de_dn;
-      hs = mux2 i.hs_pol (~~ hs_dn) hs_dn;
-      vs = mux2 i.vs_pol (~~ vs_dn) vs_dn;
-      data_r = i.single_r; (* Logic for mode selection omitted for brevity *)
-      data_g = i.single_g;
-      data_b = i.single_b;
+      hs = mux2 X.hs_pol (~~ hs_dn) hs_dn;
+      vs = mux2 X.vs_pol (~~ vs_dn) vs_dn;
+      data_r = X.single_r; (* Logic for mode selection omitted for brevity *)
+      data_g = X.single_g;
+      data_b = X.single_b;
     }
 end
 

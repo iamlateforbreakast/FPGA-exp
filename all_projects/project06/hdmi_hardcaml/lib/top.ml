@@ -41,6 +41,7 @@ module Make (X : Config.S) = struct
   module MyLeds = Leds.Make(X)
 
   let clkdiv ~div_mode ~hclkin ~resetn ~calib =
+    let _ = X.clk_fre in
     Instantiation.create
       ()
       ~name:"CLKDIV" (* Must match the Gowin primitive name *)
