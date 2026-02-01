@@ -33,6 +33,11 @@ module Make (X : Config.S) = struct
     let v_bporch = of_int ~width:12 X.v_bporch in
     let h_res = of_int ~width:12 X.h_res in
     let v_res = of_int ~width:12 X.v_res in
+    let single_r = of_int ~width:8 255 in
+    let single_g = of_int ~width:8 0 in
+    let single_b = of_int ~width:8 0 in
+    let vs_pol = of_bool X.vs_pol in
+    let hs_pol = of_bool X.hs_pol in
 
     (* --- Counters --- *)
     let h_cnt = reg_fb spec ~width:12 ~f:(fun current ->
@@ -59,26 +64,20 @@ module Make (X : Config.S) = struct
     let vs_dn = pipeline spec ~n:5 vs_w in
 
     (* --- Display Area Counters --- *)
-    let de_pos = (~~ (msb (pipeline spec ~n:1 de_w))) &: de_w in (* Simplified edge detect *)
+    let de_pos = (~:(msb (pipeline spec ~n:1 de_w))) &: de_w in (* Simplified edge detect *)
     
-    let de_hcnt = reg_fb spec ~width:12 ~f:(fun curr ->
+    let _de_hcnt = reg_fb spec ~width:12 ~f:(fun curr ->
       mux2 de_pos (zero 12) (mux2 (pipeline spec ~n:1 de_w) (curr +:. 1) curr))
-    in
-
-    (* --- Pattern Logic (Example: Color Bar) --- *)
-    let color_trig_num = reg_fb spec~width:12 ~f:(fun curr ->
-      let de_active = pipeline spec ~n:1 de_w in
-      mux2 (~~ de_active) (select h_res 11 3 @: zero 3) curr (* Simplified scaling *))
     in
 
     (* --- Output Assignment --- *)
     { O.
       de = de_dn;
-      hs = mux2 X.hs_pol (~~ hs_dn) hs_dn;
-      vs = mux2 X.vs_pol (~~ vs_dn) vs_dn;
-      data_r = X.single_r; (* Logic for mode selection omitted for brevity *)
-      data_g = X.single_g;
-      data_b = X.single_b;
+      hs = mux2 hs_pol (~:hs_dn) hs_dn;
+      vs = mux2 vs_pol (~:vs_dn) vs_dn;
+      data_r = single_r; (* Logic for mode selection omitted for brevity *)
+      data_g = single_g;
+      data_b = single_b;
     }
 end
 
