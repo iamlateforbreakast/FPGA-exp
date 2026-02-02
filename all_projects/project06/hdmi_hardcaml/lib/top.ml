@@ -1,4 +1,5 @@
 (* top.ml *)
+open Base
 open Hardcaml
 open Signal
 
@@ -38,21 +39,29 @@ module Make (X : Config.S) = struct
   module MyPattern = Test_pattern.Make(X)
   module MyKey = Key_user_ctrl.Make(X)
   module MyDvi_tx = Dvi_tx.Make(X)
+  module MyDvi_encoder = Dvi_encoder.Make(X)
   module MyLeds = Leds.Make(X)
 
   let clkdiv ~div_mode ~hclkin ~resetn ~calib =
     let _ = X.clk_fre in
-    Instantiation.create
-      ()
-      ~name:"CLKDIV" (* Must match the Gowin primitive name *)
-      ~parameters:[ "DIV_MODE", Param_string div_mode ]
-      ~inputs:[
-        "HCLKIN", hclkin;
-        "RESETN", resetn;
-        "CALIB",  calib;
-      ]
-      ~outputs:[ "CLKOUT", 1 ]
-    |> fun outputs -> Map.find_exn outputs "CLKOUT"
+    let parameters = 
+      List.map
+      ~f:(fun (name, value) -> Parameter.create ~name ~value)
+        [
+          "DIV_MODE", Parameter.Value.Int div_mode;  (* Clock Divider *)
+           "GSREN", Parameter.Value.Bool false;  (* Global Set/Reset Enable *)
+        ] in
+      Instantiation.create
+        ()
+        ~name:"CLKDIV" (* Must match the Gowin primitive name *)
+        ~parameters:parameters
+        ~inputs:[
+          "HCLKIN", hclkin;
+          "RESETN", resetn;
+          "CALIB",  calib;
+        ]
+        ~outputs:[ "CLKOUT", 1 ]
+      |> fun outputs -> Map.find_exn outputs "CLKOUT"
   
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
 
@@ -64,6 +73,11 @@ module Make (X : Config.S) = struct
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
+    let dvi_encoder = MyDvi_encoder.hierarchical scope (
+      MyDvi_encoder.I.{ pixel_clk = pixel_clk
+                       ; reset = input.reset
+                       })
+    in
     (* Instanciate UART TX *)
     let dvi_tx = MyDvi_tx.hierarchical scope (
       MyDvi_tx.I.{ clock = input.clock
