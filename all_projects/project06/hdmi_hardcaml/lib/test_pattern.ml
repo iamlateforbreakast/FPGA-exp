@@ -23,7 +23,7 @@ module Make (X : Config.S) = struct
     } [@@deriving sexp_of, hardcaml]
   end
 
-  let create (i : Signal.t I.t) =
+  let create (_scope : Scope.t) (i : Signal.t I.t) =
     let spec = Reg_spec.create ~clock:i.pxl_clk ~clear:i.rst_n () in
     let h_total = of_int ~width:12 X.h_total in
     let v_total = of_int ~width:12 X.v_total in
@@ -79,5 +79,8 @@ module Make (X : Config.S) = struct
       data_g = single_g;
       data_b = single_b;
     }
+  let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
+    let module H = Hierarchy.In_scope(I)(O) in
+    H.hierarchical ~scope ~name:"test_pattern" ~instance:"inst1" create i
 end
 

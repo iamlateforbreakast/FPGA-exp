@@ -30,6 +30,8 @@ module Make (X : Config.S) = struct
     } [@@deriving sexp_of, hardcaml]
   end
 
+  module MyEncoder = Dvi_encoder.Make(X)
+
   (* Helper for OSER10 instantiation *)
   let oser10 ~inst ~data ~pclk ~fclk ~reset =
     let parameters = 
@@ -46,16 +48,16 @@ module Make (X : Config.S) = struct
       ~inputs:[ "PCLK", pclk
               ; "FCLK", fclk
               ; "RESET", reset
-              ; "D0", select data 0 1
-              ; "D1", select data 1 2
-              ; "D2", select data 2 3
-              ; "D3", select data 3 4
-              ; "D4", select data 4 5
-              ; "D5", select data 5 6
-              ; "D6", select data 6 7
-              ; "D7", select data 7 8
-              ; "D8", select data 8 9
-              ; "D9", select data 9 10
+              ; "D0", Signal.bit data 0
+              ; "D1", Signal.bit data 1
+              ; "D2", Signal.bit data 2
+              ; "D3", Signal.bit data 3
+              ; "D4", Signal.bit data 4
+              ; "D5", Signal.bit data 5
+              ; "D6", Signal.bit data 6
+              ; "D7", Signal.bit data 7
+              ; "D8", Signal.bit data 8
+              ; "D9", Signal.bit data 9
               ] 
       ~outputs:[ "Q", 1 ]
       ()
@@ -74,25 +76,22 @@ module Make (X : Config.S) = struct
   
 
   (* 1. DVI Encoders (Assumes an external dvi_encoder module exists) *)
-  let encode ~inst ~data ~ctrl ~rst_n ~rgb_clk ~rgb_de=
-    Instantiation.create 
-      ~name:"dvi_encoder"
-      ~instance:inst
-      ~inputs:[
-        "I_rst_n", rst_n;
-        "I_clk", rgb_clk;
-        "I_de", rgb_de;
-        "I_data", data;
-        "I_ctrl", ctrl;
-      ]
-      ~outputs:[ "O_data", 10 ]
-      ()
-    |> fun m -> Map.find_exn m "O_data"
+  let encode ~scope ~inst ~data ~ctrl ~rst_n ~rgb_clk ~rgb_de=
+    let encoder = MyEncoder.hierarchical scope ~instance:inst
+      (MyEncoder.I.
+        { rst_n = rst_n
+        ; pix_clk = rgb_clk
+        ; de = rgb_de
+        ; control = ctrl
+        ; data = data
+        })
+  in
+    encoder.encoded
   
-  let create (_scope : Scope.t)(i : Signal.t I.t) =
-    let enc_b = encode ~inst:"blu" ~data:i.rgb_b ~ctrl:(concat_msb [i.rgb_vs; i.rgb_hs]) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
-    let enc_g = encode ~inst:"grn" ~data:i.rgb_g ~ctrl:(of_int ~width:2 0) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
-    let enc_r = encode ~inst:"red" ~data:i.rgb_r ~ctrl:(of_int ~width:2 0) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
+  let create (scope : Scope.t)(i : Signal.t I.t) =
+    let enc_b = encode ~scope ~inst:"blu" ~data:i.rgb_b ~ctrl:(concat_msb [i.rgb_vs; i.rgb_hs]) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
+    let enc_g = encode ~scope ~inst:"grn" ~data:i.rgb_g ~ctrl:(of_int ~width:2 0) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
+    let enc_r = encode ~scope ~inst:"red" ~data:i.rgb_r ~ctrl:(of_int ~width:2 0) ~rst_n:i.rst_n ~rgb_clk:i.rgb_clk ~rgb_de:i.rgb_de in
 
     (* 2. Serializers (OSER10) *)
     let rst = ~: (i.rst_n) in
@@ -116,5 +115,5 @@ module Make (X : Config.S) = struct
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
-    H.hierarchical ~scope ~name:"top_level" ~instance:"inst1" create i
+    H.hierarchical ~scope ~name:"dvi_tx" ~instance:"inst1" create i
 end

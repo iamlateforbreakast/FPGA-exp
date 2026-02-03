@@ -73,17 +73,22 @@ module Make (X : Config.S) = struct
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
-    (* Instanciate UART TX *)
+    (* Instanciate Test Pattern*)
+    let test_pattern = MyPattern.hierarchical scope (
+      MyPattern.I.{ rst_n = ~:(input.reset)
+                  ; pxl_clk = pixel_clk
+                  ; mode = zero 3 })
+    in
     let dvi_tx = MyDvi_tx.hierarchical scope (
       MyDvi_tx.I.{ serial_clk = input.clock
                   ; rst_n = ~:(input.reset)
                   ; rgb_clk = pixel_clk
-                  ; rgb_vs = gnd
-                  ; rgb_hs = gnd
-                  ; rgb_de = gnd
-                  ; rgb_r = zero 8
-                  ; rgb_g = zero 8
-                  ; rgb_b = zero 8
+                  ; rgb_vs = test_pattern.vs
+                  ; rgb_hs = test_pattern.hs
+                  ; rgb_de = test_pattern.de
+                  ; rgb_r = test_pattern.data_r
+                  ; rgb_g = test_pattern.data_g
+                  ; rgb_b = test_pattern.data_b
                   })
     in
     (* Instanciate leds *)

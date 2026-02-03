@@ -90,4 +90,7 @@ module Make (X : Config.S) = struct
 
     { O.encoded = encoded.value }
 
+  let hierarchical (scope : Scope.t) (instance : string) (i : Signal.t I.t) : Signal.t O.t =
+    let module H = Hierarchy.In_scope(I)(O) in
+    H.hierarchical ~scope ~name:"dvi_encoder" ~instance create i
 end
