@@ -79,10 +79,10 @@ module Make (X : Config.S) = struct
         ] [
           if_ (invert) [
             encoded <-- concat_msb [ of_int ~width:1 1; qm_8; qm_7_0 ^: (repeat (of_int ~width:1 1) 8) ];
-            bias <-- bias.value +: (concat_msb [qm_8; of_int ~width:1 0]) -: disparity;
+            bias <-- bias.value +: (uresize (concat_msb [qm_8; gnd]) 5) -: disparity;
           ] [
             encoded <-- concat_msb [ of_int ~width:1 0; qm_8; qm_7_0 ];
-            bias <-- bias.value -: (concat_msb [~:qm_8; of_int ~width:1 0]) +: disparity;
+            bias <-- bias.value -: (uresize (concat_msb [qm_8; gnd]) 5) +: disparity;
           ]
         ]
       ]
@@ -90,7 +90,7 @@ module Make (X : Config.S) = struct
 
     { O.encoded = encoded.value }
 
-  let hierarchical (scope : Scope.t) (instance : string) (i : Signal.t I.t) : Signal.t O.t =
+  let hierarchical (scope : Scope.t) (inst : string) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
-    H.hierarchical ~scope ~name:"dvi_encoder" ~instance create i
+    H.hierarchical ~scope ~name:"dvi_encoder" ~instance:inst create i
 end

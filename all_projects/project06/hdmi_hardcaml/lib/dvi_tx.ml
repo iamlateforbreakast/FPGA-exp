@@ -77,7 +77,7 @@ module Make (X : Config.S) = struct
 
   (* 1. DVI Encoders (Assumes an external dvi_encoder module exists) *)
   let encode ~scope ~inst ~data ~ctrl ~rst_n ~rgb_clk ~rgb_de=
-    let encoder = MyEncoder.hierarchical scope ~instance:inst
+    let encoder = MyEncoder.hierarchical scope inst
       (MyEncoder.I.
         { rst_n = rst_n
         ; pix_clk = rgb_clk
