@@ -1,4 +1,5 @@
 (* dvi_tx.ml *)
+open Base
 open Hardcaml
 open Signal
 
@@ -32,16 +33,28 @@ module Make (X : Config.S) = struct
   let create (i : Signal.t I.t) =
   (* Helper for OSER10 instantiation *)
   let oser10 ~name ~data ~pclk ~fclk ~reset =
+    let parameters = 
+      List.map
+      ~f:(fun (name, value) -> Parameter.create ~name ~value)
+        [
+          "GSREN", Parameter.Value.Bool false;
+          "LSREN", Parameter.Value.Bool true;
+        ] in
     Instantiation.create 
       ~name:"OSER10"
-      ~parameters:[
-        "GSREN", Parameter.string "false";
-        "LSREN", Parameter.string "true"
-      ]
-      ~inputs:(
-        List.init 10 ~f:(fun bit -> (Printf.sprintf "D%d" bit, bit_ data bit)) @
-        [ "PCLK", pclk; "FCLK", fclk; "RESET", reset ]
-      )
+      ~parameters:parameters
+      ~inputs:[ "PCLK", pclk; "FCLK", fclk; "RESET", reset;
+        "D0", slice data 0 1;
+        "D1", slice data 1 2;
+        "D2", slice data 2 3;
+        "D3", slice data 3 4;
+        "D4", slice data 4 5;
+        "D5", slice data 5 6;
+        "D6", slice data 6 7;
+        "D7", slice data 7 8;
+        "D8", slice data 8 9;
+        "D9", slice data 9 10;
+      ] 
       ~outputs:[ "Q", 1 ]
       ()
     |> fun m -> Map.find_exn m "Q"
