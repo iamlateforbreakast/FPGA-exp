@@ -44,16 +44,16 @@ module Make (X : Config.S) = struct
       ~name:"OSER10"
       ~parameters:parameters
       ~inputs:[ "PCLK", pclk; "FCLK", fclk; "RESET", reset;
-        "D0", slice data 0 1;
-        "D1", slice data 1 2;
-        "D2", slice data 2 3;
-        "D3", slice data 3 4;
-        "D4", slice data 4 5;
-        "D5", slice data 5 6;
-        "D6", slice data 6 7;
-        "D7", slice data 7 8;
-        "D8", slice data 8 9;
-        "D9", slice data 9 10;
+        "D0", select data 0 1;
+        "D1", select data 1 2;
+        "D2", select data 2 3;
+        "D3", select data 3 4;
+        "D4", select data 4 5;
+        "D5", select data 5 6;
+        "D6", select data 6 7;
+        "D7", select data 7 8;
+        "D8", select data 8 9;
+        "D9", select data 9 10;
       ] 
       ~outputs:[ "Q", 1 ]
       ()
