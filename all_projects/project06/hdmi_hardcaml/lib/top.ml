@@ -7,31 +7,20 @@ module type Config = Config.S
 
 module Make (X : Config.S) = struct
 
-(*
-    input             I_clk           , //27Mhz
-    input             I_rst           ,
-    input             I_key           ,
-    output     [4:0]  O_led           ,
-    output            running         ,
-    output            O_tmds_clk_p    ,
-    output            O_tmds_clk_n    ,
-    output     [2:0]  O_tmds_data_p   ,//{r,g,b}
-    output     [2:0]  O_tmds_data_n   
-*)
   module I = struct
     type 'a t =
       { clock : 'a
-      ; reset : 'a
-      ; key : 'a
+      ; I_rst : 'a
+      ; I_key : 'a
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { tmds_clk_p : 'a
-      ; tmds_data_p : 'a[@bits 3]
-	  ; leds : 'a[@bits 6]
+      { O_tmds_clk_p : 'a
+      ; O_tmds_data_p : 'a[@bits 3]
+	    ; O_led : 'a[@bits 6]
       }
     [@@deriving hardcaml]
   end
@@ -69,19 +58,19 @@ module Make (X : Config.S) = struct
 	  let pixel_clk = clkdiv 
         ~div_mode:5 
         ~hclkin:input.clock
-        ~resetn:input.reset
+        ~resetn:input.I_rst
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
     (* Instanciate Test Pattern*)
     let test_pattern = MyPattern.hierarchical scope (
-      MyPattern.I.{ rst_n = ~:(input.reset)
+      MyPattern.I.{ rst_n = ~:(input.I_rst)
                   ; pxl_clk = pixel_clk
                   ; mode = zero 3 })
     in
     let dvi_tx = MyDvi_tx.hierarchical scope (
       MyDvi_tx.I.{ serial_clk = input.clock
-                  ; rst_n = ~:(input.reset)
+                  ; rst_n = ~:(input.I_rst)
                   ; rgb_clk = pixel_clk
                   ; rgb_vs = test_pattern.vs
                   ; rgb_hs = test_pattern.hs
@@ -93,9 +82,9 @@ module Make (X : Config.S) = struct
     in
     (* Instanciate leds *)
 	  let leds = MyLeds.hierarchical scope (
-	    MyLeds.I.{ reset=input.reset; clock=input.clock }) in
+	    MyLeds.I.{ reset=input.I_rst; clock=input.clock }) in
 
-    { O.tmds_clk_p = dvi_tx.tmds_clk_p; tmds_data_p = dvi_tx.tmds_data_p; O.leds = (~:(leds.leds)) }
+    { O.O_tmds_clk_p = dvi_tx.tmds_clk_p; O.O_tmds_data_p = dvi_tx.tmds_data_p; O.O_led = (~:(leds.leds)) }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in

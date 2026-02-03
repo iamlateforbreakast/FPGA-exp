@@ -2,14 +2,16 @@ DEVICE = GW2AR-LV18QN88C8/I7
 FAMILY = GW2A-18C
 TOP_MODULE = top_level
 VERILOG_FILES = ./verilog_out/dvi_tx.v \
+                ./verilog_out/dvi_encoder.v \
                 ./verilog_out/leds.v \
                 ./verilog_out/test_pattern.v \
                 ./verilog_out/top_level.v
 SOURCES = ./lib/top.ml \
           ./lib/dvi_tx.ml \
+          ./lib/dvi_encoder.ml \
           ./lib/test_pattern.ml \
           ./bin/generate.ml
-PROJECT = uart_hardcaml
+PROJECT = hdmi_hardcaml
 CONSTRAINT_FILE = ../tangnano20k.cst
 
 all: $(PROJECT).fs
