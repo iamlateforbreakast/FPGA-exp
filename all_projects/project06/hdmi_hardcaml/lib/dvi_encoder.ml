@@ -23,7 +23,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (input : _ I.t) =
-    let spec = Reg_spec.create ~clock:input.pix_clk ~reset:input.rst_n () in
+    let _spec = Reg_spec.create ~clock:input.pix_clk ~reset:input.rst_n () in
 
     (* Stage 1: Minimize transitions *)
     (* Using of_int for the width-specific constants *)

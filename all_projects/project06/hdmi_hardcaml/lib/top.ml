@@ -37,7 +37,7 @@ module Make (X : Config.S) = struct
   end
 
   module MyPattern = Test_pattern.Make(X)
-  module MyKey = Key_user_ctrl.Make(X)
+  module MyKey = Key_ctrl.Make(X)
   module MyDvi_tx = Dvi_tx.Make(X)
   module MyDvi_encoder = Dvi_encoder.Make(X)
   module MyLeds = Leds.Make(X)
@@ -67,28 +67,30 @@ module Make (X : Config.S) = struct
 
     (* Instanciate the CLKDIV primitive *)
 	  let pixel_clk = clkdiv 
-        ~div_mode:"5" 
+        ~div_mode:5 
         ~hclkin:input.clock
         ~resetn:input.reset
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
-    let dvi_encoder = MyDvi_encoder.hierarchical scope (
-      MyDvi_encoder.I.{ pixel_clk = pixel_clk
-                       ; reset = input.reset
-                       })
-    in
     (* Instanciate UART TX *)
     let dvi_tx = MyDvi_tx.hierarchical scope (
-      MyDvi_tx.I.{ clock = input.clock
-                  ; reset = input.reset
+      MyDvi_tx.I.{ serial_clk = input.clock
+                  ; rst_n = ~:(input.reset)
+                  ; rgb_clk = pixel_clk
+                  ; rgb_vs = gnd
+                  ; rgb_hs = gnd
+                  ; rgb_de = gnd
+                  ; rgb_r = zero 8
+                  ; rgb_g = zero 8
+                  ; rgb_b = zero 8
                   })
     in
     (* Instanciate leds *)
 	  let leds = MyLeds.hierarchical scope (
 	    MyLeds.I.{ reset=input.reset; clock=input.clock }) in
 
-    { O.tmds_clk_p = zero 1; tmds_data_p = zero 3; O.leds = (~:(leds.leds)) }
+    { O.tmds_clk_p = dvi_tx.tmds_clk_p; tmds_data_p = dvi_tx.tmds_data_p; O.leds = (~:(leds.leds)) }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
