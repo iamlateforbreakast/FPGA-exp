@@ -32,7 +32,6 @@ module Make (X : Config.S) = struct
   module MyLeds = Leds.Make(X)
 
   let clkdiv ~div_mode ~hclkin ~resetn ~calib =
-    let _ = X.clk_fre in
     let parameters = 
       List.map
       ~f:(fun (name, value) -> Parameter.create ~name ~value)
@@ -51,13 +50,44 @@ module Make (X : Config.S) = struct
         ]
         ~outputs:[ "CLKOUT", 1 ]
       |> fun outputs -> Map.find_exn outputs "CLKOUT"
+
+  let rpll ~inst ~clkin =
+    let m = Instantiation.create
+      ~name:"rPLL"
+      ~instance:inst
+      ~parameters:[
+        "FCLKIN", String "27";          (* Input clock frequency *)
+        "IDIV_SEL", Int 0;               (* Input divider *)
+        "FBDIV_SEL", Int 10;             (* Feedback divider *)
+        "ODIV_SEL", Int 8;               (* Output divider for CLKOUT *)
+        "DYN_SDIV_SEL", Int 2;           (* Static divider for CLKOUTD (pclk) *)
+        "DEVICE", String "GW2A-18C";     (* Your specific chip *)
+      ]
+      ~inputs:[
+        "CLKIN", clkin;
+        "CLKFB", Signal.gnd;
+        "RESET", Signal.gnd;
+        "RESET_P", Signal.gnd;
+      ]
+      ~outputs:[
+        "CLKOUT", 1;  (* Serial Clock (fclk) *)
+        "CLKOUTD", 1; (* Pixel Clock (pclk) - usually fclk / 5 *)
+        "LOCK", 1;
+      ]
+      ()
+    in
+    (Map.find_exn m "CLKOUT", Map.find_exn m "CLKOUTD", Map.find_exn m "LOCK")
   
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-
+    (* Instanciate the rPLL primitive *)
+	let rpllx5 = rpll
+	  ~inst:"pll"
+	  ~clkin:input.clock
+	in
     (* Instanciate the CLKDIV primitive *)
 	  let pixel_clk = clkdiv 
         ~div_mode:5 
-        ~hclkin:input.clock
+        ~hclkin:rpllx5.clkout
         ~resetn:input.rst
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
