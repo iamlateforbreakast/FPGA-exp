@@ -79,6 +79,7 @@ module Make (X : Config.S) = struct
       data_g = single_g;
       data_b = single_b;
     }
+    
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
     H.hierarchical ~scope ~name:"test_pattern" ~instance:"inst1" create i
