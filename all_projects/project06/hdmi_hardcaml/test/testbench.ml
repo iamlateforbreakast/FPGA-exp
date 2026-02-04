@@ -1,8 +1,26 @@
+(* testbench.ml *)
 open Base
 open Hardcaml
-open Hardcaml_waveterm
+open Project06_lib
 
-module Simulator = Cyclesim.With_interface (Dvi_encoder.I) (Dvi_encoder.O)
+module My_config = struct
+  let clk_fre = 27_000_000
+  let h_total = 1440
+  let v_total = 900
+  let h_res   = 1280
+  let v_res   = 720
+  let h_sync  = 160
+  let v_sync  = 5
+  let h_bporch = 160
+  let v_bporch = 5
+  let hs_pol   = false
+  let vs_pol   = false
+  let pattern = [0;1;2;3;4;5;6;7]
+  let is_simulation = false
+end
+
+module MyDviEncoder = Dvi_encoder.Make(My_config)
+module Simulator = Cyclesim.With_interface (MyDviEncoder.I) (MyDviEncoder.O)
 
 let testbench () =
   (* 1. Create the simulation *)
