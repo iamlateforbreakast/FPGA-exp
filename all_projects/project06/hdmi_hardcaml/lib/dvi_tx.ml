@@ -63,10 +63,10 @@ module Make (X : Config.S) = struct
       ()
     |> fun m -> Map.find_exn m "Q"
 
-  (* Helper for ELVDS_OBUF instantiation *)
-  let elvds_obuf ~inst ~input =
+  (* Helper for TLVDS_OBUF instantiation *)
+  let tlvds_obuf ~inst ~input =
     let m = Instantiation.create
-      ~name:"ELVDS_OBUF"
+      ~name:"tlvds"
       ~instance:inst
       ~inputs:[ "I", input ]
       ~outputs:[ "O", 1; "OB", 1 ]
@@ -101,10 +101,10 @@ module Make (X : Config.S) = struct
     let ser_r = oser10 ~inst:"red_ser" ~data:enc_r ~pclk:i.rgb_clk ~fclk:i.serial_clk ~reset:rst in
 
     (* 3. LVDS Output Buffers *)
-    let clk_p, clk_n = elvds_obuf ~inst:"clk_obuf" ~input:ser_clk in
-    let b_p, b_n     = elvds_obuf ~inst:"blu_obuf" ~input:ser_b in
-    let g_p, g_n     = elvds_obuf ~inst:"grn_obuf" ~input:ser_g in
-    let r_p, r_n     = elvds_obuf ~inst:"red_obuf" ~input:ser_r in
+    let clk_p, clk_n = tlvds_obuf ~inst:"clk_obuf" ~input:ser_clk in
+    let b_p, b_n     = tlvds_obuf ~inst:"blu_obuf" ~input:ser_b in
+    let g_p, g_n     = tlvds_obuf ~inst:"grn_obuf" ~input:ser_g in
+    let r_p, r_n     = tlvds_obuf ~inst:"red_obuf" ~input:ser_r in
 
     { O.
       tmds_clk_p  = clk_p;
