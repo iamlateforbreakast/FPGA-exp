@@ -2,6 +2,7 @@
 open Base
 open Hardcaml
 open Project06_lib
+open Hardcaml_waveterm
 
 module My_config = struct
   let clk_fre = 27_000_000
@@ -24,9 +25,9 @@ module Simulator = Cyclesim.With_interface (MyDviEncoder.I) (MyDviEncoder.O)
 
 let testbench () =
   (* 1. Create the simulation *)
-  let sim = Simulator.create (Dvi_encoder.create (Scope.create ())) in
+  let sim = Simulator.create (MyDviEncoder.create (Scope.create ())) in
   let inputs = Cyclesim.inputs sim in
-  let outputs = Cyclesim.outputs sim in
+  let _outputs = Cyclesim.outputs sim in
 
   (* 2. Set up waveform recording *)
   let waves, sim = Waveform.create sim in
