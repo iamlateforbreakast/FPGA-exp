@@ -66,7 +66,7 @@ module Make (X : Config.S) = struct
   (* Helper for TLVDS_OBUF instantiation *)
   let tlvds_obuf ~inst ~input =
     let m = Instantiation.create
-      ~name:"tlvds"
+      ~name:"TLVDS_OBUF"
       ~instance:inst
       ~inputs:[ "I", input ]
       ~outputs:[ "O", 1; "OB", 1 ]
