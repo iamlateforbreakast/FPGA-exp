@@ -60,10 +60,26 @@ end
       ~f:(fun (name, value) -> Parameter.create ~name ~value)
         [
           "FCLKIN", Parameter.Value.String "27";          (* Input clock frequency *)
+		  "DYN_IDIV_SEL", Parameter,Value.String "false",
           "IDIV_SEL", Parameter.Value.Int 3;               (* Input divider *)
+		  "DYN_FBDIV_SEL", Parameter.Value.String "false",
           "FBDIV_SEL", Parameter.Value.Int 54;             (* Feedback divider *)
+		  "DYN_ODIV_SEL", Parameter.Value.String "false",
           "ODIV_SEL", Parameter.Value.Int 2;               (* Output divider for CLKOUT *)
+		  "PSDA_SEL", Parameter.Value.String "0000",
+		  "DYN_DA_EN", Parameter.Value.String "true",
+		  "DUTYDA_SEL", Parameter.Value.String "1000",
+		  "CLKOUT_FT_DIR", Parameter.Value.Int 1,
+		  "CLKOUTP_FT_DIR", Parameter.Value.Int 1,
+		  "CLKOUT_DLY_STEP", Parameter.Value.Int 0,
+		  "CLKOUTP_DLY_STEP", Parameter.Value.Int 0,
+		  "CLKFB_SEL", Parameter.Value.String "internal",
+		  "CLKOUT_BYPASS", Parameter.Value.String "false",
+		  "CLKOUTP_BYPASS", Parameter.Value.String "false",
+		  "CLKOUTD_BYPASS". Parameter.Value.String "false",
           "DYN_SDIV_SEL", Parameter.Value.Int 2;           (* Static divider for CLKOUTD (pclk) *)
+		  "CLKOUTD_SRC", Parameter.Value.String "CLKOUT",
+		  "CLKOUTD3_SRC", Parameter.Value.String "CLKOUT",
           "DEVICE", Parameter.Value.String "GW2A-18C";     (* Your specific chip *)
         ] in
     let m = Instantiation.create
