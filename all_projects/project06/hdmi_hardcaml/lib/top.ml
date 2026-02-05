@@ -17,13 +17,16 @@ module Make (X : Config.S) = struct
   end
 
   module O = struct
-    type 'a t =
-      { tmds_clk_p : 'a [@rtlname "O_tmds_clk_p"]
-      ; tmds_data_p : 'a [@rtlname "O_tmds_data_p"] [@bits 3]
-	    ; led : 'a [@rtlname "O_led"] [@bits 6]
-      }
-    [@@deriving hardcaml]
-  end
+  type 'a t =
+    { tmds_clk_p  : 'a [@rtlname "O_tmds_clk_p"]
+    ; tmds_clk_n  : 'a [@rtlname "O_tmds_clk_n"]
+    ; tmds_data_p : 'a [@rtlname "O_tmds_data_p"] [@bits 3]
+    ; tmds_data_n : 'a [@rtlname "O_tmds_data_n"] [@bits 3]
+    ; led         : 'a [@rtlname "O_led"] [@bits 6]
+    }
+  [@@deriving hardcaml]
+end
+
 
   module MyPattern = Test_pattern.Make(X)
   module MyKey = Key_ctrl.Make(X)
@@ -57,9 +60,9 @@ module Make (X : Config.S) = struct
       ~f:(fun (name, value) -> Parameter.create ~name ~value)
         [
           "FCLKIN", Parameter.Value.String "27";          (* Input clock frequency *)
-          "IDIV_SEL", Parameter.Value.Int 0;               (* Input divider *)
-          "FBDIV_SEL", Parameter.Value.Int 10;             (* Feedback divider *)
-          "ODIV_SEL", Parameter.Value.Int 8;               (* Output divider for CLKOUT *)
+          "IDIV_SEL", Parameter.Value.Int 3;               (* Input divider *)
+          "FBDIV_SEL", Parameter.Value.Int 54;             (* Feedback divider *)
+          "ODIV_SEL", Parameter.Value.Int 2;               (* Output divider for CLKOUT *)
           "DYN_SDIV_SEL", Parameter.Value.Int 2;           (* Static divider for CLKOUTD (pclk) *)
           "DEVICE", Parameter.Value.String "GW2A-18C";     (* Your specific chip *)
         ] in
@@ -103,7 +106,7 @@ module Make (X : Config.S) = struct
                   ; mode = zero 3 })
     in
     let dvi_tx = MyDvi_tx.hierarchical scope (
-      MyDvi_tx.I.{ serial_clk = input.clock
+      MyDvi_tx.I.{ serial_clk = fclk
                   ; rst_n = ~:(input.rst)
                   ; rgb_clk = pixel_clk
                   ; rgb_vs = test_pattern.vs
@@ -118,7 +121,14 @@ module Make (X : Config.S) = struct
 	  let leds = MyLeds.hierarchical scope (
 	    MyLeds.I.{ reset=input.rst; clock=input.clock }) in
 
-    { O.tmds_clk_p = dvi_tx.tmds_clk_p; O.tmds_data_p = dvi_tx.tmds_data_p; O.led = (~:(leds.leds)) }
+    {
+      O.tmds_clk_p  = dvi_tx.tmds_clk_p;
+      O.tmds_clk_n  = dvi_tx.tmds_clk_n;
+      O.tmds_data_p = dvi_tx.tmds_data_p;
+      O.tmds_data_n = dvi_tx.tmds_data_n;
+      O.led         = ~:(leds.leds);
+    }
+
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
