@@ -1,4 +1,4 @@
-module dvi_tx(
+module DVI_TX_Top(
   I_rst_n,
   I_serial_clk,
   I_rgb_clk,
@@ -44,10 +44,10 @@ wire serialized_blue;
 wire serialized_clock;
 
 
-ELVDS_OBUF clk_obuf(.O(O_tmds_clk_p), .OB(O_tmds_clk_n), .I(serialized_clock));
-ELVDS_OBUF blu_obuf(.O(O_tmds_data_p[0]), .OB(O_tmds_data_n[0]), .I(serialized_blue));
-ELVDS_OBUF grn_obuf(.O(O_tmds_data_p[1]), .OB(O_tmds_data_n[1]), .I(serialized_green));
-ELVDS_OBUF red_obuf(.O(O_tmds_data_p[2]), .OB(O_tmds_data_n[2]), .I(serialized_red));
+TLVDS_OBUF clk_obuf(.O(O_tmds_clk_p), .OB(O_tmds_clk_n), .I(serialized_clock));
+TLVDS_OBUF blu_obuf(.O(O_tmds_data_p[0]), .OB(O_tmds_data_n[0]), .I(serialized_blue));
+TLVDS_OBUF grn_obuf(.O(O_tmds_data_p[1]), .OB(O_tmds_data_n[1]), .I(serialized_green));
+TLVDS_OBUF red_obuf(.O(O_tmds_data_p[2]), .OB(O_tmds_data_n[2]), .I(serialized_red));
 
 dvi_encoder blu_encoder(I_rst_n, I_rgb_clk, I_rgb_de, I_rgb_b, {I_rgb_vs, I_rgb_hs}, encoded_blue);
 dvi_encoder grn_encoder(I_rst_n, I_rgb_clk, I_rgb_de, I_rgb_g, 2'b0, encoded_green);
