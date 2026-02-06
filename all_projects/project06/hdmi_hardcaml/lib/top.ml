@@ -39,8 +39,8 @@ end
       List.map
       ~f:(fun (name, value) -> Parameter.create ~name ~value)
         [
-          "DIV_MODE", Parameter.Value.Int div_mode;  (* Clock Divider *)
-           "GSREN", Parameter.Value.Bool false;  (* Global Set/Reset Enable *)
+          "DIV_MODE", Parameter.Value.String div_mode;  (* Clock Divider *)
+           "GSREN", Parameter.Value.String "false";  (* Global Set/Reset Enable *)
         ] in
       Instantiation.create
         ()
@@ -63,7 +63,7 @@ end
 		      "DYN_IDIV_SEL", Parameter.Value.String "false";
           "IDIV_SEL", Parameter.Value.Int 3;               (* Input divider *)
 		      "DYN_FBDIV_SEL", Parameter.Value.String "false";
-          "FBDIV_SEL", Parameter.Value.Int 54;             (* Feedback divider *)
+          "FBDIV_SEL", Parameter.Value.Int 54; (*54;*)             (* Feedback divider *)
 		      "DYN_ODIV_SEL", Parameter.Value.String "false";
           "ODIV_SEL", Parameter.Value.Int 2;               (* Output divider for CLKOUT *)
 		      "PSDA_SEL", Parameter.Value.String "0000";
@@ -103,27 +103,29 @@ end
   
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     (* Instanciate the rPLL primitive *)
-	  let (fclk, _pclk_from_pll, _pll_lock) = rpll
+	  let (fclk, _pclk_from_pll, pll_lock) = rpll
 	    ~inst:"pll"
 	    ~clkin:input.clock
 	  in
+    (* Global reset: active low, released only when PLL is stable *)
+    let global_rst_n = (~:(input.rst)) &: pll_lock in
     (* Instanciate the CLKDIV primitive *)
 	  let pixel_clk = clkdiv 
-        ~div_mode:5 
+        ~div_mode:"5"
         ~hclkin:fclk
-        ~resetn:input.rst
+        ~resetn:global_rst_n
         ~calib:gnd (* Tie CALIB to ground if unused *)
     in
   
     (* Instanciate Test Pattern*)
     let test_pattern = MyPattern.hierarchical scope (
-      MyPattern.I.{ rst_n = ~:(input.rst)
+      MyPattern.I.{ rst_n = global_rst_n
                   ; pxl_clk = pixel_clk
                   ; mode = zero 3 })
     in
     let dvi_tx = MyDvi_tx.hierarchical scope (
       MyDvi_tx.I.{ serial_clk = fclk
-                  ; rst_n = ~:(input.rst)
+                  ; rst_n = global_rst_n
                   ; rgb_clk = pixel_clk
                   ; rgb_vs = test_pattern.vs
                   ; rgb_hs = test_pattern.hs
@@ -135,7 +137,7 @@ end
     in
     (* Instanciate leds *)
 	  let leds = MyLeds.hierarchical scope (
-	    MyLeds.I.{ reset=input.rst; clock=input.clock }) in
+	    MyLeds.I.{ reset=input.rst; clock=pixel_clk }) in
 
     {
       O.tmds_clk_p  = dvi_tx.tmds_clk_p;
