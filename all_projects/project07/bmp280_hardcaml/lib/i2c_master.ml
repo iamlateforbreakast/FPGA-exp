@@ -37,7 +37,18 @@ module Make (X : Config.S) = struct
       }
     [@@deriving hardcaml]
   end
-	
+	 
+  (* Helper for IO_BUF instantiation *)
+  let io_buf ~inst ~input =
+    let m = Instantiation.create
+      ~name:"IO_BUF"
+      ~instance:inst
+      ~inputs:[ "I", input; "OE", 1]
+      ~outputs:[ "O", 1]
+      ()
+    in
+    (Map.find_exn m "O")
+
   let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
 	let _sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
 
