@@ -24,6 +24,7 @@ module Make (X : Config.S) = struct
     type 'a t =
       { scl : 'a
       ; sda_out : 'a
+	  ; sda_oe : 'a
       ; ready : 'a
       ; ack_error : 'a
       ; dout : 'a [@bits 8]
@@ -211,8 +212,12 @@ module Make (X : Config.S) = struct
     ]
     ]);
     (* Return circuit output value *)
-    { O.scl = scl_o.value; O.sda_out = sda_o.value; O.ready = ready.value; 
-      O.ack_error = ack_err.value; O.dout = zero 8 }
+    { O.scl = scl_o.value
+	; O.sda_out = sda_o.value
+	; O.sda_oe = sda-oe.value
+	; O.ready = ready.value
+	; O.ack_error = ack_err.value
+	; O.dout = zero 8 }
     	
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
