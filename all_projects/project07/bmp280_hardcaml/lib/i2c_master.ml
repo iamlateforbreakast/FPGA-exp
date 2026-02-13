@@ -32,24 +32,25 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-	let _sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
+	let sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
 
 	(* --- Internal Signals & Registers --- *)
-    let step_counter = reg_fb spec ~enable:vdd ~w:16 (fun fb -> fb +: 1) in
-    let bit_index = Always.Variable.reg spec ~w:3 () in
-    let shift_reg = Always.Variable.reg spec ~w:8 () in
+    let step_counter = Always.Variable.reg spec ~w:16 () in
+    let bit_index = Always.Variable.reg sync_spec ~w:3 () in
+    let shift_reg = Always.Variable.reg sync_spec ~w:8 () in
     
     (* I2C Signals *)
-    let scl_o = Always.Variable.all_reg spec ~w:1 () in
-    let sda_o = Always.Variable.all_reg spec ~w:1 () in
-    let sda_oe = Always.Variable.all_reg spec ~w:1 () in
-    let ready = Always.Variable.all_reg spec ~w:1 () in
-    let ack_err = Always.Variable.all_reg spec ~w:1 () in
+    let scl_o = Always.Variable.all_reg sync_spec ~w:1 () in
+    let sda_o = Always.Variable.all_reg sync_spec ~w:1 () in
+    let sda_oe = Always.Variable.all_reg sync_spec ~w:1 () in
+    let ready = Always.Variable.all_reg sync_spec ~w:1 () in
+    let ack_err = Always.Variable.all_reg sync_spec ~w:1 () in
 
 	(* State machine *)
-	let sm = Statemachine.create (module State) spec in
+	let sm = Statemachine.create (module State) sync_spec in
 
 	sm.switch [
+	  step_counter <-- step_counter.value +: 1;
       IDLE, [
         ready <-- vdd;
         scl_o <-- vdd;
