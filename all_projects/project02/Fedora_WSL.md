@@ -18,16 +18,19 @@ Wait a couple of minutes (depending on the size of your current installation and
 
 In PowerShell:
 
+```
 wsl --update
+```
+
 Still in PowerShell, click the ∨ arrow, select Settings, and under Profiles click FedoraLinux-42. Change the name from 42 to 43 and click Save.
 
 Next, open the Windows menu, type Fedora, right-click FedoraLinux-42, and select Open file location. Right-click FedoraLinux-42, press F2, change 42 to 43, and press Enter.
 
 Lastly, open regedit and change 42 to 43 in:
 
+```
 HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Lxss\{uuid-string}\DistributionName
 HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Lxss\{uuid-string}\ShortcutPath
-It’s mostly like any other Fedora in-place upgrade, apart from the Windows-specific steps.
+```
 
-Edit: Added changes to registry keys
-Edit 2: Added PowerShell profile rename based on digitalman comment.
+
