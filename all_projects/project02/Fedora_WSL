@@ -1,0 +1,33 @@
+I’ve just completed this upgrade based on the previous comments, but for the sake of clarity, these are the exact steps I followed:
+
+In Fedora itself:
+
+```
+sudo dnf upgrade --refresh -y
+sudo shutdown -h now
+```
+
+Launch Fedora again.
+
+```
+sudo dnf system-upgrade download --releasever=43
+sudo dnf5 offline reboot
+```
+
+Wait a couple of minutes (depending on the size of your current installation and the number of packages to be installed; mine was around 250).
+
+In PowerShell:
+
+wsl --update
+Still in PowerShell, click the ∨ arrow, select Settings, and under Profiles click FedoraLinux-42. Change the name from 42 to 43 and click Save.
+
+Next, open the Windows menu, type Fedora, right-click FedoraLinux-42, and select Open file location. Right-click FedoraLinux-42, press F2, change 42 to 43, and press Enter.
+
+Lastly, open regedit and change 42 to 43 in:
+
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Lxss\{uuid-string}\DistributionName
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Lxss\{uuid-string}\ShortcutPath
+It’s mostly like any other Fedora in-place upgrade, apart from the Windows-specific steps.
+
+Edit: Added changes to registry keys
+Edit 2: Added PowerShell profile rename based on digitalman comment.
