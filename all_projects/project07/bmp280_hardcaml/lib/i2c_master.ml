@@ -1,13 +1,6 @@
 (* i2c_master.ml *)
 open Hardcaml
 open Signal
-(*
-    input clk, rst_n,
-    input [6:0] addr, [7:0] reg_addr, [7:0] din,
-    input rw, start,
-    output reg [7:0] dout, output reg done, ack_error,
-    inout sda, output scl
-*)
 
 module type Config = Config.S
 
@@ -24,7 +17,7 @@ module Make (X : Config.S) = struct
       ; start : 'a
       ; sda_in : 'a
       } 
-    [@@deriving hardcaml]
+      [@@deriving hardcaml]
   end
 
   module O = struct
@@ -35,10 +28,10 @@ module Make (X : Config.S) = struct
       ; ack_error : 'a
       ; dout : 'a [@bits 8]
       }
-    [@@deriving hardcaml]
+      [@@deriving hardcaml]
   end
 
-  let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
+  let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
 	let _sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
 
 	(* --- Internal Signals & Registers --- *)
@@ -56,73 +49,73 @@ module Make (X : Config.S) = struct
 	(* State machine *)
 	let sm = Statemachine.create (module State) spec in
 
-	Always.(compile [
-      sm.switch [
-        IDLE, [
-          ready <-- vdd;
-          scl_o <-- vdd;
+	sm.switch [
+      IDLE, [
+        ready <-- vdd;
+        scl_o <-- vdd;
+        sda_o <-- vdd;
+        sda_oe <-- gnd;
+        if_ input.start [
+          shift_reg <-- input.addr @: input.rw;
+          bit_index <-- of_int ~w:3 7;
+          ready <-- gnd;
+          step_counter <-- of_int ~w:16 0; (* Reset for START *)
+          sm.set_next START;
+        ];
+      ];
+
+      START, [
+        sda_oe <-- vdd;
+        sda_o <-- gnd; 
+        if_ (step_counter.value ==: quarter_period) [
+          scl_o <-- gnd;
+          step_counter <-- of_int ~w:16 0; (* Reset for ADDR *)
+          sm.set_next ADDR;
+        ];
+      ];
+
+      ADDR, [
+        sda_oe <-- vdd;
+        sda_o <-- (shift_reg.value ==>: bit_index.value);
+      
+        if_ (step_counter.value ==: half_period) [ scl_o <-- vdd ];
+      
+        if_ (step_counter.value ==: full_period) [
+          scl_o <-- gnd;
+          step_counter <-- of_int ~w:16 0; (* Reset for next bit or state *)
+          if_ (bit_index.value ==: zero 3) [
+            sm.set_next ACK_ADDR;
+          ] [
+            bit_index <-- bit_index.value -: 1;
+          ];
+        ];
+      ];
+
+      ACK_ADDR, [
+        sda_oe <-- gnd; 
+        if_ (step_counter.value ==: half_period) [ scl_o <-- vdd ];
+        if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 3)) [
+          ack_err <-- input.sda_in; 
+        ];
+        if_ (step_counter.value ==: full_period) [
+          scl_o <-- gnd;
+          step_counter <-- of_int ~w:16 0; (* Reset for STOP *)
+          sm.set_next STOP;
+        ];
+      ];
+
+      STOP, [
+        sda_oe <-- vdd;
+        sda_o <-- gnd;
+        if_ (step_counter.value ==: quarter_period) [ scl_o <-- vdd ];
+        if_ (step_counter.value ==: half_period) [ 
           sda_o <-- vdd;
-          sda_oe <-- gnd;
-          if_ input.start [
-            shift_reg <-- input.addr @: input.rw; (* Concatenate addr + rw *)
-            bit_index <-- of_int ~w:3 7;
-            ready <-- gnd;
-            sm.set_next START;
-          ];
+          ready <-- vdd;
+          sm.set_next IDLE;
         ];
-
-        START, [
-          sda_oe <-- vdd;
-          sda_o <-- gnd; (* SDA drop while SCL high *)
-          if_ (step_counter.value ==: quarter_period) [
-            scl_o <-- gnd;
-            sm.set_next ADDR;
-          ];
-        ];
-
-        ADDR, [
-          sda_oe <-- vdd;
-          sda_o <-- (shift_reg.value ==>: bit_index.value);
-          
-          (* Simple SCL toggling logic *)
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [ scl_o <-- vdd ];
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 4)) [
-            scl_o <-- gnd;
-            if_ (bit_index.value ==: zero 3) [
-              sm.set_next ACK_ADDR;
-            ] [
-              bit_index <-- bit_index.value -: 1;
-            ];
-          ];
-        ];
-
-        ACK_ADDR, [
-          sda_oe <-- gnd; (* Release bus for slave ACK *)
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [
-            scl_o <-- vdd;
-          ];
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 3)) [
-            (* Sample ACK: SDA should be LOW from slave *)
-            ack_err <-- input.sda_in; 
-          ];
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 4)) [
-            scl_o <-- gnd;
-            sm.set_next STOP;
-          ];
-        ];
-
-        STOP, [
-          sda_oe <-- vdd;
-          sda_o <-- gnd;
-          if_ (step_counter.value ==: quarter_period) [ scl_o <-- vdd ];
-          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [ 
-            sda_o <-- vdd; (* SDA rise while SCL high *)
-            sm.set_next IDLE;
-          ];
-        ];
-      ]
-    ]);
-
+      ];
+    ]
+  ]);
     (* Return circuit output value *)
     { O.scl = scl_o.value; O.sda_out = sda_o.value; O.ready = ready.value; 
       O.ack_error = ack_err.value; O.dout = zero 8 }
