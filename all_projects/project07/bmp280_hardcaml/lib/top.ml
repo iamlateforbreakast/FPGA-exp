@@ -13,8 +13,8 @@ module Make (X : Config.S) = struct
   *)
   module I = struct
     type 'a t =
-      { clock : 'a
-      ; reset : 'a
+      { clock : 'a [@rtlname "I_clk"]
+      ; reset : 'a [@rtlname "I_rst"]
       } 
     [@@deriving hardcaml]
   end
@@ -22,9 +22,9 @@ module Make (X : Config.S) = struct
   module O = struct
     type 'a t =
       { leds : 'a[@bits 6]
-      ; scl : 'a
-      ; sda : 'a
-      ; output : 'a[@bits 20]
+      ; scl : 'a [@rtlname "O_scl"]
+      ; sda : 'a [@rtlname "O_sda"]
+      ; output : 'a[@bits 20] [@rtlname "O_dout"]
       }
     [@@deriving hardcaml]
   end
@@ -34,8 +34,21 @@ module Make (X : Config.S) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
 
+  (* Create configured modules *)
   module MyI2c_master = I2c_master.Make(X)
-	
+
+  (* Create GOWIN primitive components *)
+  let iobuf ~din ~dout ~oen =
+    Instantiation.create
+      ~name:"IOBUF" (* Gowin primitive name *)
+      ~inputs:[ "I", din
+	          ; "OEN", oen
+              ]
+      ~outputs:[ "IO", 1
+		       ; "O", 1 ]
+	  ()
+      in (Map.find_exn outputs "IO", Map.find outputs "O")
+	  
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
 	  let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
