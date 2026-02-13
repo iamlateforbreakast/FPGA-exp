@@ -31,44 +31,102 @@ module Make (X : Config.S) = struct
     type 'a t =
       { scl : 'a
       ; sda_out : 'a
-	    ; ready : 'a
-	    ; ack_error : 'a
-	    ; dout : 'a [@bits 8]
+      ; ready : 'a
+      ; ack_error : 'a
+      ; dout : 'a [@bits 8]
       }
     [@@deriving hardcaml]
   end
-	 
-  (* Helper for IO_BUF instantiation *)
-  let io_buf ~inst ~input =
-    let m = Instantiation.create
-      ~name:"IO_BUF"
-      ~instance:inst
-      ~inputs:[ "I", input; "OE", 1]
-      ~outputs:[ "O", 1]
-      ()
-    in
-    (Map.find_exn m "O")
 
   let create (_scope : Scope.t) (_input : Signal.t I.t) : Signal.t O.t =
 	let _sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
 
-    let sda_i = wire 1 in
-    let sda_o = Always.Variable.wire ~default:gnd in
-    let sda_oe = Always.Variable.wire ~default:gnd in
+	(* --- Internal Signals & Registers --- *)
+    let step_counter = reg_fb spec ~enable:vdd ~w:16 (fun fb -> fb +: 1) in
+    let bit_index = Always.Variable.reg spec ~w:3 () in
+    let shift_reg = Always.Variable.reg spec ~w:8 () in
+    
+    (* I2C Signals *)
+    let scl_o = Always.Variable.all_reg spec ~w:1 () in
+    let sda_o = Always.Variable.all_reg spec ~w:1 () in
+    let sda_oe = Always.Variable.all_reg spec ~w:1 () in
+    let ready = Always.Variable.all_reg spec ~w:1 () in
+    let ack_err = Always.Variable.all_reg spec ~w:1 () in
 
-	(* Instantiate the IOBUF for SDA *)
-    let iobuf_res = Instantiation.create ~name:"IOBUF" ~scope
-      ~inputs:[("I", sda_o.value); ("OEN", ~: (sda_oe.value))]
-      ~outputs:[("O", 1)] () in
-    sda_i <== (Map.find_exn iobuf_res "O");
-	
+	(* State machine *)
+	let sm = Statemachine.create (module State) spec in
+
+	Always.(compile [
+      sm.switch [
+        IDLE, [
+          ready <-- vdd;
+          scl_o <-- vdd;
+          sda_o <-- vdd;
+          sda_oe <-- gnd;
+          if_ input.start [
+            shift_reg <-- input.addr @: input.rw; (* Concatenate addr + rw *)
+            bit_index <-- of_int ~w:3 7;
+            ready <-- gnd;
+            sm.set_next START;
+          ];
+        ];
+
+        START, [
+          sda_oe <-- vdd;
+          sda_o <-- gnd; (* SDA drop while SCL high *)
+          if_ (step_counter.value ==: quarter_period) [
+            scl_o <-- gnd;
+            sm.set_next ADDR;
+          ];
+        ];
+
+        ADDR, [
+          sda_oe <-- vdd;
+          sda_o <-- (shift_reg.value ==>: bit_index.value);
+          
+          (* Simple SCL toggling logic *)
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [ scl_o <-- vdd ];
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 4)) [
+            scl_o <-- gnd;
+            if_ (bit_index.value ==: zero 3) [
+              sm.set_next ACK_ADDR;
+            ] [
+              bit_index <-- bit_index.value -: 1;
+            ];
+          ];
+        ];
+
+        ACK_ADDR, [
+          sda_oe <-- gnd; (* Release bus for slave ACK *)
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [
+            scl_o <-- vdd;
+          ];
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 3)) [
+            (* Sample ACK: SDA should be LOW from slave *)
+            ack_err <-- input.sda_in; 
+          ];
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 4)) [
+            scl_o <-- gnd;
+            sm.set_next STOP;
+          ];
+        ];
+
+        STOP, [
+          sda_oe <-- vdd;
+          sda_o <-- gnd;
+          if_ (step_counter.value ==: quarter_period) [ scl_o <-- vdd ];
+          if_ (step_counter.value ==: (quarter_period *: of_int ~w:16 2)) [ 
+            sda_o <-- vdd; (* SDA rise while SCL high *)
+            sm.set_next IDLE;
+          ];
+        ];
+      ]
+    ]);
+
     (* Return circuit output value *)
-    { O.scl = zero 1
-    ; O.sda_out = zero 1
-    ; O.ready = vdd
-    ; O.ack_error = gnd
-    ; O.dout = zero 8
-    }
+    { O.scl = scl_o.value; O.sda_out = sda_o.value; O.ready = ready.value; 
+      O.ack_error = ack_err.value; O.dout = zero 8 }
+    	
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
     let module H = Hierarchy.In_scope(I)(O) in
     H.hierarchical ~scope ~name:"i2c_master" ~instance:"inst1" create i
@@ -79,25 +137,6 @@ end
 let sda_i = wire 1 in
 let sda_o = Always.Variable.wire ~default:gnd in
 let sda_oe = Always.Variable.wire ~default:gnd in
-
-(* Instantiate the IOBUF for SDA *)
-let iobuf_res = Instantiation.create ~name:"IOBUF" ~scope
-  ~inputs:[("I", sda_o.value); ("OEN", ~: (sda_oe.value))]
-  ~outputs:[("O", 1)] () in
-sda_i <== (Map.find_exn iobuf_res "O");
-
-(* FSM State Example for Start Condition *)
-(* SCL is High, SDA transitions High -> Low *)
-Always.(compile [
-  sm.switch [
-    START, [
-      sda_oe <-- vdd;
-      sda_o  <-- gnd; (* Pull down SDA *)
-      if_ (timer.value ==: half_period) [ sm.set_next SEND_ADDR ];
-    ];
-    (* ... more states for ADDR, RW, ACK, DATA ... *)
-  ]
-]);
 
 (* AI *)
 open Hardcaml
