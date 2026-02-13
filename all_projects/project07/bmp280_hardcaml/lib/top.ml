@@ -6,11 +6,6 @@ module type Config = Config.S
 
 module Make (X : Config.S) = struct
 
-  (*
-      input clk, rst_n,
-    output [19:0] raw_temp, raw_press,
-    inout sda, output scl
-  *)
   module I = struct
     type 'a t =
       { clock : 'a [@rtlname "I_clk"]
@@ -24,7 +19,8 @@ module Make (X : Config.S) = struct
       { leds : 'a[@bits 6]
       ; scl : 'a [@rtlname "O_scl"]
       ; sda : 'a [@rtlname "O_sda"]
-      ; output : 'a[@bits 20] [@rtlname "O_dout"]
+      ; uart_tx : 'a [@rtlname "O_uart_tx"]
+      (* ; output : 'a[@bits 20] [@rtlname "O_dout"] Raw temp. and raw press. *)
       }
     [@@deriving hardcaml]
   end
@@ -39,15 +35,15 @@ module Make (X : Config.S) = struct
 
   (* Create GOWIN primitive components *)
   let iobuf ~din ~oen =
-    Instantiation.create
+    let m = Instantiation.create
       ~name:"IOBUF" (* Gowin primitive name *)
       ~inputs:[ "I", din
-	          ; "OEN", oen
+              ; "OEN", oen
               ]
       ~outputs:[ "IO", 1
-		       ; "O", 1 ]
-	  ()
-      in (Map.find_exn outputs "IO", Map.find outputs "O")
+               ; "O", 1 ]
+               ()
+    in (Map.find_exn m "IO", Map.find_exn m "O")
 	  
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
@@ -77,7 +73,7 @@ module Make (X : Config.S) = struct
     let sda_i = wire 1 in
     let sda_oe = Always.Variable.wire ~default:gnd in
 
-	(* Instantiate the IOBUF for SDA *)
+	  (* Instantiate the IOBUF for SDA *)
     let iobuf_res = iobuf ~din:sda_in ~oen:sda_oe
 	
     compile [
@@ -121,6 +117,7 @@ module Make (X : Config.S) = struct
     { O.leds = zero 6
     ; O.scl = i2c_master.scl 
     ; O.sda = iobuf_res.dout
+    ; O.uart_tx = zero 1
     } 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =

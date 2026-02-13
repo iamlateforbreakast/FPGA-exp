@@ -1,5 +1,5 @@
 (library
  (name testbench)
- (libraries project06_lib hardcaml hardcaml_waveterm)
+ (libraries project07_lib hardcaml hardcaml_waveterm)
  (inline_tests)
  (preprocess (pps ppx_inline_test ppx_expect)))
