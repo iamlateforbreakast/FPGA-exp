@@ -1,7 +1,18 @@
 open Hardcaml
+open Project07_lib
 open Hardcaml.Bits
 
-module Sim = Cyclesim.With_interface(I2c_master.I)(I2c_master.O)
+module My_config = struct
+  let clk_fre = 27_000_000
+  let uart_fre = 27_000_000
+  let baud_rate = 115_200
+  let i2c_address = 0x76
+  let pattern = [0;1;2;3;4;5;6;7]
+  let is_simulation = false
+end
+
+module MyI2c_master = I2c_master.Make(My_config)
+module Sim = Cyclesim.With_interface(MyI2c_master.I)(MyI2c_master.O)
 
 let run_test () =
   (* Create the simulator *)
