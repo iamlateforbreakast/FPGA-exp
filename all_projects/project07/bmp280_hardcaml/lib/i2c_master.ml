@@ -41,7 +41,7 @@ module Make (X : Config.S) = struct
     let half_period = quarter_period *: of_int ~w:16 2 in
     let full_period = quarter_period *: of_int ~w:16 4 in
 	
-	let sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
+	let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
 	(* --- Internal Signals & Registers --- *)
     let step_counter = Always.Variable.reg spec ~w:16 () in
