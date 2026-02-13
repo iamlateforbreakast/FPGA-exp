@@ -38,7 +38,7 @@ module Make (X : Config.S) = struct
   module MyI2c_master = I2c_master.Make(X)
 
   (* Create GOWIN primitive components *)
-  let iobuf ~din ~dout ~oen =
+  let iobuf ~din ~oen =
     Instantiation.create
       ~name:"IOBUF" (* Gowin primitive name *)
       ~inputs:[ "I", din
@@ -75,14 +75,10 @@ module Make (X : Config.S) = struct
                       ; sda_in = zero 1 }) in
 					  
     let sda_i = wire 1 in
-    let sda_o = Always.Variable.wire ~default:gnd in
     let sda_oe = Always.Variable.wire ~default:gnd in
 
 	(* Instantiate the IOBUF for SDA *)
-    let iobuf_res = Instantiation.create ~name:"IOBUF" ~scope
-      ~inputs:[("I", sda_o.value); ("OEN", ~: (sda_oe.value))]
-      ~outputs:[("O", 1)] () in
-    sda_i <== (Map.find_exn iobuf_res "O");
+    let iobuf_res = iobuf ~din:sda_in ~oen:sda_oe
 	
     compile [
       sm.switch [
@@ -123,9 +119,8 @@ module Make (X : Config.S) = struct
 
     (* Return circuit output value *)
     { O.leds = zero 6
-    ; O.output = i2c_master.dout
     ; O.scl = i2c_master.scl 
-    ; O.sda = i2c_master.sda_out
+    ; O.sda = iobuf_res.dout
     } 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
