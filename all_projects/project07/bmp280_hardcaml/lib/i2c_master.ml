@@ -17,9 +17,9 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a
       ; reset : 'a
-	    ; addr : 'a[@bits 7]
-	    ; reg_addr : 'a[@bits 8]
-	    ; din : 'a [@bits 8]
+      ; addr : 'a[@bits 7]
+      ; reg_addr : 'a[@bits 8]
+      ; din : 'a [@bits 8]
       ; rw : 'a
       ; start : 'a
       ; sda_in : 'a
