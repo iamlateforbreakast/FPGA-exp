@@ -32,6 +32,9 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+    let half_period = quarter_period *: of_int ~w:16 2 in
+    let full_period = quarter_period *: of_int ~w:16 4 in
+	
 	let sync_spec = Reg_spec.create ~clock:_input.clock ~reset:_input.reset () in
 
 	(* --- Internal Signals & Registers --- *)
