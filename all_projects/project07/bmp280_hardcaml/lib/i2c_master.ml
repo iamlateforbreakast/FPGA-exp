@@ -75,7 +75,7 @@ module Make (X : Config.S) = struct
     
 end
 
-(* Inside your create function *)
+(* Inside your create function 
 let sda_i = wire 1 in
 let sda_o = Always.Variable.wire ~default:gnd in
 let sda_oe = Always.Variable.wire ~default:gnd in
@@ -200,3 +200,4 @@ module Make (X : Config.S) = struct
       O.ack_error = ack_err.value; O.dout = zero 8 }
 end
 
+*)

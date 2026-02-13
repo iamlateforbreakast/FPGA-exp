@@ -1,8 +1,10 @@
 (* config_intf.ml *)
 module type S = sig
   val clk_fre : int
+  val uart_fre : int
   val baud_rate : int
   val i2c_address : int
+  val pattern: int list
   val is_simulation: bool
 end
 

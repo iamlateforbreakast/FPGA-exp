@@ -6,6 +6,7 @@ module My_config = struct
   let clk_fre = 27_000_000
   let baud_rate = 115_200
   let i2c_address = 0x76
+  let pattern = [0x21; 0x12; 0x0C; 0x00; 0x12; 0x21]
   let is_simulation = false
 end
 
