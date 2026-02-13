@@ -1,4 +1,4 @@
-I’ve just completed this upgrade based on the previous comments, but for the sake of clarity, these are the exact steps I followed:
+How to upgrade WSL Fedora 42 to fedor 43
 
 In Fedora itself:
 
