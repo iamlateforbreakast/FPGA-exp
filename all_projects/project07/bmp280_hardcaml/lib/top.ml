@@ -1,6 +1,7 @@
 (* top.ml *)
 open Hardcaml
 open Signal
+open Base
 
 module type Config = Config.S
 
@@ -32,6 +33,7 @@ module Make (X : Config.S) = struct
 
   (* Create configured modules *)
   module MyI2c_master = I2c_master.Make(X)
+  module MyLeds = Leds.Make(X)
 
   (* Create GOWIN primitive components *)
   let iobuf ~din ~oen =
@@ -45,22 +47,18 @@ module Make (X : Config.S) = struct
                ()
     in (Map.find_exn m "IO", Map.find_exn m "O")
 	  
-  let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+  let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
 	  let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
     let sm = State_machine.create (module States) sync_spec ~enable:vdd in
-    (*
-    reg [3:0] state;
-    reg start;
-    wire done;
-    reg [7:0] reg_addr, wdata;
-    *)
+
     let start = Variable.reg ~enable:vdd sync_spec ~width:1 in
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
     let wdata = Variable.reg ~enable:vdd sync_spec ~width:8 in
 
-    let i2c_master = MyI2c_master.hierarchical _scope (
+    let sda_var_in = Variable.wire ~default:gnd in
+    let i2c_master = MyI2c_master.hierarchical scope (
 	     MyI2c_master.I.{ reset=input.reset
                       ; clock=input.clock
                       ; addr=of_int ~width:7 X.i2c_address
@@ -68,15 +66,16 @@ module Make (X : Config.S) = struct
                       ; din=wdata.value
                       ; rw=one 1  (* 1 for write, 0 for read *)
                       ; start=start.value 
-                      ; sda_in = zero 1 }) in
-					  
-    let sda_i = wire 1 in
-    let sda_oe = Always.Variable.wire ~default:gnd in
+                      ; sda_in = sda_var_in.value }) in
+
+    let leds = MyLeds.hierarchical scope (
+	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
 
 	  (* Instantiate the IOBUF for SDA *)
-    let iobuf_res = iobuf ~din:sda_in ~oen:sda_oe
+    let (sda_io,sda_from_bus) = iobuf ~din:i2c_master.sda_out ~oen:i2c_master.sda_oe in
 	
-    compile [
+    Always.(compile [
+      sda_var_in <-- sda_from_bus;
       sm.switch [
         States.INIT, [
           reg_addr <--. 0xF4;
@@ -95,7 +94,7 @@ module Make (X : Config.S) = struct
         ];
         (* Continue sequencing through all 6 data registers *)
       ]
-    ];
+    ];);
     (*
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) state <= 0;
@@ -114,10 +113,10 @@ module Make (X : Config.S) = struct
     *)
 
     (* Return circuit output value *)
-    { O.leds = zero 6
+    { O.leds = (~:(leds.leds))
     ; O.scl = i2c_master.scl 
-    ; O.sda = iobuf_res.dout
-    ; O.uart_tx = zero 1
+    ; O.sda = sda_io
+    ; O.uart_tx = gnd
     } 
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =

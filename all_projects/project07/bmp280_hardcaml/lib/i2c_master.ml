@@ -187,7 +187,7 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: zero 16) [ sda_o <-- vdd ][];
           if_ (step_counter.value ==: quarter_period) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: half_period) [ sda_o <-- gnd ][]; (* Start condition *)
-          if_ (step_counter.value ==: (quarter_period *: of_int ~width:16 3)) [
+          if_ (step_counter.value ==: (quarter_period *: (of_int ~width:16 3))) [
             scl_o <-- gnd;
             shift_reg <-- input.addr @: vdd; (* Address + READ bit *)
             bit_index <-- of_int ~width:3 7;
