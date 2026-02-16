@@ -58,6 +58,17 @@ module Make (X : Config.S) = struct
     (* State machine *)
     let sm = Always.State_machine.create (module State) sync_spec in
 
+    (* Debug *)
+    let _ = Signal.(scl_o.value -- "scl_o") in
+    let _ = Signal.(sda_o.value -- "sda_o") in
+    let _ = Signal.(sda_oe.value -- "sda_oe") in
+    let _ = Signal.(ready.value -- "ready") in
+    let _ = Signal.(ack_err.value -- "ack_error") in
+    let _ = Signal.(step_counter.value -- "step_counter") in
+    let _ = Signal.(bit_index.value -- "bit_index") in
+    let _ = Signal.(shift_reg.value -- "shift_reg") in
+    let _ = Signal.(sm.current -- "state") in
+
     (* State Machine Logic *)
     Always.(compile [
       step_counter <-- step_counter.value +:. 1;
