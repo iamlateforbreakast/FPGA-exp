@@ -11,17 +11,15 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a [@rtlname "I_clk"]
       ; reset : 'a [@rtlname "I_rst"]
-      ; sda_in : 'a [@rtlname "I_sda_in"]
       } 
     [@@deriving hardcaml]
   end
 
   module O = struct
     type 'a t =
-      { leds : 'a[@bits 6]
-      ; scl : 'a [@rtlname "O_scl"]
+      { leds    : 'a[@bits 6]
+      ; scl     : 'a [@rtlname "O_scl"]
       ; sda_out : 'a [@rtlname "O_sda_out"]
-      ; sda_oe : 'a [@rtlname "O_sda_oe"]
       ; uart_tx : 'a [@rtlname "O_uart_tx"]
       }
     [@@deriving hardcaml]
@@ -32,78 +30,91 @@ module Make (X : Config.S) = struct
     [@@deriving sexp_of, compare, enumerate]
   end
 
-  (* Create configured modules *)
   module MyI2c_master = I2c_master.Make(X)
   module MyLeds = Leds.Make(X)
 
-  (* Create GOWIN primitive components *)
+  (* Create GOWIN primitive components with port naming to satisfy validator *)
   let iobuf ~din ~oen =
     let m = Instantiation.create
-      ~name:"IOBUF" (* Gowin primitive name *)
-      ~inputs:[ "I", din
-              ; "OEN", oen
-              ]
-      ~outputs:[ "IO", 1
-               ; "O", 1 ]
-               ()
-    in (Map.find_exn m "IO" -- "sda_io", 
-        Map.find_exn m "O"  -- "sda_from_bus")
+      ~name:"IOBUF"
+      ~inputs:[ "I", din; "OEN", oen ]
+      ~outputs:[ "IO", 1; "O", 1 ]
+      ()
+    in 
+    (Map.find_exn m "IO" -- "sda_io", 
+     Map.find_exn m "O"  -- "sda_from_bus")
 	  
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
-	  let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
     let sm = State_machine.create (module States) sync_spec ~enable:vdd in
 
-    let start = Variable.reg ~enable:vdd sync_spec ~width:1 in
+    (* Control Registers *)
+    let start    = Variable.reg ~enable:vdd sync_spec ~width:1 in
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
-    let wdata = Variable.reg ~enable:vdd sync_spec ~width:8 in
+    let wdata    = Variable.reg ~enable:vdd sync_spec ~width:8 in
 
+    (* Feedback Wires to handle recursive module dependencies *)
+    let master_ready_wire = Signal.wire 1 in
+    let sda_in_wire       = Signal.wire 1 in
+
+    (* Instantiate the I2C Master *)
     let i2c_master = MyI2c_master.hierarchical scope (
-	     MyI2c_master.I.{ reset=input.reset
-                      ; clock=input.clock
-                      ; dev_addr=(of_int ~width:7 X.i2c_address)
-                      ; reg_addr=reg_addr.value
-                      ; mosi=wdata.value
-                      ; rw=gnd  (* 1 for write, 0 for read *)
-                      ; start = start.value
-                      ; sda_in = input.sda_in }) in
+	     MyI2c_master.I.{ reset    = input.reset
+                      ; clock    = input.clock
+                      ; dev_addr = of_int ~width:7 X.i2c_address
+                      ; reg_addr = reg_addr.value
+                      ; mosi     = wdata.value
+                      ; rw       = gnd 
+                      ; start    = start.value
+                      ; sda_in   = sda_in_wire }) in
 
     let leds = MyLeds.hierarchical scope (
-	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
+	     MyLeds.I.{ reset = input.reset; clock = input.clock }) in
 
-	  (* Instantiate the IOBUF for SDA *)
-    let (_sda_io,_sda_from_bus) = iobuf ~din:i2c_master.sda_out ~oen:i2c_master.sda_oe in
+    (* Instantiate the IOBUF for SDA *)
+    let (sda_io, sda_phys_in) = iobuf 
+        ~din:i2c_master.sda_out 
+        ~oen:i2c_master.sda_oe in
 
-    Always.(compile [
+    (* Connect wires after instantiations to complete the logic loops *)
+    let () =
+      master_ready_wire <== i2c_master.ready;
+      sda_in_wire       <== sda_phys_in 
+    in
+
+    (* Compile the logic - Must be done before returning the record O.t *)
+    let () = compile [
       sm.switch [
         States.INIT, [
-          start    <--. 0;
-		  sm.set_next SEND_CONFIG;
+          start    <-- gnd;
+          sm.set_next SEND_CONFIG;
         ];
         States.SEND_CONFIG, [
-		  reg_addr <--. 0xF4; (* Temperature *)
-          reg_addr <--. 0xF7;  (* Pressure MSB *)
-          start    <--. 1;
-		  sm.set_next WAIT_CONFIG;
+          reg_addr <--. 0xF4; 
+          wdata    <--. 0x27;
+          start    <-- vdd;
+          sm.set_next WAIT_CONFIG;
         ];
-		States.WAIT_CONFIG [
-		  if_ i2c_master.ready [
+        States.WAIT_CONFIG, [
+          if_ master_ready_wire [
+            start <-- gnd;
             sm.set_next States.READ_DATA;
           ][]
-		];
-        States.READ_DATA [
-		];
-		States.WAIT_DATA [
-		];
+        ];
+        States.READ_DATA, [
+          (* Logic to trigger read... *)
+        ];
+        States.WAIT_DATA, [
+        ];
       ]
-    ];);
+    ] in
 
     (* Return circuit output value *)
-    { O.leds = (~:(leds.leds))
-    ; O.scl = gnd (* i2c_master.scl *) 
-    ; O.sda_out = gnd (* i2c_master.sda_out a*)
-    ; O.sda_oe = gnd (* i2c_master.sda_oe *)
+    { O.leds    = (~:(leds.leds))
+    ; O.scl     = i2c_master.scl
+    ; O.sda_out = sda_io
     ; O.uart_tx = gnd
     } 
 
