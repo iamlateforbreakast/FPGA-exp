@@ -3,10 +3,7 @@
 open Hardcaml
 open Hardcaml.Signal
 
-module type Config = Config.S
-
 module Make (X : Config.S) = struct
-
   module I = struct
     type 'a t =
       { clock : 'a
@@ -25,115 +22,81 @@ module Make (X : Config.S) = struct
     [@@deriving hardcaml]
   end
 
-  (* State encoding *)
-  module States = struct
-    type t = S_IDLE | S_START | S_SEND_BYTE | S_STOP
+  (* State definition *)
+  module State = struct
+    type t = IDLE | START | SEND_BYTE | STOP
     [@@deriving sexp_of, compare, enumerate]
   end
 
-let create
-    ~build_mode
-    scope
-    { I.clock; resetn; tx_data; tx_data_valid }
-  =
-    let width_state = 3 in
-    let width_cycle = 16 in
-    let width_bit = 3 in
-    let width_data = 8 in
-
-    (* Parameters *)
-    let clk_fre = 50 in
+  let create _scope { I.clock; resetn; tx_data; tx_data_valid } =
+    let spec = Reg_spec.create ~clock ~reset:(~:resetn) () in
+    
+    (* Parameters based on Config X *)
     let baud_rate = 115200 in
-    let cycle = clk_fre * 1_000_000 / baud_rate in
+    let clk_freq_hz = 50 * 1_000_000 in
+    let cycles_per_bit = clk_freq_hz / baud_rate in
 
-    (* Registers *)
-    let state = reg ~width:width_state ~clock:clk ~reset:(~:rst_n) ~reset_to:(of_int ~width:width_state s_idle) in
-    let next_state = wire width_state in
-    let cycle_cnt = reg ~width:width_cycle ~clock:clk ~reset:(~:rst_n) ~reset_to:(zero width_cycle) in
-    let bit_cnt = reg ~width:width_bit ~clock:clk ~reset:(~:rst_n) ~reset_to:(zero width_bit) in
-    let tx_data_latch = reg ~width:width_data ~clock:clk ~reset:(~:rst_n) ~reset_to:(zero width_data) in
-    let tx_reg = reg ~width:1 ~clock:clk ~reset:(~:rst_n) ~reset_to:(vdd) in
+    let sm = Always.State_machine.create (module State) spec in
+    
+    let cycle_cnt = Always.Variable.reg spec ~width:16 in
+    let bit_cnt = Always.Variable.reg spec ~width:3 in
+    let tx_data_latch = Always.Variable.reg spec ~width:8 in
+    let tx_pin = Always.Variable.reg spec ~width:1 in
+    let tx_data_ready = Always.Variable.wire ~default:gnd in
 
-    (* Next state logic *)
-    let next_state_val =
-      mux state [
-        (of_int ~width:width_state s_idle,
-          mux tx_data_valid
-            (of_int ~width:width_state s_start)
-            (of_int ~width:width_state s_idle)
-        );
-        (of_int ~width:width_state s_start,
-          mux (cycle_cnt ==:. (cycle - 1))
-            (of_int ~width:width_state s_send_byte)
-            (of_int ~width:width_state s_start)
-        );
-        (of_int ~width:width_state s_send_byte,
-          mux ((cycle_cnt ==:. (cycle - 1)) &: (bit_cnt ==:. 7))
-            (of_int ~width:width_state s_stop)
-            (of_int ~width:width_state s_send_byte)
-        );
-        (of_int ~width:width_state s_stop,
-          mux (cycle_cnt ==:. (cycle - 1))
-            (of_int ~width:width_state s_idle)
-            (of_int ~width:width_state s_stop)
-        )
-      ] ~default:(of_int ~width:width_state s_idle)
-    in
-    next_state <== next_state_val;
+    let is_last_cycle = cycle_cnt.value ==:. (cycles_per_bit - 1) in
+    let is_last_bit = bit_cnt.value ==:. 7 in
 
-    (* State register update *)
-    state <== next_state;
+    Always.(compile [
+      (* Default behavior *)
+      cycle_cnt <-- cycle_cnt.value +:. 1;
+      tx_pin <-- vdd;
 
-    (* tx_data_ready logic *)
-    let tx_data_ready =
-      reg_fb ~width:1 ~clock:clk ~reset:(~:rst_n) ~reset_to:(zero 1) (fun d ->
-        mux2 (state ==:. s_idle)
-          (mux2 tx_data_valid (zero 1) (ones 1))
-          (
-            mux2 ((state ==:. s_stop) &: (cycle_cnt ==:. (cycle - 1)))
-              (ones 1)
-              d
-          )
-      )
-    in
+      sm.switch [
+        IDLE, [
+          tx_data_ready <-- vdd;
+          cycle_cnt <-- gnd;
+          if_ tx_data_valid [
+            tx_data_latch <-- tx_data;
+            sm.set_next START;
+          ] [];
+        ];
 
-    (* tx_data_latch logic *)
-    tx_data_latch <== mux2 ((state ==:. s_idle) &: tx_data_valid) tx_data tx_data_latch;
+        START, [
+          tx_pin <-- gnd;
+          if_ is_last_cycle [
+            cycle_cnt <-- gnd;
+            sm.set_next SEND_BYTE;
+          ] [];
+        ];
 
-    (* bit_cnt logic *)
-    let bit_cnt_next =
-      mux2 (state ==:. s_send_byte)
-        (mux2 (cycle_cnt ==:. (cycle - 1)) (bit_cnt +:. 1) bit_cnt)
-        (zero width_bit)
-    in
-    bit_cnt <== bit_cnt_next;
+        SEND_BYTE, [
+          (* Select bit from latch using mux *)
+          tx_pin <-- mux bit_cnt.value (Array.to_list (bits_msb tx_data_latch.value |> List.rev));
+          if_ is_last_cycle [
+            cycle_cnt <-- 0;
+            if_ is_last_bit [
+              bit_cnt <-- 0;
+              sm.set_next STOP;
+            ] [
+              bit_cnt <-- bit_cnt.value +:. 1;
+            ];
+          ] [];
+        ];
 
-    (* cycle_cnt logic *)
-    let cycle_cnt_next =
-      mux2 ((state ==:. s_send_byte) &: (cycle_cnt ==:. (cycle - 1)) |: (next_state <>: state))
-        (zero width_cycle)
-        (cycle_cnt +:. 1)
-    in
-    cycle_cnt <== cycle_cnt_next;
+        STOP, [
+          tx_pin <-- vdd;
+          if_ is_last_cycle [
+            cycle_cnt <-- 0;
+            sm.set_next IDLE;
+          ] [];
+        ];
+      ]
+    ]);
 
-    (* tx_reg logic *)
-    let tx_reg_next =
-      mux state [
-        (of_int ~width:width_state s_idle, vdd);
-        (of_int ~width:width_state s_stop, vdd);
-        (of_int ~width:width_state s_start, gnd);
-        (of_int ~width:width_state s_send_byte, select tx_data_latch bit_cnt);
-      ] ~default:vdd
-    in
-    tx_reg <== tx_reg_next;
+    { O.tx_pin = tx_pin.value; tx_data_ready = tx_data_ready.value }
 
-    (* Outputs *)
-    let tx_pin = tx_reg in
-
-    (* Return outputs as a record *)
-    { tx_data_ready; tx_pin }
-
-  let hierarchical ?instance ~build_mode scope =
+  let hierarchical ?instance scope i =
     let module H = Hierarchy.In_scope (I) (O) in
-    H.hierarchical ?instance ~name:"uart_tx" ~scope (create ~build_mode)
+    H.hierarchical ?instance ~name:"uart_tx" ~scope (create scope) i
 end
