@@ -4,7 +4,6 @@ module type S = sig
   val uart_fre : int
   val baud_rate : int
   val i2c_address : int
-  val message ：string
   val pattern: int list
   val is_simulation: bool
 end
