@@ -1,3 +1,4 @@
+(* testbench.ml *)
 open Hardcaml
 open Project07_lib
 open Hardcaml.Bits
@@ -14,9 +15,11 @@ end
 module MyI2c_master = I2c_master.Make(My_config)
 module Sim = Cyclesim.With_interface(MyI2c_master.I)(MyI2c_master.O)
 
-let run_test () =
-  (* Create the simulator *)
-  let sim = Sim.create (MyI2c_master.create (Scope.create ())) in
+let testbench () =
+  let scope = Scope.create 
+      ~auto_label_hierarchical_ports:true
+      ~flatten_design:true () in
+  let sim = Sim.create (MyI2c_master.create scope) in
   let inputs = Cyclesim.inputs sim in
   let outputs = Cyclesim.outputs sim in
 
@@ -26,6 +29,8 @@ let run_test () =
       Cyclesim.cycle sim;
     done
   in
+
+  Printf.printf "%s\n" "Hello";
 
   (* 1. Reset the system *)
   inputs.reset := vdd;
@@ -56,3 +61,13 @@ let run_test () =
 
   Printf.printf "Final Data Received: 0x%x\n" (to_int !(outputs.miso))
 
+let%expect_test "bmp280" =
+  testbench ();
+  [%expect {|
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
+  |}]
