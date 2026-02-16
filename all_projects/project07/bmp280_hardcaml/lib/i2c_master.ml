@@ -113,7 +113,7 @@ module Make (X : Config.S) = struct
             (* If we just sent the Slave Addr, move to Reg Addr *)
             shift_reg <-- input.reg_addr;
             bit_index <-- of_int ~width:3 7;
-            sm.set_next REG_ADDR;
+            sm.set_next SET_REG;
           ][];
         ];
 
@@ -128,7 +128,7 @@ module Make (X : Config.S) = struct
           ][];
         ];
 
-        REG_ADDR, [
+        SET_REG, [
           sda_oe <-- vdd;
           shift_reg <-- sll shift_reg.value 1;
           sda_o <-- (bit shift_reg.value 7);
