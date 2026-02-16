@@ -97,7 +97,7 @@ module Make (X : Config.S) = struct
             scl_o <-- gnd;
             step_counter <-- zero 16; (* Reset for next bit or state *)
             if_ (bit_index.value ==: zero 3) [
-              sm.set_next ACK_ADDR;
+              sm.set_next WAIT_ACK_ADDR;
             ] [
               bit_index <-- bit_index.value -:. 1;
             ];
@@ -136,8 +136,11 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
             step_counter <-- zero 16;
-            if_ (bit_index.value ==: zero 3) [ sm.set_next ACK_REG ]
-            [ bit_index <-- bit_index.value -:. 1 ];
+            if_ (bit_index.value ==: zero 3) [
+			  sm.set_next WAIT_ACK_REG
+			] [
+			  bit_index <-- bit_index.value -:. 1 
+			];
           ][];
         ];
 
