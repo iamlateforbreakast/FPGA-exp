@@ -10,9 +10,9 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a
       ; reset : 'a
-      ; addr : 'a[@bits 7]
+      ; dev_addr : 'a[@bits 7]
       ; reg_addr : 'a[@bits 8]
-      ; din : 'a [@bits 8]
+      ; mosi : 'a [@bits 8]
       ; rw : 'a
       ; start : 'a
       ; sda_in : 'a
@@ -24,25 +24,24 @@ module Make (X : Config.S) = struct
     type 'a t =
       { scl : 'a
       ; sda_out : 'a
-	    ; sda_oe : 'a
+	  ; sda_oe : 'a
       ; ready : 'a
       ; ack_error : 'a
-      ; dout : 'a [@bits 8]
+      ; miso : 'a [@bits 8]
       }
       [@@deriving hardcaml]
   end
 
   module State = struct
-    type t = IDLE | START | ADDR | ACK_ADDR | REG_ADDR | ACK_REG 
-         | RESTART | ADDR_READ | ACK_ADDR_READ | READ_DATA | WRITE_DATA 
-         | ACK_WRITE | MSTR_ACK | STOP 
+    type t = IDLE | START | SET_ADDR | WAIT_ACK_ADDR | SET_REG | WAIT_ACK_REG 
+         | RESTART | ADDR_READ | ACK_ADDR_READ | READ_DATA | MSTR_ACK | STOP 
          [@@deriving sexp_of, compare, enumerate]
   end
   
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let quarter_period = 67 in (* 100 kHz *)
 	
-	  let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
+    let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
 	  (* --- Internal Signals & Registers --- *)
     let step_counter = Always.Variable.reg sync_spec ~enable:vdd ~width:16 in
@@ -56,8 +55,8 @@ module Make (X : Config.S) = struct
     let ready = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ack_err = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
 
-	  (* State machine *)
-	  let sm = Always.State_machine.create (module State) sync_spec in
+    (* State machine *)
+    let sm = Always.State_machine.create (module State) sync_spec in
 
     (* State Machine Logic *)
     Always.(compile [
@@ -69,27 +68,28 @@ module Make (X : Config.S) = struct
           sda_o <-- vdd;
           sda_oe <-- gnd;
           if_ input.start [
-            shift_reg <-- input.addr @: input.rw;
-            bit_index <-- of_int ~width:3 7;
-            ready <-- gnd;
-            step_counter <-- zero 16; (* Reset for START *)
+            shift_reg <-- input.dev_addr @: (zero 1);
+			bit_index <-- of_int ~width:3 7;
             sm.set_next START;
           ][];
         ];
 
         START, [
           sda_oe <-- vdd;
-          sda_o <-- gnd; 
+          sda_o <-- gnd;
+          ready <-- gnd;
+          step_counter <-- zero 16; (* Reset for START *)
           if_ (step_counter.value ==: (of_int ~width:16 quarter_period)) [
             scl_o <-- gnd;
             step_counter <-- zero 16; (* Reset for ADDR *)
-            sm.set_next ADDR;
+            sm.set_next SET_ADDR;
           ][];
         ];
 
-        ADDR, [
+        SET_ADDR, [
           sda_oe <-- vdd;
-          sda_o <-- (bit shift_reg.value (to_int bit_index.value));
+		  shift_reg <-- sll shift_reg 1;
+          sda_o <-- (bit shift_reg.value 7);
         
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
         
@@ -104,7 +104,7 @@ module Make (X : Config.S) = struct
           ][];
         ];
 
-        ACK_ADDR, [
+        WAIT_ACK_ADDR, [
           sda_oe <-- gnd;
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
@@ -130,17 +130,18 @@ module Make (X : Config.S) = struct
 
         REG_ADDR, [
           sda_oe <-- vdd;
-          sda_o <-- (bit  bit_index.value (to_int shift_reg.value));
+          shift_reg <-- sll shift_reg 1;
+          sda_o <-- (bit shift_reg.value 7);
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
-          scl_o <-- gnd;
-          step_counter <-- zero 16;
-          if_ (bit_index.value ==: zero 3) [ sm.set_next ACK_REG ]
-          [ bit_index <-- bit_index.value -:. 1 ];
+            scl_o <-- gnd;
+            step_counter <-- zero 16;
+            if_ (bit_index.value ==: zero 3) [ sm.set_next ACK_REG ]
+            [ bit_index <-- bit_index.value -:. 1 ];
           ][];
         ];
 
-        ACK_REG, [
+        WAIT_ACK_REG, [
           sda_oe <-- gnd;
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
@@ -157,28 +158,6 @@ module Make (X : Config.S) = struct
           ][];
         ];
         
-        WRITE_DATA, [
-          sda_oe <-- vdd;
-          sda_o <-- (bit shift_reg.value (to_int bit_index.value));
-          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ] [];
-          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
-            scl_o <-- gnd;
-            step_counter <-- zero 16;
-            if_ (bit_index.value ==: zero 3) [ sm.set_next ACK_WRITE ]
-            [ bit_index <-- bit_index.value -:. 1 ];
-          ] [];
-        ];
-
-        ACK_WRITE, [
-          sda_oe <-- gnd;
-          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ] [];
-          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
-            scl_o <-- gnd;
-            step_counter <-- zero 16;
-            sm.set_next STOP;
-          ] [];
-        ];
-
         RESTART, [
           (* Repeated Start: SDA goes high then low while SCL is high *)
           sda_oe <-- vdd;
