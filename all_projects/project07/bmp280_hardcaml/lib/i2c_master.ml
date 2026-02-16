@@ -63,6 +63,7 @@ module Make (X : Config.S) = struct
       step_counter <-- step_counter.value +:. 1;
       sm.switch [
         IDLE, [
+          ack_err <-- gnd;
           ready <-- vdd;
           scl_o <-- vdd;
           sda_o <-- vdd;
@@ -177,6 +178,19 @@ module Make (X : Config.S) = struct
         ];
 
         SET_ADDR_READ, [
+          sda_oe <-- vdd;
+          sda_o <-- (bit shift_reg.value 7);
+          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
+          if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
+            scl_o <-- gnd;
+            step_counter <-- zero 16;
+            shift_reg <-- sll shift_reg.value 1;
+            if_ (bit_index.value ==: zero 3) [
+              sm.set_next READ_DATA; (* After addr ack, go to read *)
+            ] [
+              bit_index <-- bit_index.value -:. 1;
+            ];
+          ][];
 		    ];
 		
         READ_DATA, [
@@ -185,6 +199,7 @@ module Make (X : Config.S) = struct
             scl_o <-- vdd;
             (* Sample data at the middle of the high SCL pulse *)
             (* TBC: shift_reg <-- insert ~into:shift_reg.value ~at_offset:(to_int bit_index.value) input.sda_in; *)
+            shift_reg <-- ((sll shift_reg.value 1) |: (zero 7 @: input.sda_in));
           ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
