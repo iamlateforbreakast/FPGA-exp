@@ -11,6 +11,7 @@ module Make (X : Config.S) = struct
     type 'a t =
       { clock : 'a [@rtlname "I_clk"]
       ; reset : 'a [@rtlname "I_rst"]
+      ; sda_in : 'a [@rtlname "I_sda_in"]
       } 
     [@@deriving hardcaml]
   end
@@ -19,9 +20,9 @@ module Make (X : Config.S) = struct
     type 'a t =
       { leds : 'a[@bits 6]
       ; scl : 'a [@rtlname "O_scl"]
-      ; sda : 'a [@rtlname "O_sda"]
+      ; sda_out : 'a [@rtlname "O_sda_out"]
+      ; sda_oe : 'a [@rtlname "O_sda_oe"]
       ; uart_tx : 'a [@rtlname "O_uart_tx"]
-      (* ; output : 'a[@bits 20] [@rtlname "O_dout"] Raw temp. and raw press. *)
       }
     [@@deriving hardcaml]
   end
@@ -45,7 +46,8 @@ module Make (X : Config.S) = struct
       ~outputs:[ "IO", 1
                ; "O", 1 ]
                ()
-    in (Map.find_exn m "IO", Map.find_exn m "O")
+    in (Map.find_exn m "IO" -- "sda_io", 
+        Map.find_exn m "O"  -- "sda_from_bus")
 	  
   let create (scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
@@ -57,29 +59,26 @@ module Make (X : Config.S) = struct
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
     let wdata = Variable.reg ~enable:vdd sync_spec ~width:8 in
 
-    let sda_var_in = Variable.wire ~default:gnd in
     let i2c_master = MyI2c_master.hierarchical scope (
 	     MyI2c_master.I.{ reset=input.reset
                       ; clock=input.clock
-                      ; addr=of_int ~width:7 X.i2c_address
+                      ; dev_addr=(of_int ~width:7 X.i2c_address)
                       ; reg_addr=reg_addr.value
-                      ; din=wdata.value
-                      ; rw=one 1  (* 1 for write, 0 for read *)
-                      ; start=start.value 
-                      ; sda_in = sda_var_in.value }) in
+                      ; mosi=wdata.value
+                      ; rw=gnd  (* 1 for write, 0 for read *)
+                      ; start = start.value
+                      ; sda_in = input.sda_in }) in
 
     let leds = MyLeds.hierarchical scope (
 	     MyLeds.I.{ reset=input.reset; clock=input.clock }) in
 
 	  (* Instantiate the IOBUF for SDA *)
-    let (sda_io,sda_from_bus) = iobuf ~din:i2c_master.sda_out ~oen:i2c_master.sda_oe in
-	
+    let (_sda_io,_sda_from_bus) = iobuf ~din:i2c_master.sda_out ~oen:i2c_master.sda_oe in
+
     Always.(compile [
-      sda_var_in <-- sda_from_bus;
       sm.switch [
         States.INIT, [
-          reg_addr <--. 0xF4;
-          wdata    <--. 0x27;
+          reg_addr <--. 0xF4; (* Temperature *)
           start    <--. 1;
           if_ i2c_master.ready [
             sm.set_next States.SEND_CONFIG;
@@ -95,27 +94,12 @@ module Make (X : Config.S) = struct
         (* Continue sequencing through all 6 data registers *)
       ]
     ];);
-    (*
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) state <= 0;
-        else case (state)
-            0: begin // Step 1: Configure Sensor
-                reg_addr <= 8'hF4; wdata <= 8'h27; start <= 1;
-                if (done) state <= 1;
-            end
-            1: begin // Step 2: Request Pressure MSB (0xF7)
-                reg_addr <= 8'hF7; start <= 1;
-                if (done) state <= 2;
-            end
-            // Continue sequencing through all 6 data registers
-        endcase
-    end
-    *)
 
     (* Return circuit output value *)
     { O.leds = (~:(leds.leds))
-    ; O.scl = i2c_master.scl 
-    ; O.sda = sda_io
+    ; O.scl = gnd (* i2c_master.scl *) 
+    ; O.sda_out = gnd (* i2c_master.sda_out a*)
+    ; O.sda_oe = gnd (* i2c_master.sda_oe *)
     ; O.uart_tx = gnd
     } 
 
