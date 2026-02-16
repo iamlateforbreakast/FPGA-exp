@@ -34,7 +34,7 @@ module Make (X : Config.S) = struct
 
   module State = struct
     type t = IDLE | START | SET_ADDR | WAIT_ACK_ADDR | SET_REG | WAIT_ACK_REG 
-         | RESTART | ADDR_READ | ACK_ADDR_READ | READ_DATA | MSTR_ACK | STOP 
+         | RESTART | SET_ADDR_READ | ACK_ADDR_READ | READ_DATA | MSTR_ACK | STOP 
          [@@deriving sexp_of, compare, enumerate]
   end
   
@@ -156,7 +156,7 @@ module Make (X : Config.S) = struct
             ] [
               shift_reg <-- input.mosi;
               bit_index <-- of_int ~width:3 7;
-              sm.set_next WRITE_DATA; (* You can implement this similarly to REG_ADDR *)
+              sm.set_next RESTART; (* You can implement this similarly to REG_ADDR *)
             ];
           ][];
         ];
@@ -172,10 +172,13 @@ module Make (X : Config.S) = struct
             shift_reg <-- input.dev_addr @: vdd; (* Address + READ bit *)
             bit_index <-- of_int ~width:3 7;
             step_counter <-- zero 16  ;
-            sm.set_next ADDR_READ; (* New state to handle the second address phase *)
+            sm.set_next SET_ADDR_READ; (* New state to handle the second address phase *)
           ][];
         ];
 
+        SET_ADDR_READ, [
+		];
+		
         READ_DATA, [
           sda_oe <-- gnd; (* Release SDA for slave to drive data *)
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [
