@@ -78,20 +78,24 @@ module Make (X : Config.S) = struct
     Always.(compile [
       sm.switch [
         States.INIT, [
-          reg_addr <--. 0xF4; (* Temperature *)
-          start    <--. 1;
-          if_ i2c_master.ready [
-            sm.set_next States.SEND_CONFIG;
-          ][]
+          start    <--. 0;
+		  sm.set_next SEND_CONFIG;
         ];
         States.SEND_CONFIG, [
+		  reg_addr <--. 0xF4; (* Temperature *)
           reg_addr <--. 0xF7;  (* Pressure MSB *)
           start    <--. 1;
-          if_ i2c_master.ready [
+		  sm.set_next WAIT_CONFIG;
+        ];
+		States.WAIT_CONFIG [
+		  if_ i2c_master.ready [
             sm.set_next States.READ_DATA;
           ][]
-        ];
-        (* Continue sequencing through all 6 data registers *)
+		];
+        States.READ_DATA [
+		];
+		States.WAIT_DATA [
+		];
       ]
     ];);
 
