@@ -16,7 +16,7 @@ module Sim = Cyclesim.With_interface(MyI2c_master.I)(MyI2c_master.O)
 
 let run_test () =
   (* Create the simulator *)
-  let sim = Sim.create (I2c_master.create (Scope.create ())) in
+  let sim = Sim.create (MyI2c_master.create (Scope.create ())) in
   let inputs = Cyclesim.inputs sim in
   let outputs = Cyclesim.outputs sim in
 
@@ -33,8 +33,8 @@ let run_test () =
   inputs.reset := gnd;
 
   (* 2. Configure a Read transaction *)
-  inputs.addr     := of_int ~w:7 0x50; (* Slave Address *)
-  inputs.reg_addr := of_int ~w:8 0x12; (* Sub-address to read *)
+  inputs.dev_addr     := of_int ~width:7 0x50; (* Slave Address *)
+  inputs.reg_addr := of_int ~width:8 0x12; (* Sub-address to read *)
   inputs.rw       := vdd;              (* Read = 1 *)
   inputs.start    := vdd;
   cycle 1;
@@ -54,5 +54,5 @@ let run_test () =
     cycle 10;
   done;
 
-  Printf.printf "Final Data Received: 0x%x\n" (to_int !(outputs.dout))
+  Printf.printf "Final Data Received: 0x%x\n" (to_int !(outputs.miso))
 
