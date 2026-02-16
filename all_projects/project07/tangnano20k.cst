@@ -1,0 +1,30 @@
+// connection to the external I2C
+IO_LOC "O_scl" 42;
+IO_PORT "O_scl" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "O_sda_out" 41;
+IO_PORT "O_sda_out" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+
+// connection to TX uart
+IO_LOC "O_uart_tx" 69;
+IO_PORT "O_uart_tx" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8 BANK_VCCIO=3.3;
+
+// connection to leds
+IO_LOC "O_led[5]" 15;
+IO_PORT "O_led[5]" PULL_MODE=UP DRIVE=8;
+IO_LOC "O_led[4]" 16;
+IO_PORT "O_led[4]" PULL_MODE=UP DRIVE=8;
+IO_LOC "O_led[3]" 17;
+IO_PORT "O_led[3]" PULL_MODE=UP DRIVE=8;
+IO_LOC "O_led[2]" 18;
+IO_PORT "O_led[2]" PULL_MODE=UP DRIVE=8;
+IO_LOC "O_led[1]" 19;
+IO_PORT "O_led[1]" PULL_MODE=UP DRIVE=8;
+IO_LOC "O_led[0]" 20;
+IO_PORT "O_led[0]" PULL_MODE=UP DRIVE=8;
+
+IO_LOC "I_key" 87;
+IO_PORT "I_key" PULL_MODE=DOWN;
+IO_LOC "I_rst" 88;
+IO_PORT "I_rst" PULL_MODE=DOWN;
+IO_LOC "I_clk" 4;
+IO_PORT "I_clk" PULL_MODE=UP;
