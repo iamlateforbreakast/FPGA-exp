@@ -39,7 +39,7 @@ module Make (X : Config.S) = struct
   end
   
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let quarter_period = 67 in (* 100 kHz *)
+    let quarter_period = if (X.is_simulation = false) then 67 else 3 in (* 100 kHz *)
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
@@ -82,6 +82,7 @@ module Make (X : Config.S) = struct
           if_ input.start [
             shift_reg <-- input.dev_addr @: (zero 1);
             bit_index <-- of_int ~width:3 7;
+            step_counter <-- zero 16;
             sm.set_next START;
           ][];
         ];
@@ -90,7 +91,6 @@ module Make (X : Config.S) = struct
           sda_oe <-- vdd;
           sda_o <-- gnd;
           ready <-- gnd;
-          step_counter <-- zero 16; (* Reset for START *)
           if_ (step_counter.value ==: (of_int ~width:16 quarter_period)) [
             scl_o <-- gnd;
             step_counter <-- zero 16; (* Reset for ADDR *)
@@ -100,8 +100,6 @@ module Make (X : Config.S) = struct
 
         SET_ADDR, [
           sda_oe <-- vdd;
-		  shift_reg <-- sll shift_reg.value 1;
-          sda_o <-- (bit shift_reg.value 7);
         
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
         
@@ -112,6 +110,8 @@ module Make (X : Config.S) = struct
               sm.set_next WAIT_ACK_ADDR;
             ] [
               bit_index <-- bit_index.value -:. 1;
+              shift_reg <-- sll shift_reg.value 1;
+              sda_o <-- (bit shift_reg.value 7);
             ];
           ][];
         ];
@@ -142,17 +142,17 @@ module Make (X : Config.S) = struct
 
         SET_REG, [
           sda_oe <-- vdd;
-          shift_reg <-- sll shift_reg.value 1;
-          sda_o <-- (bit shift_reg.value 7);
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
             step_counter <-- zero 16;
             if_ (bit_index.value ==: zero 3) [
-			  sm.set_next WAIT_ACK_REG
-			] [
-			  bit_index <-- bit_index.value -:. 1 
-			];
+			        sm.set_next WAIT_ACK_REG
+			      ] [
+			        bit_index <-- bit_index.value -:. 1;
+              shift_reg <-- sll shift_reg.value 1;
+              sda_o <-- (bit shift_reg.value 7);
+			      ];
           ][];
         ];
 
