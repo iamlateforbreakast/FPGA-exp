@@ -18,29 +18,39 @@ module MyBmp280 = I2c_master.Make(My_config)
 module Simulator = Cyclesim.With_interface (MyBmp280.I)(MyBmp280.O)
 
 let testbench n =
-  let scope = 
-    Scope.create 
+  let scope = Scope.create 
       ~auto_label_hierarchical_ports:true
       ~flatten_design:true () in
   let oc = open_out "bmp280.vcd" in
-  let sim = 
-    Simulator.create
+  let sim = Simulator.create
       ~config:Cyclesim.Config.trace_all (MyBmp280.create scope) |> Vcd.wrap oc in
   let inputs : _ MyBmp280.I.t = Cyclesim.inputs sim in
   let _outputs : _ MyBmp280.O.t = Cyclesim.outputs sim in
   let waves, sim = Waveform.create sim in
 
+  let cycle n =
+    for _ = 1 to n do
+      Cyclesim.cycle sim;
+    done
+  in
+  
+  (* Initialise inputs *)
   inputs.reset := Bits.gnd;
   inputs.dev_addr := Bits.of_int ~width:7 0x76;
-  inputs.reg_addr := Bits.of_int ~width:8 0x50;
-  inputs.mosi := Bits.of_int ~width:8 0;
-  inputs.rw := Bits.gnd;
+  inputs.reg_addr := Bits.of_int ~width:8 0xF4; (* BMP280 temperaturate register *)
+  inputs.mosi := Bits.of_int ~width:8 0; (* Unused *)
+  inputs.rw := Bits.gnd; (* Read = 0 *)
   inputs.start := Bits.gnd;
   inputs.sda_in := Bits.gnd;
 
-  for _i = 0 to n do
-    Cyclesim.cycle sim
-  done;
+  cycle 1;
+  inputs.reset := Bits.vdd;
+  cycle 1;
+  inputs.reset := Bits.gnd;
+  cycle 1;
+  inputs.start := Bits.vdd;
+  cycle n - 3;
+  
   close_out oc;
   waves
 
