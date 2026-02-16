@@ -5,12 +5,15 @@ open Hardcaml_waveterm
 open Project07_lib
 
 module My_config = struct
-  let clk_fre = 27
+  let clk_fre = 27_000_000
+  let uart_fre = 27_000_000
+  let baud_rate = 115_200
   let i2c_address = 0x76
+  let pattern = [0x21; 0x12; 0x0C; 0x00; 0x12; 0x21]
   let is_simulation = true
 end
 
-module MyBmp280 = Top.Make(My_config)
+module MyBmp280 = I2c_master.Make(My_config)
 
 module Simulator = Cyclesim.With_interface (MyBmp280.I)(MyBmp280.O)
 
@@ -28,6 +31,12 @@ let testbench n =
   let waves, sim = Waveform.create sim in
 
   inputs.reset := Bits.gnd;
+  inputs.dev_addr := Bits.of_int ~width:7 0x76;
+  inputs.reg_addr := Bits.of_int ~width:8 0x50;
+  inputs.mosi := Bits.of_int ~width:8 0;
+  inputs.rw := Bits.gnd;
+  inputs.start := Bits.gnd;
+  inputs.sda_in := Bits.gnd;
 
   for _i = 0 to n do
     Cyclesim.cycle sim
