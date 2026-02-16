@@ -40,6 +40,7 @@ let testbench () =
   (* 2. Configure a Read transaction *)
   inputs.dev_addr     := of_int ~width:7 0x50; (* Slave Address *)
   inputs.reg_addr := of_int ~width:8 0x12; (* Sub-address to read *)
+  inputs.mosi := Bits.of_int ~width:8 0;
   inputs.rw       := vdd;              (* Read = 1 *)
   inputs.start    := vdd;
   cycle 1;
