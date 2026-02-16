@@ -154,7 +154,7 @@ module Make (X : Config.S) = struct
             if_ input.rw [
               sm.set_next RESTART;
             ] [
-              shift_reg <-- input.din;
+              shift_reg <-- input.mosi;
               bit_index <-- of_int ~width:3 7;
               sm.set_next WRITE_DATA; (* You can implement this similarly to REG_ADDR *)
             ];
@@ -169,7 +169,7 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ sda_o <-- gnd ][]; (* Start condition *)
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 3))) [
             scl_o <-- gnd;
-            shift_reg <-- input.addr @: vdd; (* Address + READ bit *)
+            shift_reg <-- input.dev_addr @: vdd; (* Address + READ bit *)
             bit_index <-- of_int ~width:3 7;
             step_counter <-- zero 16  ;
             sm.set_next ADDR_READ; (* New state to handle the second address phase *)
