@@ -88,7 +88,7 @@ module Make (X : Config.S) = struct
 
         SET_ADDR, [
           sda_oe <-- vdd;
-		  shift_reg <-- sll shift_reg 1;
+		  shift_reg <-- sll shift_reg.value 1;
           sda_o <-- (bit shift_reg.value 7);
         
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
@@ -130,7 +130,7 @@ module Make (X : Config.S) = struct
 
         REG_ADDR, [
           sda_oe <-- vdd;
-          shift_reg <-- sll shift_reg 1;
+          shift_reg <-- sll shift_reg.value 1;
           sda_o <-- (bit shift_reg.value 7);
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
