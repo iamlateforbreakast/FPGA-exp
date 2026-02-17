@@ -95,7 +95,7 @@ module Make (X : Config.S) = struct
           reg_addr <--. 0xF4; 
           wdata    <--. 0x27;
 		  reg_rw   <-- gnd; (* Write *)
-          start    <-- vdd;Mgr1702
+          start    <-- vdd;
           sm.set_next WAIT_CONFIG;
         ];
         States.WAIT_CONFIG, [
