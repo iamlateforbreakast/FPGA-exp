@@ -54,7 +54,8 @@ module Make (X : Config.S) = struct
     let step_counter = Always.Variable.reg sync_spec ~enable:vdd ~width:16 in
     let bit_index = Always.Variable.reg sync_spec ~enable:vdd ~width:3 in
     let shift_reg = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
-    
+    let miso_buffer = Always.Variable.reg sync_spec ~enable:vdd ~width:48 in
+	
     (* I2C Signals *)
     let scl_o = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let sda_o = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
@@ -86,6 +87,7 @@ module Make (X : Config.S) = struct
           scl_o <-- vdd;
           sda_o <-- vdd;
           sda_oe <-- gnd;
+		  miso_buffer <--. 0;
           if_ input.start [
             shift_reg <-- input.dev_addr @: (zero 1);
             bit_index <-- of_int ~width:3 7;
@@ -221,7 +223,7 @@ module Make (X : Config.S) = struct
             scl_o <-- vdd;
             (* Sample data at the middle of the high SCL pulse *)
             (* TBC: shift_reg <-- insert ~into:shift_reg.value ~at_offset:(to_int bit_index.value) input.sda_in; *)
-            shift_reg <-- ((sll shift_reg.value 1) |: (zero 7 @: input.sda_in));
+            miso_buffer <-- ((sll miso_buffer.value 1) |: (zero 7 @: input.sda_in));
           ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
