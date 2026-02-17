@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is generating the Verilog files. 🚀
 
 on:
   push:
-    paths: 'all_projects/project07/**' # Triggers only if update is project06
+    paths: 'all_projects/project07/**' # Triggers only if update is project07
 
 jobs:
   Project07-Build-And-Generate:
