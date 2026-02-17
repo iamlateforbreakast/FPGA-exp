@@ -6,7 +6,7 @@ on:
     paths: 'all_projects/project07/**' # Triggers only if update is project06
 
 jobs:
-  Project06-Build-And-Generate:
+  Project07-Build-And-Generate:
     strategy:
       fail-fast: false
       matrix:
