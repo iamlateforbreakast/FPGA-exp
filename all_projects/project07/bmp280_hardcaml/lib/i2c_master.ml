@@ -61,7 +61,7 @@ module Make (X : Config.S) = struct
     let sda_oe = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ready = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ack_err = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
-    let byte_count = Always.VAriable.reg sync_spec ~enable:vdd ~width:8 in
+    let byte_count = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
     (* State machine *)
     let sm = Always.State_machine.create (module State) sync_spec in
 
@@ -118,8 +118,9 @@ module Make (X : Config.S) = struct
               sm.set_next WAIT_ACK_ADDR;
             ] [
               bit_index <-- bit_index.value -:. 1;
-              shift_reg <-- sll shift_reg.value 1;
-              sda_o <-- (bit shift_reg.value 7);
+			  sda_o <-- Signal.mux bit_index.value (Array.to_list (Signal.bits_msb shift_reg.value)) in
+              (* shift_reg <-- sll shift_reg.value 1;
+              sda_o <-- (bit shift_reg.value 7); *)
             ];
           ][];
         ];
@@ -158,8 +159,9 @@ module Make (X : Config.S) = struct
 			        sm.set_next WAIT_ACK_REG
 			      ] [
 			        bit_index <-- bit_index.value -:. 1;
-              shift_reg <-- sll shift_reg.value 1;
-              sda_o <-- (bit shift_reg.value 7);
+					sda_o <-- Signal.mux bit_index.value (Array.to_list (Signal.bits_msb shift_reg.value)) in
+                    (* shift_reg <-- sll shift_reg.value 1;
+                    sda_o <-- (bit shift_reg.value 7);*)
 			      ];
           ][];
         ];
