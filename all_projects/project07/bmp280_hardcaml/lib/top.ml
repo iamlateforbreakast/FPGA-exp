@@ -54,7 +54,8 @@ module Make (X : Config.S) = struct
     let start    = Variable.reg ~enable:vdd sync_spec ~width:1 in
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
     let wdata    = Variable.reg ~enable:vdd sync_spec ~width:8 in
-    let reg_rw   = VAriable.reg ~enable:vdd sync_spec ~width:1 in
+    let reg_rw   = Variable.reg ~enable:vdd sync_spec ~width:1 in
+	let data_out = Variable.reg ~enable:vdd sync_spec ~width:48 in
     (* Feedback Wires to handle recursive module dependencies *)
     let master_ready_wire = Signal.wire 1 in
     let sda_in_wire       = Signal.wire 1 in
@@ -113,6 +114,7 @@ module Make (X : Config.S) = struct
         States.WAIT_DATA, [
 		  start <-- gnd;
 		  if_ master_ready_wire [
+		    data_out <-- i2c_master.miso;
             sm.set_next States.READ_DATA;
           ][]
         ];
