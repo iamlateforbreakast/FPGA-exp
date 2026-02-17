@@ -72,3 +72,10 @@ let%expect_test "bmp280" =
     io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
     io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
   |}]
+
+  (* Assertion 1: when input.start is low, 
+       output.state is IDLE
+       output.scl is high
+       output.sda is high
+       output.ready is high *)
+       
