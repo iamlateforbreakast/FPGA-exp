@@ -54,7 +54,7 @@ module Make (X : Config.S) = struct
     let start    = Variable.reg ~enable:vdd sync_spec ~width:1 in
     let reg_addr = Variable.reg ~enable:vdd sync_spec ~width:8 in
     let wdata    = Variable.reg ~enable:vdd sync_spec ~width:8 in
-
+    let reg_rw   = VAriable.reg ~enable:vdd sync_spec ~width:1 in
     (* Feedback Wires to handle recursive module dependencies *)
     let master_ready_wire = Signal.wire 1 in
     let sda_in_wire       = Signal.wire 1 in
@@ -66,7 +66,7 @@ module Make (X : Config.S) = struct
                       ; dev_addr = of_int ~width:7 X.i2c_address
                       ; reg_addr = reg_addr.value
                       ; mosi     = wdata.value
-                      ; rw       = gnd 
+                      ; rw       = reg_rw.value 
                       ; start    = start.value
                       ; sda_in   = sda_in_wire }) in
 
@@ -94,19 +94,27 @@ module Make (X : Config.S) = struct
         States.SEND_CONFIG, [
           reg_addr <--. 0xF4; 
           wdata    <--. 0x27;
-          start    <-- vdd;
+		  reg_rw   <-- gnd; (* Write *)
+          start    <-- vdd;Mgr1702
           sm.set_next WAIT_CONFIG;
         ];
         States.WAIT_CONFIG, [
+		  start <-- gnd;
           if_ master_ready_wire [
-            start <-- gnd;
             sm.set_next States.READ_DATA;
           ][]
         ];
         States.READ_DATA, [
-          (* Logic to trigger read... *)
+          reg_addr <--. 0xF7;
+		  reg_rw   <-- vdd; (* Read *)
+		  start    <-- vdd;
+		  sm.set_next WAIT_DATA;
         ];
         States.WAIT_DATA, [
+		  start <-- gnd;
+		  if_ master_ready_wire [
+            sm.set_next States.READ_DATA;
+          ][]
         ];
       ]
     ] in
