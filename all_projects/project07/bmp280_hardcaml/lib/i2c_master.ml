@@ -2,6 +2,13 @@
 open Hardcaml
 open Signal
 
+(* TODO 1: Bit Ordering & Shifting: In SET_ADDR, you check if bit_index == 0 but perform the shift/assignment after the check. 
+   This will likely result in the first bit being missed or the 8th bit being sent incorrectly. Additionally, sda_o <-- (bit 
+   shift_reg.value 7) is inside the counter block, but shift_reg is shifted simultaneously; usually, you want to drive SDA 
+   from the MSB before the first clock edge. *)
+(* TODO 2: Sampling Logic: In READ_DATA, you are shifting shift_reg on every clock cycle where step_counter == quarter_period * 2.
+   This means you are shifting 8 times per bit if your counter logic isn't perfectly gated, or you are shifting the wrong values. *)
+(* TODO 3: *)
 module type Config = Config.S
 
 module Make (X : Config.S) = struct
@@ -27,7 +34,7 @@ module Make (X : Config.S) = struct
 	  ; sda_oe : 'a
       ; ready : 'a
       ; ack_error : 'a
-      ; miso : 'a [@bits 8]
+      ; miso : 'a [@bits 48]
       }
       [@@deriving hardcaml]
   end
@@ -54,7 +61,7 @@ module Make (X : Config.S) = struct
     let sda_oe = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ready = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ack_err = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
-
+    let byte_count = Always.VAriable.reg sync_spec ~enable:vdd ~width:8 in
     (* State machine *)
     let sm = Always.State_machine.create (module State) sync_spec in
 
@@ -83,6 +90,7 @@ module Make (X : Config.S) = struct
             shift_reg <-- input.dev_addr @: (zero 1);
             bit_index <-- of_int ~width:3 7;
             step_counter <-- zero 16;
+			byte_count <--. 6; (* Read 6 bytes of measurements *)
             sm.set_next START;
           ][];
         ];
@@ -197,6 +205,7 @@ module Make (X : Config.S) = struct
             step_counter <-- zero 16;
             shift_reg <-- sll shift_reg.value 1;
             if_ (bit_index.value ==: zero 3) [
+			  byte_count <--. 10;
               sm.set_next READ_DATA; (* After addr ack, go to read *)
             ] [
               bit_index <-- bit_index.value -:. 1;
@@ -215,20 +224,29 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
             step_counter <-- zero 16;
-            if_ (bit_index.value ==: zero 3) [ sm.set_next MSTR_ACK ]
-            [ bit_index <-- bit_index.value -:. 1 ];
+            if_ (bit_index.value ==: zero 3) [
+			  byte_count <-- byte_count.value -:. 1;
+			  sm.set_next MSTR_ACK;
+			] [
+			  bit_index <-- bit_index.value -:. 1 
+			];
           ][];
         ];
 
         MSTR_ACK, [
           sda_oe <-- vdd;
           (* For a single byte read, send NACK (SDA High) to end *)
-          sda_o <-- vdd; 
+		  if_ (byte_count.value ==: 0) [
+		    sda_o <-- vdd; (* NACK: End of acquisition *)
+			sm.set_next STOP;
+		  ][
+		    sda_o <-- gnd; (* ACK: More bytes to read  *)
+			sm.set_next READ_DATA;
+		  ]
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
             step_counter <-- zero 16;
-            sm.set_next STOP;
           ][];
         ];
       ]
