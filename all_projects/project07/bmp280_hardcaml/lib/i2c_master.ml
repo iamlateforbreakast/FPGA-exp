@@ -92,7 +92,7 @@ module Make (X : Config.S) = struct
             if_ input.start [
               ready <-- gnd;
               shift_reg <-- input.dev_addr @: (zero 1);
-              bit_index <-- of_int ~width:3 7;
+              bit_index <-- of_int ~width:3 8;
               step_counter <-- zero 8;
 			        byte_count <--. 6; (* Read 6 bytes of measurements *)
               sm.set_next START;
@@ -137,7 +137,7 @@ module Make (X : Config.S) = struct
             step_counter <-- zero 8;
             (* If we just sent the Slave Addr, move to Reg Addr *)
             shift_reg <-- input.reg_addr;
-            bit_index <-- of_int ~width:3 7;
+            bit_index <-- of_int ~width:3 8;
             sm.set_next SET_REG;
           ][];
         ];
@@ -181,7 +181,6 @@ module Make (X : Config.S) = struct
               sm.set_next RESTART;
             ] [
               shift_reg <-- input.mosi;
-              bit_index <-- of_int ~width:3 7;
               sm.set_next RESTART; (* You can implement this similarly to REG_ADDR *)
             ];
           ][];
@@ -196,7 +195,7 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [
             scl_o <-- gnd;
             shift_reg <-- input.dev_addr @: vdd; (* Address + READ bit *)
-            bit_index <-- of_int ~width:3 7;
+            bit_index <-- of_int ~width:3 8;
             step_counter <-- zero 8  ;
             sm.set_next SET_ADDR_READ; (* New state to handle the second address phase *)
           ][];
