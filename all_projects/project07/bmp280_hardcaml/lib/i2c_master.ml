@@ -120,9 +120,8 @@ module Make (X : Config.S) = struct
               sm.set_next WAIT_ACK_ADDR;
             ] [
               bit_index <-- bit_index.value -:. 1;
-			  sda_o <-- Signal.mux bit_index.value (Array.to_list (Signal.bits_msb shift_reg.value)) in
-              (* shift_reg <-- sll shift_reg.value 1;
-              sda_o <-- (bit shift_reg.value 7); *)
+              shift_reg <-- sll shift_reg.value 1;
+              sda_o <-- (bit shift_reg.value 7);
             ];
           ][];
         ];
@@ -161,9 +160,8 @@ module Make (X : Config.S) = struct
 			        sm.set_next WAIT_ACK_REG
 			      ] [
 			        bit_index <-- bit_index.value -:. 1;
-					sda_o <-- Signal.mux bit_index.value (Array.to_list (Signal.bits_msb shift_reg.value)) in
-                    (* shift_reg <-- sll shift_reg.value 1;
-                    sda_o <-- (bit shift_reg.value 7);*)
+              shift_reg <-- sll shift_reg.value 1;
+              sda_o <-- (bit shift_reg.value 7);
 			      ];
           ][];
         ];
@@ -240,13 +238,13 @@ module Make (X : Config.S) = struct
         MSTR_ACK, [
           sda_oe <-- vdd;
           (* For a single byte read, send NACK (SDA High) to end *)
-		  if_ (byte_count.value ==: 0) [
-		    sda_o <-- vdd; (* NACK: End of acquisition *)
-			sm.set_next STOP;
-		  ][
-		    sda_o <-- gnd; (* ACK: More bytes to read  *)
-			sm.set_next READ_DATA;
-		  ]
+		      if_ (byte_count.value ==: (of_int ~width:8 0)) [
+		        sda_o <-- vdd; (* NACK: End of acquisition *)
+			      sm.set_next STOP;
+		      ][
+		        sda_o <-- gnd; (* ACK: More bytes to read  *)
+			      sm.set_next READ_DATA;
+		      ];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 2))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:16 (quarter_period * 4))) [
             scl_o <-- gnd;
