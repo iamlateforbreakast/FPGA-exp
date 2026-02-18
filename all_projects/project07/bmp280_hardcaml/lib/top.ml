@@ -17,7 +17,7 @@ module Make (X : Config.S) = struct
 
   module O = struct
     type 'a t =
-      { leds    : 'a[@bits 6]
+      { leds    : 'a[@bits 6] [@rtlname "O_led"]
       ; scl     : 'a [@rtlname "O_scl"]
       ; sda_out : 'a [@rtlname "O_sda_out"]
       ; uart_tx : 'a [@rtlname "O_uart_tx"]
