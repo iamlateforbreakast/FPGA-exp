@@ -33,6 +33,12 @@ module Make (X : Config.S) = struct
   module MyI2c_master = I2c_master.Make(X)
   module MyLeds = Leds.Make(X)
 
+  let print_message ~index =
+    let open Signal in
+    let chars = X.message |> String.to_seq |> List.of_seq in
+    let rom = List.map (fun c -> of_char c) chars in
+    mux index rom
+	
   (* Create GOWIN primitive components with port naming to satisfy validator *)
   let iobuf ~din ~oen =
     let m = Instantiation.create
