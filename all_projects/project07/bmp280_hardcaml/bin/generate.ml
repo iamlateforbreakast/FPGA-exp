@@ -21,8 +21,11 @@ let () =
   (* Generate the circuit *)
   let output_dir = "verilog_out" in
   let _ = Sys.command ("mkdir -p " ^ output_dir) in
-  Rtl.output
+  let _ = Rtl.output
       ~database
       Verilog
       ~output_mode:(In_directory output_dir)
-      circuit
+      circuit in
+  let _ = Sys.command ("sed -i 's/output O_sda_out/inout O_sda_out/' " ^ output_dir ^ "/top_level.v") in
+  ()
+
