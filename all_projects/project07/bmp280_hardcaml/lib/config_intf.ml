@@ -5,6 +5,7 @@ module type S = sig
   val baud_rate : int
   val i2c_address : int
   val pattern: int list
+  val message : string
   val is_simulation: bool
 end
 

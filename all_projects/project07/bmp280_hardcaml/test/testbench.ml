@@ -9,6 +9,7 @@ module My_config = struct
   let baud_rate = 115_200
   let i2c_address = 0x76
   let pattern = [0;1;2;3;4;5;6;7]
+  let message = "Temp: XXXX Press: XXXX"
   let is_simulation = false
 end
 
