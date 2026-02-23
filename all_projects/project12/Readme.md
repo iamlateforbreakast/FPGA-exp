@@ -1,3 +1,9 @@
+# Would it be possible to connect a Raspberry Pi 4 to a Nanotang 20k
+
+--------------
+
+This would allow the measurement of latency beteeen the 2 systems.
+
 # Would it be possible to synthesize the verilog spacewire core on the tang nano 20k?
 
 --------------
