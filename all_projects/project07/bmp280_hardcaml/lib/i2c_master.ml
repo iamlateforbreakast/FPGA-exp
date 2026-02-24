@@ -198,9 +198,59 @@ module Make (X : Config.S) = struct
           ][];
         ];
 
-		SET_REG_DATA, [];
+		SET_REG_DATA, [
+          (* Drive SDA with the current MSB of shift_reg *)
+          if_ (step_counter.value ==: zero 8) [
+            sda_o <-- (bit shift_reg.value 7);
+          ][];
+          
+          (* Clock high in the middle of the bit period *)
+          if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ 
+            scl_o <-- vdd 
+          ][];
+          
+          (* Clock low for data transition *)
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ 
+            scl_o <-- gnd 
+          ][];
+          
+          (* End of bit period: shift or change state *)
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+            step_counter <-- zero 8;
+            shift_reg <-- sll shift_reg.value 1;
+            
+            if_ (bit_index.value ==: zero 3) [
+              sda_oe <-- gnd; (* Release SDA to wait for ACK *)
+              sm.set_next WAIT_ACK_REG_DATA;
+            ] [
+              bit_index <-- bit_index.value -:. 1;
+            ];
+          ][];
+        ];
 
-		WAIT_ACK_REG_DATA, [];
+		WAIT_ACK_REG_DATA, [
+          (* Master releases SDA; Slave pulls it low to ACK *)
+          if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ 
+            scl_o <-- vdd 
+          ][];
+          
+          if_ (step_counter.value ==: of_int ~width:8 (quarter_period * 2)) [
+            (* Sample ACK bit: 0 = SUCCESS, 1 = FAIL *)
+            ack_err <-- input.sda_in;
+          ][];
+          
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ 
+            scl_o <-- gnd 
+          ][];
+          
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+            step_counter <-- zero 8;
+            sda_oe <-- vdd; (* Re-enable master control of SDA *)
+            
+            (* For BMP280 writes, we usually stop after one byte or repeat *)
+            sm.set_next STOP;
+          ][];
+        ];
 		
         RESTART, [
           (* Repeated Start: SDA goes high then low while SCL is high *)
