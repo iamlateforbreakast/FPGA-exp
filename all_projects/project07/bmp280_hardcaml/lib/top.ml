@@ -114,13 +114,13 @@ module Make (X : Config.S) = struct
         ~oen:i2c_master.sda_oe in
 
     (* Output data latch *)
-	let raw_data_latch = Reg.create sync_spec ~enable:i2c.ready i2c.miso
+	let raw_data_latch = Signal.reg sync_spec ~enable:i2c_master.ready i2c_master.miso in
 
 	(* BMP280 Data Mapping (48 bits total)
        [47:40] Press MSB | [39:32] Press LSB | [31:24] Press XLSB
        [23:16] Temp MSB  | [15:8]  Temp LSB  | [7:0]   Temp XLSB *)
-    let adc_p = (select raw_data_latch 47 28) in (* 20-bit Pressure *)
-    let adc_t = (select raw_data_latch 23 4)  in (* 20-bit Temperature *)
+    let _adc_p = (select raw_data_latch 47 28) in (* 20-bit Pressure *)
+    let _adc_t = (select raw_data_latch 23 4)  in (* 20-bit Temperature *)
 	
     (* Connect wires after instantiations to complete the logic loops *)
     let () =
