@@ -193,7 +193,8 @@ module Make (X : Config.S) = struct
                 sm.set_next RESTART;
               ] [
                 shift_reg <-- input.mosi;
-                sm.set_next RESTART;
+                bit_index <-- of_int ~width:3 7;
+                sm.set_next SET_REG_DATA;
               ];
             ];
           ][];

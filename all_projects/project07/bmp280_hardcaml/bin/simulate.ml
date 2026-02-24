@@ -35,11 +35,11 @@ let testbench n =
     done
   in
   
-  (* Initialise inputs *)
+  (* Initialise inputs for write *)
   inputs.dev_addr := Bits.of_int ~width:7 0x76;
   inputs.reg_addr := Bits.of_int ~width:8 0xF4; (* BMP280 temperaturate register *)
-  inputs.mosi := Bits.of_int ~width:8 0; (* Unused *)
-  inputs.rw := Bits.gnd; (* Read = 0 *)
+  inputs.mosi := Bits.of_int ~width:8 0XAA;
+  inputs.rw := Bits.gnd; (* Write = 0, Read = 1 *)
   inputs.start := Bits.gnd;
   inputs.sda_in := Bits.gnd;
 
@@ -50,8 +50,17 @@ let testbench n =
   inputs.reset := Bits.gnd;
   cycle 2;
   inputs.start := Bits.vdd;
-  cycle (n - 5);
-  
+  cycle (375);
+ 
+  inputs.dev_addr := Bits.of_int ~width:7 0x76;
+  inputs.reg_addr := Bits.of_int ~width:8 0xF4; (* BMP280 temperaturate register *)
+  inputs.mosi := Bits.of_int ~width:8 0X00; (* Unused *)
+  inputs.rw := Bits.vdd; (* Write = 0, Read = 1 *)
+  inputs.start := Bits.vdd;
+  inputs.sda_in := Bits.gnd;
+
+  cycle (n-375);
+
   close_out oc;
   waves
 
