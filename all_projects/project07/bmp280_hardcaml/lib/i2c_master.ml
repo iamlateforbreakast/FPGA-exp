@@ -2,13 +2,6 @@
 open Hardcaml
 open Signal
 
-(* TODO 1: Bit Ordering & Shifting: In SET_ADDR, you check if bit_index == 0 but perform the shift/assignment after the check. 
-   This will likely result in the first bit being missed or the 8th bit being sent incorrectly. Additionally, sda_o <-- (bit 
-   shift_reg.value 7) is inside the counter block, but shift_reg is shifted simultaneously; usually, you want to drive SDA 
-   from the MSB before the first clock edge. *)
-(* TODO 2: Sampling Logic: In READ_DATA, you are shifting shift_reg on every clock cycle where step_counter == quarter_period * 2.
-   This means you are shifting 8 times per bit if your counter logic isn't perfectly gated, or you are shifting the wrong values. *)
-(* TODO 3: *)
 module type Config = Config.S
 
 module Make (X : Config.S) = struct
@@ -50,7 +43,7 @@ module Make (X : Config.S) = struct
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
-	  (* --- Internal Signals & Registers --- *)
+	(* --- Internal Signals & Registers --- *)
     let step_counter = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
     let bit_index = Always.Variable.reg sync_spec ~enable:vdd ~width:3 in
     let shift_reg = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
@@ -63,6 +56,7 @@ module Make (X : Config.S) = struct
     let ready = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let ack_err = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let byte_count = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
+	
     (* State machine *)
     let sm = Always.State_machine.create (module State) sync_spec in
 
@@ -234,7 +228,7 @@ module Make (X : Config.S) = struct
               bit_index <-- bit_index.value -:. 1;
             ];
           ][];
-		    ];
+		];
 		
         WAIT_ACK_READ_ADDR, [
           if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ scl_o <-- vdd ][];
