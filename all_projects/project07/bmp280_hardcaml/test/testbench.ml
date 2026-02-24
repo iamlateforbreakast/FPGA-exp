@@ -1,6 +1,7 @@
 (* testbench.ml *)
 open Hardcaml
 open Project07_lib
+open Bmp280_model
 open Hardcaml.Bits
 
 module My_config = struct
@@ -23,6 +24,7 @@ let testbench () =
   let sim = Sim.create (MyI2c_master.create scope) in
   let inputs = Cyclesim.inputs sim in
   let outputs = Cyclesim.outputs sim in
+  let model = Bmp280_Model.create () in
 
   (* Helper to pulse clock and print status *)
   let cycle n =
