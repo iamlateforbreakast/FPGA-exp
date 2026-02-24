@@ -27,7 +27,7 @@ module Make (X : Config.S) = struct
 	  ; sda_oe : 'a
       ; ready : 'a
       ; ack_error : 'a
-      ; miso : 'a [@bits 48]
+      ; miso : 'a [@bits 48] (* 6 bytes read from BMP280 *)
       }
       [@@deriving hardcaml]
   end
@@ -40,6 +40,7 @@ module Make (X : Config.S) = struct
   end
   
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
+    (* --- Constants --- *)
     let quarter_period = if (X.is_simulation = false) then 67 else 3 in (* 100 kHz *)
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
@@ -50,7 +51,7 @@ module Make (X : Config.S) = struct
     let shift_reg = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
     let miso_buffer = Always.Variable.reg sync_spec ~enable:vdd ~width:48 in
 	
-    (* I2C Signals *)
+    (* --- I2C Signals --- *)
     let scl_o = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let sda_o = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let sda_oe = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
@@ -58,10 +59,10 @@ module Make (X : Config.S) = struct
     let ack_err = Always.Variable.reg sync_spec ~enable:vdd ~width:1 in
     let byte_count = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
 	
-    (* State machine *)
+    (* --- State machine --- *)
     let sm = Always.State_machine.create (module State) sync_spec in
 
-    (* Debug *)
+    (* --- Debug --- *)
     let _ = Signal.(scl_o.value -- "scl_o") in
     let _ = Signal.(sda_o.value -- "sda_o") in
     let _ = Signal.(sda_oe.value -- "sda_oe") in
@@ -73,7 +74,7 @@ module Make (X : Config.S) = struct
     let _ = Signal.(byte_count.value -- "byte_count") in
     let _ = Signal.(sm.current -- "state") in
 
-    (* State Machine Logic *)
+    (* --- State Machine Logic --- *)
     Always.(compile [
       step_counter <-- step_counter.value +:. 1;
       sm.switch [
@@ -273,7 +274,7 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
             step_counter <-- zero 8;
-            shift_reg <-- sll shift_reg.value 1;
+            shift_reg <-- input.dev_addr @: vdd;
             if_ (bit_index.value ==: zero 3) [
 			        byte_count <--. 10;
               sda_oe <-- gnd; (* Release SDA for slave to drive data *)
