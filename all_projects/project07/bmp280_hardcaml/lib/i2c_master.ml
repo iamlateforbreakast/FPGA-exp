@@ -33,7 +33,8 @@ module Make (X : Config.S) = struct
   end
 
   module State = struct
-    type t = IDLE | START | SET_ADDR | WAIT_ACK_ADDR | SET_REG | WAIT_ACK_REG 
+    type t = IDLE | START | SET_ADDR | WAIT_ACK_ADDR | SET_REG | WAIT_ACK_REG
+	     | SET_REG_DATA | WAIT_ACK_REG_DATA
          | RESTART | SET_ADDR_READ | WAIT_ACK_READ_ADDR | READ_DATA | MSTR_ACK | STOP 
          [@@deriving sexp_of, compare, enumerate]
   end
@@ -196,7 +197,11 @@ module Make (X : Config.S) = struct
             ];
           ][];
         ];
-        
+
+		SET_REG_DATA, [];
+
+		WAIT_ACK_REG_DATA, [];
+		
         RESTART, [
           (* Repeated Start: SDA goes high then low while SCL is high *)
           if_ (step_counter.value ==: zero 8) [ sda_o <-- vdd ][];
