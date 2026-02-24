@@ -52,16 +52,29 @@ module Bmp280_Model = struct
     else if sda_stop then t.state <- Idle
     else if scl_rising then begin
       match t.state with
-      | Address { bits; count } ->
-          if count < 7 then (bits = (bits lsl 1) lor sda_in; count = count + 1)
-          else t.state <- Ack_Addr
 
-      | Ack_Addr -> t.state <- Reg_Pointer { bits = 0; count = 0 }
-      | Reg_Pointer { bits; count } ->
-          if count < 8 then (bits = (bits lsl 1) lor sda_in; count = count + 1)
-          else (t.reg_ptr <- bits; t.state <- Ack_Reg)
+      | Address r -> (* Use 'r' to access the record fields *)
+          if r.count < 7 then begin
+            r.bits <- (r.bits lsl 1) lor sda_in; 
+            r.count <- r.count + 1
+          end else 
+            t.state <- Ack_Addr
 
-      | Ack_Reg -> t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+      | Ack_Addr -> 
+          t.state <- Reg_Pointer { bits = 0; count = 0 }
+
+
+      | Reg_Pointer r ->
+          if r.count < 8 then begin
+            r.bits <- (r.bits lsl 1) lor sda_in; 
+            r.count <- r.count + 1
+          end else begin
+            t.reg_ptr <- r.bits; 
+            t.state <- Ack_Reg
+          end
+
+      | Ack_Reg -> 
+          t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
       | _ -> ()
     end;
 
