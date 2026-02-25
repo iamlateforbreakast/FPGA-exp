@@ -48,8 +48,8 @@ let testbench () =
   inputs.reset := gnd;
 
   (* 2. Configure a Read transaction *)
-  inputs.dev_addr := of_int ~width:7 0x50; (* Slave Address *)
-  inputs.reg_addr := of_int ~width:8 0x12; (* Sub-address to read *)
+  inputs.dev_addr := of_int ~width:7 0xF4; (* Slave Address *)
+  inputs.reg_addr := of_int ~width:8 0x27; (* Sub-address to read *)
   inputs.mosi     := Bits.of_int ~width:8 66;
   inputs.rw       := vdd;                  (* Read = 1 *)
   inputs.start    := vdd;
@@ -57,12 +57,7 @@ let testbench () =
 
   (* 3. Run until the Slave needs to ACK the address *)
   (* You must wait long enough for the 8 bits + timing to pass *)
-  cycle 10; 
-
-  (* 4. Mock a Slave ACK: pull SDA low *)
-  inputs.sda_in := gnd; 
   cycle 500; (* Hold for one SCL pulse *)
-  inputs.sda_in := vdd;
 
   (* 5. Wait for transaction to complete and check result *)
   while not (to_bool !(outputs.ready)) do

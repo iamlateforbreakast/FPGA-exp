@@ -6,11 +6,11 @@ module Bmp280_Model = struct
     | Idle
     | Address of { mutable bits : int; mutable count : int }
     | Ack_Addr
-
     | Reg_Pointer of { mutable bits : int; mutable count : int }
     | Ack_Reg
+    | Write_Data of { mutable bits : int; mutable count : int }
+    | Ack_Write
     | Read_Data of { mutable bits : int; mutable count : int }
-
     | Send_Ack
 
   type t = {
@@ -51,6 +51,8 @@ module Bmp280_Model = struct
     | Ack_Addr -> "Ack_Addr"
     | Reg_Pointer _ -> "Reg_Pointer"
     | Ack_Reg -> "Ack_Reg"
+    | Write_Data _ -> "Write_Data"
+    | Ack_Write -> "Ack_Write"
     | Read_Data _ -> "Read_Data"
     | Send_Ack -> "Send_Ack"
   let step t ~scl ~sda_in =
@@ -79,7 +81,7 @@ module Bmp280_Model = struct
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
           end else begin
-            Stdio.printf "Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
+            Stdio.printf "  Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
             t.rw <- r.bits land 1; (* LSB indicates R/W *)
             t.reg_ptr <- 0; (* Reset reg pointer on new transaction *)
             t.state <- Ack_Addr;
@@ -87,7 +89,7 @@ module Bmp280_Model = struct
 
       | Ack_Addr ->
           if t.rw = 0 then t.state <- Reg_Pointer { bits = 0; count = 0 }
-          else t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          else t.state <- Reg_Pointer { bits = t.regs.(t.reg_ptr); count = 0 }
 
 
       | Reg_Pointer r ->
@@ -95,21 +97,37 @@ module Bmp280_Model = struct
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
           end else begin
-            Stdio.printf "Register Received: 0x%02x at cycle %d\n" r.bits t.cycle;
+            Stdio.printf "  Register Received: 0x%02x at cycle %d\n" r.bits t.cycle;
             t.reg_ptr <- r.bits; 
             t.state <- Ack_Reg
           end
 
       | Ack_Reg -> 
-          t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          t.state <- Write_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+      
+      | Write_Data r ->
+          if r.count < 8 then begin
+            r.bits <- (r.bits lsl 1) lor sda_in;
+            r.count <- r.count + 1
+          end else begin
+            (* Commit the byte to the register array *)
+            t.regs.(t.reg_ptr) <- r.bits;
+            Stdio.printf " I2C Write: Reg 0x%02x <- 0x%02x\n" t.reg_ptr r.bits;
+            (* Auto-increment pointer for burst writes *)
+            t.reg_ptr <- (t.reg_ptr + 1) land 0xFF;
+            t.state <- Ack_Reg (* Pull SDA low to ACK the data byte *)
+          end
+      | Ack_Write ->
+          t.state <- Reg_Pointer { bits = 0; count = 0 } (* Ready for next reg pointer or data *)
+
       | _ -> ()
     end;
 
     (* Logic to drive SDA low for ACKs *)
     (match t.state with
 
-     | Ack_Addr | Ack_Reg -> drive_sda := 0
-     | Address _ | Reg_Pointer _ -> () (* Slave listens, doesn't drive *)
+     | Ack_Addr | Ack_Reg | Ack_Write -> drive_sda := 0
+     | Address _ | Reg_Pointer _ | Write_Data _ -> () (* Slave listens, doesn't drive *)
      | Read_Data { bits; count } -> 
          drive_sda := (bits lsl count) land 0x80
      | _ -> ());
