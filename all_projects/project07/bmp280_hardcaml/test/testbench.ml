@@ -11,7 +11,7 @@ module My_config = struct
   let i2c_address = 0x76
   let pattern = [0;1;2;3;4;5;6;7]
   let message = "Temp: XXXX Press: XXXX"
-  let is_simulation = false
+  let is_simulation = true
 end
 
 module MyI2c_master = I2c_master.Make(My_config)
@@ -32,9 +32,10 @@ let testbench () =
       let scl_bit = to_int !(outputs.scl) in
       let sda_out_bit = to_int !(outputs.sda_out) in
       let model_sda = Bmp280_Model.step model ~scl:scl_bit ~sda_in:sda_out_bit in
-      inputs.sda_in := (match model_sda with 
-                     | 0 -> Bits.gnd 
-                     | _ -> Bits.vdd);
+      (* Combine for Open-Drain logic: Bus is low if either pulls down *)
+      let bus_sda = sda_out_bit land model_sda in
+      inputs.sda_in := of_int ~width:1 bus_sda;
+
       Cyclesim.cycle sim;
     done
   in
@@ -49,15 +50,14 @@ let testbench () =
   (* 2. Configure a Read transaction *)
   inputs.dev_addr := of_int ~width:7 0x50; (* Slave Address *)
   inputs.reg_addr := of_int ~width:8 0x12; (* Sub-address to read *)
-  inputs.mosi     := Bits.of_int ~width:8 0;
-  inputs.rw       := vdd;              (* Read = 1 *)
+  inputs.mosi     := Bits.of_int ~width:8 66;
+  inputs.rw       := vdd;                  (* Read = 1 *)
   inputs.start    := vdd;
   cycle 1;
-  inputs.start    := gnd;
 
   (* 3. Run until the Slave needs to ACK the address *)
   (* You must wait long enough for the 8 bits + timing to pass *)
-  cycle 2000; 
+  cycle 10; 
 
   (* 4. Mock a Slave ACK: pull SDA low *)
   inputs.sda_in := gnd; 

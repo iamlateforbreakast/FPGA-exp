@@ -18,14 +18,16 @@ module Bmp280_Model = struct
     mutable last_scl : int;
     mutable last_sda : int;
     mutable reg_ptr  : int;
+    mutable cycle    : int;
     regs             : int array; (* 256 registers *)
   }
 
   let create () = {
     state    = Idle;
-    last_scl = 1;
-    last_sda = 1;
+    last_scl = 0;
+    last_sda = 0;
     reg_ptr  = 0;
+    cycle    = 0;
     regs     = Array.create ~len:256 0;
   }
 
@@ -40,26 +42,45 @@ module Bmp280_Model = struct
     let dig_t1 = t.regs.(0x88) lor (t.regs.(0x89) lsl 8) in
     (* Official Bosch 64-bit logic goes here *)
     (raw_t / 16384) * dig_t1 (* Simplified placeholder *)
-
+  let print_state s =
+    match s with
+    | Idle -> "Idle"
+    | Address _ -> "Address"
+    | Ack_Addr -> "Ack_Addr"
+    | Reg_Pointer _ -> "Reg_Pointer"
+    | Ack_Reg -> "Ack_Reg"
+    | Read_Data _ -> "Read_Data"
+    | Send_Ack -> "Send_Ack"
   let step t ~scl ~sda_in =
-    let t.scl_rising_latched  = (t.last_scl = 0 && scl = 1) || (t.last_scl = 1 && scl = 1) in
-    let t.scl_falling_latched = (t.last_scl = 1 && scl = 0) || (t.last_scl = 0 && scl = 0) in
+    let scl_rising  = (t.last_scl = 0 && scl = 1) in
+    let _scl_falling = (t.last_scl = 1 && scl = 0) || (t.last_scl = 0 && scl = 0) in
     let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 in
     let sda_stop   = t.last_scl = 1 && t.last_sda = 0 && sda_in = 1 in
 
     let drive_sda = ref 1 in (* Default High-Z *)
 
-    if sda_start then t.state <- Address { bits = 0; count = 0 }
-    else if sda_stop then t.state <- Idle
+    if sda_start then begin
+      Stdio.printf "Start Condition Detected cycle = %d\n" t.cycle;
+      t.state <- Address { bits = 0; count = 0 }
+    end
+    else if sda_stop then begin
+      Stdio.printf "Stop Condition Detected cycle = %d\n" t.cycle;
+      t.state <- Idle
+    end
     else if scl_rising then begin
+      Stdio.printf "SCL Rising Edge Detected cycle = %d\n" t.cycle;
+      (* State machine transitions *)
       match t.state with
 
       | Address r -> (* Use 'r' to access the record fields *)
-          if r.count < 7 then begin
+          if r.count < 8 then begin
+            (* Stdio.printf "Receiving Address Bit: %d at cycle %d\n" sda_in t.cycle; *)
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
-          end else 
-            t.state <- Ack_Addr
+          end else begin
+            Stdio.printf "Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
+            t.state <- Ack_Addr;
+          end
 
       | Ack_Addr -> 
           t.state <- Reg_Pointer { bits = 0; count = 0 }
@@ -70,6 +91,7 @@ module Bmp280_Model = struct
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
           end else begin
+            Stdio.printf "Register Received: 0x%02x at cycle %d\n" r.bits t.cycle;
             t.reg_ptr <- r.bits; 
             t.state <- Ack_Reg
           end
@@ -83,11 +105,13 @@ module Bmp280_Model = struct
     (match t.state with
 
      | Ack_Addr | Ack_Reg -> drive_sda := 0
+     | Address _ | Reg_Pointer _ -> () (* Slave listens, doesn't drive *)
      | Read_Data { bits; count } -> 
          drive_sda := (bits lsl count) land 0x80
      | _ -> ());
 
     t.last_scl <- scl;
     t.last_sda <- sda_in;
+    t.cycle <- t.cycle + 1;
     !drive_sda
 end

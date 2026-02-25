@@ -85,7 +85,7 @@ module Make (X : Config.S) = struct
           sda_o <-- vdd;
           sda_oe <-- gnd;
 		      miso_buffer <--. 0;
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             if_ input.start [
               ready <-- gnd;
               shift_reg <-- input.dev_addr @: (zero 1);
@@ -100,7 +100,7 @@ module Make (X : Config.S) = struct
 
         START, [
           sda_o <-- gnd;
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             scl_o <-- gnd;
             step_counter <-- zero 8; (* Reset for ADDR *)
             sm.set_next SET_ADDR;
@@ -113,7 +113,7 @@ module Make (X : Config.S) = struct
           ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd; ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [       
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [       
             step_counter <-- zero 8; (* Reset for next bit or state *)
             shift_reg <-- sll shift_reg.value 1;
             if_ (bit_index.value ==: zero 3) [
@@ -132,7 +132,7 @@ module Make (X : Config.S) = struct
             ack_err <-- input.sda_in;  (* 0 = ACK, 1 = NACK *)
           ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             sda_oe <-- vdd;
             if_ ack_err.value [
@@ -164,7 +164,7 @@ module Make (X : Config.S) = struct
           ][];
           if_ (step_counter.value ==: (of_int ~width:8 quarter_period )) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             shift_reg <-- sll shift_reg.value 1;
             if_ (bit_index.value ==: zero 3) [
@@ -183,7 +183,7 @@ module Make (X : Config.S) = struct
             ack_err <-- input.sda_in;  (* 0 = ACK, 1 = NACK *)
           ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             sda_oe <-- vdd;
             (* Decide: Write data or Restart for a Read? *)
@@ -217,7 +217,7 @@ module Make (X : Config.S) = struct
           ][];
           
           (* End of bit period: shift or change state *)
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             shift_reg <-- sll shift_reg.value 1;
             
@@ -245,7 +245,7 @@ module Make (X : Config.S) = struct
             scl_o <-- gnd 
           ][];
           
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             sda_oe <-- vdd; (* Re-enable master control of SDA *)
             
@@ -273,7 +273,7 @@ module Make (X : Config.S) = struct
           sda_o <-- (bit shift_reg.value 7);
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period))) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             shift_reg <-- input.dev_addr @: vdd;
             if_ (bit_index.value ==: zero 3) [
@@ -290,7 +290,7 @@ module Make (X : Config.S) = struct
         WAIT_ACK_READ_ADDR, [
           if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             sda_oe <-- gnd; (* Release SDA for slave to drive data *)
             sm.set_next READ_DATA; (* After addr ack, go to read *)
@@ -306,7 +306,7 @@ module Make (X : Config.S) = struct
           ][];
 
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [scl_o <-- gnd][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             scl_o <-- gnd;
             step_counter <-- zero 8;
             if_ (bit_index.value ==: zero 3) [
@@ -328,7 +328,7 @@ module Make (X : Config.S) = struct
 		      ];
           if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ scl_o <-- vdd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd][];
-          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4))) [
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             if_ (byte_count.value ==: (of_int ~width:8 0)) [
               sda_oe <-- vdd;
