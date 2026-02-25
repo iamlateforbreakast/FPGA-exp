@@ -19,6 +19,7 @@ module Bmp280_Model = struct
     mutable last_sda : int;
     mutable reg_ptr  : int;
     mutable cycle    : int;
+    mutable rw       : int; (* 0 = Write, 1 = Read *)
     regs             : int array; (* 256 registers *)
   }
 
@@ -28,6 +29,7 @@ module Bmp280_Model = struct
     last_sda = 0;
     reg_ptr  = 0;
     cycle    = 0;
+    rw       = 0;
     regs     = Array.create ~len:256 0;
   }
 
@@ -53,7 +55,6 @@ module Bmp280_Model = struct
     | Send_Ack -> "Send_Ack"
   let step t ~scl ~sda_in =
     let scl_rising  = (t.last_scl = 0 && scl = 1) in
-    let _scl_falling = (t.last_scl = 1 && scl = 0) || (t.last_scl = 0 && scl = 0) in
     let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 in
     let sda_stop   = t.last_scl = 1 && t.last_sda = 0 && sda_in = 1 in
 
@@ -79,11 +80,14 @@ module Bmp280_Model = struct
             r.count <- r.count + 1
           end else begin
             Stdio.printf "Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
+            t.rw <- r.bits land 1; (* LSB indicates R/W *)
+            t.reg_ptr <- 0; (* Reset reg pointer on new transaction *)
             t.state <- Ack_Addr;
           end
 
-      | Ack_Addr -> 
-          t.state <- Reg_Pointer { bits = 0; count = 0 }
+      | Ack_Addr ->
+          if t.rw = 0 then t.state <- Reg_Pointer { bits = 0; count = 0 }
+          else t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
 
 
       | Reg_Pointer r ->

@@ -45,6 +45,9 @@ module Make (X : Config.S) = struct
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
+    let cycle = Signal.reg_fb sync_spec ~enable:vdd  ~width:32
+                       ~f:(fun d -> (d +:. 1)) in
+
 	(* --- Internal Signals & Registers --- *)
     let step_counter = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
     let bit_index = Always.Variable.reg sync_spec ~enable:vdd ~width:3 in
@@ -73,7 +76,8 @@ module Make (X : Config.S) = struct
     let _ = Signal.(shift_reg.value -- "shift_reg") in
     let _ = Signal.(byte_count.value -- "byte_count") in
     let _ = Signal.(sm.current -- "state") in
-
+    let _ = Signal.(cycle -- "cycle") in
+    
     (* --- State Machine Logic --- *)
     Always.(compile [
       step_counter <-- step_counter.value +:. 1;

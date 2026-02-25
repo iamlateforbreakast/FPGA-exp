@@ -67,6 +67,7 @@ module Make (X : Config.S) = struct
     let open Always in
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
+    
     let sm = State_machine.create (module States) sync_spec ~enable:vdd in
 
     
@@ -145,22 +146,22 @@ module Make (X : Config.S) = struct
           sm.set_next WAIT_CONFIG;
         ];
         States.WAIT_CONFIG, [
-		  start <-- gnd;
+          start <-- gnd;
           if_ master_ready_wire [
             sm.set_next States.READ_DATA;
           ][]
         ];
         States.READ_DATA, [
           reg_addr <--. 0xF7;
-		  reg_rw   <-- vdd; (* Read *)
-		  start    <-- vdd;
-		  sm.set_next WAIT_DATA;
+          reg_rw   <-- vdd; (* Read *)
+          start    <-- vdd;
+          sm.set_next WAIT_DATA;
         ];
         States.WAIT_DATA, [
           start <-- gnd;
           if_ master_ready_wire [
-		        data_out <-- i2c_master.miso;
-            sm.set_next States.READ_DATA;
+            data_out <-- i2c_master.miso;
+            sm.set_next States.PRINT_DATA; (* Proceed to UART print *)
           ][]
         ];
         States.PRINT_DATA, [
