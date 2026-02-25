@@ -29,6 +29,9 @@ let testbench () =
   (* Helper to pulse clock and print status *)
   let cycle n =
     for _ = 1 to n do
+      inputs.sda_in := (match model_sda with 
+                     | Some 0 -> Bits.gnd 
+                     | _ -> Bits.vdd);
       Cyclesim.cycle sim;
     done
   in
