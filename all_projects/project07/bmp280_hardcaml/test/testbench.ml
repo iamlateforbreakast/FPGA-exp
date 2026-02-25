@@ -29,8 +29,11 @@ let testbench () =
   (* Helper to pulse clock and print status *)
   let cycle n =
     for _ = 1 to n do
+      let scl_bit = to_int !(outputs.scl) in
+      let sda_out_bit = to_int !(outputs.sda_out) in
+      let model_sda = Bmp280_Model.step model ~scl:scl_bit ~sda_in:sda_out_bit in
       inputs.sda_in := (match model_sda with 
-                     | Some 0 -> Bits.gnd 
+                     | 0 -> Bits.gnd 
                      | _ -> Bits.vdd);
       Cyclesim.cycle sim;
     done
@@ -44,9 +47,9 @@ let testbench () =
   inputs.reset := gnd;
 
   (* 2. Configure a Read transaction *)
-  inputs.dev_addr     := of_int ~width:7 0x50; (* Slave Address *)
+  inputs.dev_addr := of_int ~width:7 0x50; (* Slave Address *)
   inputs.reg_addr := of_int ~width:8 0x12; (* Sub-address to read *)
-  inputs.mosi := Bits.of_int ~width:8 0;
+  inputs.mosi     := Bits.of_int ~width:8 0;
   inputs.rw       := vdd;              (* Read = 1 *)
   inputs.start    := vdd;
   cycle 1;
