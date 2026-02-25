@@ -42,7 +42,8 @@ module Bmp280_Model = struct
     (raw_t / 16384) * dig_t1 (* Simplified placeholder *)
 
   let step t ~scl ~sda_in =
-    let scl_rising = t.last_scl = 0 && scl = 1 in
+    let t.scl_rising_latched  = (t.last_scl = 0 && scl = 1) || (t.last_scl = 1 && scl = 1) in
+    let t.scl_falling_latched = (t.last_scl = 1 && scl = 0) || (t.last_scl = 0 && scl = 0) in
     let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 in
     let sda_stop   = t.last_scl = 1 && t.last_sda = 0 && sda_in = 1 in
 
