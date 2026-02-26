@@ -9,52 +9,45 @@ module Bmp280_Model = struct
     | Reg_Pointer of { mutable bits : int; mutable count : int }
     | Ack_Reg
     | Write_Data of { mutable bits : int; mutable count : int }
-    | Ack_Write
     | Read_Data of { mutable bits : int; mutable count : int }
     | Send_Ack
 
   type t = {
-    mutable state    : protocol_state;
-    mutable last_scl : int;
-    mutable last_sda : int;
-    mutable reg_ptr  : int;
-    mutable cycle    : int;
-    mutable rw       : int; (* 0 = Write, 1 = Read *)
-    regs             : int array; (* 256 registers *)
+    mutable state       : protocol_state;
+    mutable last_scl    : int;
+    mutable last_sda    : int;
+    mutable reg_ptr     : int;
+    mutable cycle       : int;
+    mutable rw          : int; (* 0 = Write, 1 = Read *)
+    mutable device_addr : int;
+    regs                : int array; (* 256 registers *)
   }
 
-  let create () = {
+  let create ~addr = {
     state    = Idle;
     last_scl = 0;
     last_sda = 0;
     reg_ptr  = 0;
     cycle    = 0;
     rw       = 0;
+    device_addr = addr; (* Usually 0x76 or 0x77 *)
     regs     = Array.create ~len:256 0;
   }
 
-  (* Pre-load Calibration & ID *)
-  let setup_default_values t =
-    t.regs.(0xD0) <- 0x58; (* Chip ID *)
-    t.regs.(0x88) <- 0xA1; (* Example Calibration dig_T1 *)
-    ()
+  let reset_to_defaults t =
+    Array.fill t.regs ~pos:0 ~len:256 0;
+    t.regs.(0xD0) <- 0x58; (* [Datasheet 4.3.1] Chip ID *)
+    t.regs.(0xF3) <- 0x00; (* Status: not measuring, no update *)
+    Stdio.printf "Device Reset to Defaults\n"
 
-  (* The "Gold" Compensation Logic (Temperature only for brevity) *)
+(* [Datasheet 3.11.3] Official Compensation Formula (Integer version) *)
   let compensate_t t raw_t =
     let dig_t1 = t.regs.(0x88) lor (t.regs.(0x89) lsl 8) in
-    (* Official Bosch 64-bit logic goes here *)
-    (raw_t / 16384) * dig_t1 (* Simplified placeholder *)
-  let print_state s =
-    match s with
-    | Idle -> "Idle"
-    | Address _ -> "Address"
-    | Ack_Addr -> "Ack_Addr"
-    | Reg_Pointer _ -> "Reg_Pointer"
-    | Ack_Reg -> "Ack_Reg"
-    | Write_Data _ -> "Write_Data"
-    | Ack_Write -> "Ack_Write"
-    | Read_Data _ -> "Read_Data"
-    | Send_Ack -> "Send_Ack"
+    let dig_t2 = t.regs.(0x8A) lor (t.regs.(0x8B) lsl 8) in (* Needs signed handling *)
+    let var1 = ((raw_t / 16384) - (dig_t1 / 1024)) * dig_t2 in
+    (* Simplified for brevity; real version requires 32-bit signed casting *)
+    var1 / 4
+
   let step t ~scl ~sda_in =
     let scl_rising  = (t.last_scl = 0 && scl = 1) in
     let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 in
@@ -80,7 +73,7 @@ module Bmp280_Model = struct
             (* Stdio.printf "Receiving Address Bit: %d at cycle %d\n" sda_in t.cycle; *)
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
-          end else begin
+          end else if (r.bits lsr 1) = t.device_addr then begin
             Stdio.printf "  Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
             t.rw <- r.bits land 1; (* LSB indicates R/W *)
             t.reg_ptr <- 0; (* Reset reg pointer on new transaction *)
@@ -88,8 +81,8 @@ module Bmp280_Model = struct
           end
 
       | Ack_Addr ->
-          if t.rw = 0 then t.state <- Reg_Pointer { bits = 0; count = 0 }
-          else t.state <- Reg_Pointer { bits = t.regs.(t.reg_ptr); count = 0 }
+          if t.rw = 1 then t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          else t.state <- Reg_Pointer { bits = 0; count = 0 }
 
 
       | Reg_Pointer r ->
@@ -103,7 +96,7 @@ module Bmp280_Model = struct
           end
 
       | Ack_Reg -> 
-          t.state <- Write_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          t.state <- Write_Data { bits = 0; count = 0 }
       
       | Write_Data r ->
           if r.count < 8 then begin
@@ -117,8 +110,17 @@ module Bmp280_Model = struct
             t.reg_ptr <- (t.reg_ptr + 1) land 0xFF;
             t.state <- Ack_Reg (* Pull SDA low to ACK the data byte *)
           end
-      | Ack_Write ->
-          t.state <- Reg_Pointer { bits = 0; count = 0 } (* Ready for next reg pointer or data *)
+
+      | Read_Data r ->
+          if r.count < 7 then r.count <- r.count + 1
+          else t.state <- Send_Ack
+
+
+      | Send_Ack ->
+          if sda_in = 0 then begin (* Master ACKs for more data *)
+            t.reg_ptr <- (t.reg_ptr + 1) land 0xFF;
+            t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          end else t.state <- Idle (* Master NACKs to end read *)
 
       | _ -> ()
     end;
@@ -126,10 +128,8 @@ module Bmp280_Model = struct
     (* Logic to drive SDA low for ACKs *)
     (match t.state with
 
-     | Ack_Addr | Ack_Reg | Ack_Write -> drive_sda := 0
-     | Address _ | Reg_Pointer _ | Write_Data _ -> () (* Slave listens, doesn't drive *)
-     | Read_Data { bits; count } -> 
-         drive_sda := (bits lsl count) land 0x80
+     | Ack_Addr | Ack_Reg -> drive_sda := 0
+     | Read_Data { bits; count } -> drive_sda := (bits lsr (7 - count)) land 1
      | _ -> ());
 
     t.last_scl <- scl;
