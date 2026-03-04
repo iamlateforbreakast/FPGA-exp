@@ -1,4 +1,4 @@
-open Base
+(* bmp280_model.ml *)open Base
 
 module Bmp280_Model = struct
   type protocol_state = 
@@ -60,7 +60,8 @@ module Bmp280_Model = struct
 
   let step t ~scl ~sda_in =
     let scl_rising  = (t.last_scl = 0 && scl = 1) in
-    let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 in
+    let sda_start  = t.last_scl = 1 && t.last_sda = 1 && sda_in = 0 && 
+    (match t.state with Ack_Addr | Ack_Reg | Read_Data _ -> false | _ -> true) in
     let sda_stop   = t.last_scl = 1 && t.last_sda = 0 && sda_in = 1 in
 
     let drive_sda = ref 1 in (* Default High-Z *)
@@ -96,8 +97,14 @@ module Bmp280_Model = struct
           end
 
       | Ack_Addr ->
-          if t.rw = 1 then t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
-          else t.state <- Reg_Pointer { bits = 0; count = 0 }
+          if t.rw = 1 then begin
+            Stdio.printf "  ACKed Address, preparing for Read at cycle %d\n" t.cycle;
+            t.state <- Read_Data { bits = t.regs.(t.reg_ptr); count = 0 }
+          end
+          else begin
+            Stdio.printf "  ACKed Address, preparing for Write at cycle %d\n" t.cycle;
+            t.state <- Reg_Pointer { bits = 0; count = 0 }
+          end
 
 
       | Reg_Pointer r ->
@@ -144,7 +151,9 @@ module Bmp280_Model = struct
     (match t.state with
 
      | Ack_Addr | Ack_Reg -> drive_sda := 0
-     | Read_Data _ -> drive_sda := 0
+     | Read_Data r -> 
+        drive_sda := (if t.rw = 1 then (r.bits lsr (7 - r.count)) land 1 else 1);
+        Stdio.printf "  Driving SDA for Read: bit %d = %d at cycle %d\n" (7 - r.count) !drive_sda t.cycle
      | _ -> drive_sda := 1);
 
     t.last_scl <- scl;
