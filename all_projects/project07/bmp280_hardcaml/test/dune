@@ -1,10 +1,19 @@
-(executable
- (name testbench)
+; Test logic in a library so ppx_inline_test / ppx_expect work correctly.
+(library
+ (name testbench_lib)
+ (modules testbench_lib bmp280_model)
  (libraries
   project07_lib
   hardcaml
   hardcaml_waveterm
-  hardcaml_waveterm.interactive)
+  hardcaml_waveterm.interactive
+  unix)
  (preprocess
   (pps ppx_inline_test ppx_expect))
  (inline_tests))
+
+; Thin executable for `dune exec` and DISPLAY_WAVES=1.
+(executable
+ (name testbench)
+ (modules testbench)
+ (libraries testbench_lib))
