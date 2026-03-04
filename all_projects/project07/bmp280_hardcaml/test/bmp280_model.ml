@@ -40,6 +40,16 @@ module Bmp280_Model = struct
     t.regs.(0xF3) <- 0x00; (* Status: not measuring, no update *)
     Stdio.printf "Device Reset to Defaults\n"
 
+  let print_state = function
+    | Idle -> "Idle"
+    | Address _ -> "Address"
+    | Ack_Addr -> "Ack_Addr"
+    | Reg_Pointer _ -> "Reg_Pointer"
+    | Ack_Reg -> "Ack_Reg"
+    | Write_Data _ -> "Write_Data"
+    | Read_Data _ -> "Read_Data"
+    | Send_Ack -> "Send_Ack"  
+
 (* [Datasheet 3.11.3] Official Compensation Formula (Integer version) *)
   let compensate_t t raw_t =
     let dig_t1 = t.regs.(0x88) lor (t.regs.(0x89) lsl 8) in
@@ -56,11 +66,13 @@ module Bmp280_Model = struct
     let drive_sda = ref 1 in (* Default High-Z *)
 
     if sda_start then begin
-      Stdio.printf "Start Condition Detected cycle = %d\n" t.cycle;
+      Stdio.printf "Start Condition Detected cycle = %d (state: %s, RegPtr: 0x%02x)\n" 
+        t.cycle (print_state t.state) t.reg_ptr;
       t.state <- Address { bits = 0; count = 0 }
     end
     else if sda_stop then begin
-      Stdio.printf "Stop Condition Detected cycle = %d\n" t.cycle;
+      Stdio.printf "Stop Condition Detected cycle = %d (state: %s, RegPtr: 0x%02x)\n" 
+        t.cycle (print_state t.state) t.reg_ptr;
       t.state <- Idle
     end
     else if scl_rising then begin
@@ -70,7 +82,7 @@ module Bmp280_Model = struct
 
       | Address r -> (* Use 'r' to access the record fields *)
           if r.count < 8 then begin
-            (* Stdio.printf "Receiving Address Bit: %d at cycle %d\n" sda_in t.cycle; *)
+            Stdio.printf "Receiving Address Bit: %d at cycle %d\n" sda_in t.cycle;
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
           end else if (r.bits lsr 1) = t.device_addr then begin
@@ -78,6 +90,9 @@ module Bmp280_Model = struct
             t.rw <- r.bits land 1; (* LSB indicates R/W *)
             t.reg_ptr <- 0; (* Reset reg pointer on new transaction *)
             t.state <- Ack_Addr;
+          end else begin
+            Stdio.printf "  Address Mismatch: Received 0x%02x at cycle %d (Expected 0x%02x)\n" r.bits t.cycle (t.device_addr lsl 1);
+            t.state <- Idle (* Ignore transaction if address doesn't match *)
           end
 
       | Ack_Addr ->
@@ -129,8 +144,8 @@ module Bmp280_Model = struct
     (match t.state with
 
      | Ack_Addr | Ack_Reg -> drive_sda := 0
-     | Read_Data { bits; count } -> drive_sda := (bits lsr (7 - count)) land 1
-     | _ -> ());
+     | Read_Data _ -> drive_sda := 0
+     | _ -> drive_sda := 1);
 
     t.last_scl <- scl;
     t.last_sda <- sda_in;
