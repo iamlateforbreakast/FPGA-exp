@@ -37,9 +37,8 @@ module Bmp280_Model = struct
   let reset_to_defaults t =
     Array.fill t.regs ~pos:0 ~len:256 0;
     t.regs.(0xD0) <- 0x58; (* [Datasheet 4.3.1] Chip ID *)
-    t.regs.(0xF3) <- 0x00; (* Status: not measuring, no update *)
-    Stdio.printf "Device Reset to Defaults\n"
-
+    t.regs.(0xF3) <- 0x00 (* Status: not measuring, no update *)
+    
   let print_state = function
     | Idle -> "Idle"
     | Address _ -> "Address"
@@ -77,7 +76,7 @@ module Bmp280_Model = struct
       t.state <- Idle
     end
     else if scl_rising then begin
-      Stdio.printf "SCL Rising Edge Detected cycle = %d\n" t.cycle;
+      (* Stdio.printf "SCL Rising Edge Detected cycle = %d\n" t.cycle; *)
       (* State machine transitions *)
       match t.state with
 
