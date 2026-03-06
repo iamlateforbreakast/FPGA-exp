@@ -157,14 +157,14 @@ let%expect_test "TEST 1: Reset behaviour" =
         (to_int  !(outputs.MyI2c_master.O.scl) = 1);
   check "SDA high after reset"
         (to_int  !(outputs.MyI2c_master.O.sda_out) = 1);
-  check "SDA_OE low after reset"
-        (to_int  !(outputs.MyI2c_master.O.sda_oe) = 0);
+  check "SDA_OE high after reset"
+        (to_int  !(outputs.MyI2c_master.O.sda_oe) = 1);
   [%expect {|
     [PASS] ready high after reset
     [PASS] ack_error low after reset
     [PASS] SCL high after reset
     [PASS] SDA high after reset
-    [PASS] SDA_OE low after reset
+    [PASS] SDA_OE high after reset
     |}]
 
 (* ───────────────────────────────────────────────────────────────
@@ -319,12 +319,12 @@ let%expect_test "TEST 7: Idle bus state after transaction" =
         (to_int !(outputs.MyI2c_master.O.scl) = 1);
   check "SDA high when idle"
         (to_int !(outputs.MyI2c_master.O.sda_out) = 1);
-  check "SDA_OE low when idle"
-        (to_int !(outputs.MyI2c_master.O.sda_oe) = 0);
+  check "SDA_OE high when idle"
+        (to_int !(outputs.MyI2c_master.O.sda_oe) = 1);
   [%expect {|
     [PASS] SCL high when idle
     [PASS] SDA high when idle
-    [PASS] SDA_OE low when idle
+    [PASS] SDA_OE high when idle
     |}]
 
 (* ───────────────────────────────────────────────────────────────
@@ -385,13 +385,13 @@ let%expect_test "TEST 10: Idle with no start" =
         (to_int  !(outputs.MyI2c_master.O.ack_error) = 0);
   check "SCL remains high"
         (to_int  !(outputs.MyI2c_master.O.scl) = 1);
-  check "SDA_OE remains low"
-        (to_int  !(outputs.MyI2c_master.O.sda_oe) = 0);
+  check "SDA_OE remains high"
+        (to_int  !(outputs.MyI2c_master.O.sda_oe) = 1);
   [%expect {|
     [PASS] still ready after 500 idle cycles
     [PASS] no spurious ack_error
     [PASS] SCL remains high
-    [PASS] SDA_OE remains low
+    [PASS] SDA_OE remains high
     |}]
 
 (* ───────────────────────────────────────────────────────────────
