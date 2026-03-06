@@ -3,6 +3,7 @@ FAMILY = GW2A-18C
 TOP_MODULE = top_level
 VERILOG_FILES = ./verilog_out/i2c_master.v \
                 ./verilog_out/leds.v \
+                ./verilog_out/uart_tx.v \
                 ./verilog_out/top_level.v
 SOURCES = ./lib/top.ml \
           ./lib/uart_tx.ml \
