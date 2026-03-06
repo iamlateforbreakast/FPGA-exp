@@ -81,13 +81,13 @@ module Bmp280_Model = struct
       match t.state with
 
       | Address r -> (* Use 'r' to access the record fields *)
-          if r.count < 8 then begin
+          if r.count < 7 then begin
             Stdio.printf "Receiving Address Bit: %d at cycle %d\n" sda_in t.cycle;
             r.bits <- (r.bits lsl 1) lor sda_in; 
             r.count <- r.count + 1
-          end else if (r.bits lsr 1) = t.device_addr then begin
+          end else if r.bits = t.device_addr then begin
             Stdio.printf "  Address Received: 0x%02x at cycle %d\n" r.bits t.cycle;
-            t.rw <- r.bits land 1; (* LSB indicates R/W *)
+            t.rw <- sda_in; (* LSB indicates R/W *)
             t.reg_ptr <- 0; (* Reset reg pointer on new transaction *)
             t.state <- Ack_Addr;
           end else begin
