@@ -172,10 +172,10 @@ module Make (X : Config.S) = struct
           ] [
             if_ (tx_data_ready) [
               tx_data_valid <-- vdd;
+              tx_cnt <-- tx_cnt.value +:. 1;
             ] [
               tx_data_valid <-- gnd;
             ];
-            tx_cnt <-- tx_cnt.value +:. 1;
           ];
 
         ];
