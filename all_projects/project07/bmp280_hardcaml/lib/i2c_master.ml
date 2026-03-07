@@ -279,7 +279,7 @@ module Make (X : Config.S) = struct
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
-            shift_reg <-- input.dev_addr @: vdd;
+            shift_reg <-- sll shift_reg.value 1;
             if_ (bit_index.value ==: zero 3) [
 			        byte_count <--. 6;
               sda_oe <-- vdd; (* Release SDA for slave to drive data *)
