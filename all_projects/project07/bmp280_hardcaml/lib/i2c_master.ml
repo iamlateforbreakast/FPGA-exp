@@ -293,11 +293,15 @@ module Make (X : Config.S) = struct
 		
         WAIT_ACK_READ_ADDR, [
           if_ (step_counter.value ==: (of_int ~width:8 quarter_period)) [ scl_o <-- vdd ][];
+          if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 2))) [
+            (* sample ACK *)
+            ack_err <-- input.sda_in;  (* 0 = ACK, 1 = NACK *)
+          ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 3))) [ scl_o <-- gnd ][];
           if_ (step_counter.value ==: (of_int ~width:8 (quarter_period * 4 - 1))) [
             step_counter <-- zero 8;
             sda_oe <-- vdd; (* Release SDA for slave to drive data *)
-            sm.set_next READ_DATA; (* After addr ack, go to read *)
+            if_ ack_err.value [sm.set_next STOP][sm.set_next READ_DATA] (* After addr ack, go to read *)
           ][];
         ];
 
