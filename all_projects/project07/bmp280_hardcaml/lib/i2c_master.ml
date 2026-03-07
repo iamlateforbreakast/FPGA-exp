@@ -45,8 +45,8 @@ module Make (X : Config.S) = struct
 	
     let sync_spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
 
-    let cycle = Signal.reg_fb sync_spec ~enable:vdd  ~width:32
-                       ~f:(fun d -> (d +:. 1)) in
+    let cycle = Signal.reg_fb sync_spec ~enable:vdd  ~width:16
+                       ~f:(fun d -> mux2 (d <: of_int ~width:16 quarter_period) (d +:. 1) (zero 16)) in
 
 	(* --- Internal Signals & Registers --- *)
     let step_counter = Always.Variable.reg sync_spec ~enable:vdd ~width:8 in
@@ -64,6 +64,13 @@ module Make (X : Config.S) = struct
 	
     (* --- State machine --- *)
     let sm = Always.State_machine.create (module State) sync_spec in
+
+    (* I2C Clock generation*)
+    let _start_of_bit = (cycle ==: zero 16) in
+    let _rising_edge = (cycle ==: of_int ~width:16 (quarter_period - 1)) in
+    let _middle_of_bit = (cycle ==: of_int ~width:16 (quarter_period * 2 - 1)) in
+    let _falling_edge = (cycle ==: of_int ~width:16 (quarter_period * 3 - 1)) in
+    let _end_of_bit = (cycle ==: of_int ~width:16 (quarter_period * 4 - 1)) in
 
     (* --- Debug --- *)
     let _ = Signal.(scl_o.value -- "scl_o") in
