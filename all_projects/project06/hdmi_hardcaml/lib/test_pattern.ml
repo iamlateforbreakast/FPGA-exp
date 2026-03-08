@@ -24,7 +24,7 @@ module Make (X : Config.S) = struct
   end
 
   let create (_scope : Scope.t) (i : Signal.t I.t) =
-    let spec = Reg_spec.create ~clock:i.pxl_clk ~clear:i.rst_n () in
+    let spec = Reg_spec.create ~clock:i.pxl_clk ~reset:(~:(i.rst_n)) () in
     let h_total = of_int ~width:12 X.h_total in
     let v_total = of_int ~width:12 X.v_total in
     let h_sync = of_int ~width:12 X.h_sync in
@@ -55,26 +55,19 @@ module Make (X : Config.S) = struct
       ((h_cnt >=: (h_sync +: h_bporch)) &: (h_cnt <=: (h_sync +: h_bporch +: h_res -:. 1))) &:
       ((v_cnt >=: (v_sync +: v_bporch)) &: (v_cnt <=: (v_sync +: v_bporch +: v_res -:. 1)))
     in
-    let hs_w = ~: ((h_cnt >=: zero 12) &: (h_cnt <=: h_sync -:. 1)) in
-    let vs_w = ~: ((v_cnt >=: zero 12) &: (v_cnt <=: v_sync -:. 1)) in
+    let hs_active = (h_cnt <: h_sync) in  (* high during sync *)
+    let vs_active = (v_cnt <: v_sync) in
 
     (* Pipeline Delays (N=5) *)
     let de_dn = pipeline spec ~n:5 de_w in
-    let hs_dn = pipeline spec ~n:5 hs_w in
-    let vs_dn = pipeline spec ~n:5 vs_w in
-
-    (* --- Display Area Counters --- *)
-    let de_pos = (~:(msb (pipeline spec ~n:1 de_w))) &: de_w in (* Simplified edge detect *)
-    
-    let _de_hcnt = reg_fb spec ~width:12 ~f:(fun curr ->
-      mux2 de_pos (zero 12) (mux2 (pipeline spec ~n:1 de_w) (curr +:. 1) curr))
-    in
+    let hs_dn = pipeline spec ~n:5 hs_active in
+    let vs_dn = pipeline spec ~n:5 vs_active in
 
     (* --- Output Assignment --- *)
     { O.
       de = de_dn;
-      hs = mux2 hs_pol (~:hs_dn) hs_dn;
-      vs = mux2 vs_pol (~:vs_dn) vs_dn;
+      hs = mux2 hs_pol hs_dn (~:hs_dn);
+      vs = mux2 vs_pol vs_dn (~:vs_dn) ;
       data_r = single_r; (* Logic for mode selection omitted for brevity *)
       data_g = single_g;
       data_b = single_b;
