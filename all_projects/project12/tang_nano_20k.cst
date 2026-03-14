@@ -1,0 +1,66 @@
+// Tang Nano 20K — Physical Constraints (.cst)
+// SpaceWire + SPI interface
+//
+// Adjust pin numbers to match your board connections.
+// SpaceWire LVDS pairs should use LVDS-capable I/O banks.
+// The GW2AR-18 has LVDS support on banks 0, 1, 2, 3.
+//
+// SPI lines connect to your host MCU (e.g. RP2040, STM32, etc.)
+// IRQ_N is an open-drain output — add a pull-up on the PCB.
+
+// ── Clocks ───────────────────────────────────────────────────────────
+IO_LOC  "sys_clk"    H11;   // 27 MHz crystal oscillator on Tang Nano 20K
+IO_PORT "sys_clk"    PULL_MODE=NONE IO_TYPE=LVCMOS33;
+
+IO_LOC  "rst_n"      T10;   // onboard button S1 (active low)
+IO_PORT "rst_n"      PULL_MODE=UP   IO_TYPE=LVCMOS18;
+
+// ── SpaceWire LVDS pairs ──────────────────────────────────────────────
+// Data pair (D+/D−) — use adjacent LVDS-capable pins
+IO_LOC  "spw_dp"     A11;
+IO_LOC  "spw_dn"     B11;
+IO_PORT "spw_dp"     IO_TYPE=LVDS25 DRIVE=8;
+IO_PORT "spw_dn"     IO_TYPE=LVDS25;
+
+// Strobe pair (S+/S−)
+IO_LOC  "spw_sp"     A10;
+IO_LOC  "spw_sn"     B10;
+IO_PORT "spw_sp"     IO_TYPE=LVDS25 DRIVE=8;
+IO_PORT "spw_sn"     IO_TYPE=LVDS25;
+
+// TX Data output pair
+IO_LOC  "spw_d_p"    A9;
+IO_LOC  "spw_d_n"    B9;
+IO_PORT "spw_d_p"    IO_TYPE=LVDS25 DRIVE=8;
+IO_PORT "spw_d_n"    IO_TYPE=LVDS25;
+
+// TX Strobe output pair
+IO_LOC  "spw_s_p"    A8;
+IO_LOC  "spw_s_n"    B8;
+IO_PORT "spw_s_p"    IO_TYPE=LVDS25 DRIVE=8;
+IO_PORT "spw_s_n"    IO_TYPE=LVDS25;
+
+// ── SPI slave pins ────────────────────────────────────────────────────
+// Connect to host MCU SPI master
+IO_LOC  "spi_sck"   R11;
+IO_PORT "spi_sck"   PULL_MODE=DOWN IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_cs_n"  R10;
+IO_PORT "spi_cs_n"  PULL_MODE=UP   IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_mosi"  R9;
+IO_PORT "spi_mosi"  PULL_MODE=DOWN IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_miso"  T9;
+IO_PORT "spi_miso"  PULL_MODE=NONE IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ── IRQ output ───────────────────────────────────────────────────────
+// Active-low interrupt to host MCU; add 10kΩ pull-up on board
+IO_LOC  "irq_n"     T8;
+IO_PORT "irq_n"     PULL_MODE=UP   IO_TYPE=LVCMOS33 DRIVE=4;
+
+// ── Status LED ───────────────────────────────────────────────────────
+// Lights when SpaceWire link is in Run state
+// Tang Nano 20K onboard LEDs are active-low on LVCMOS18
+IO_LOC  "led_link"  L16;
+IO_PORT "led_link"  PULL_MODE=UP   IO_TYPE=LVCMOS18 DRIVE=8;
