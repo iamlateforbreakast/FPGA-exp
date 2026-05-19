@@ -19,11 +19,12 @@ Projects
 | 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | Started | [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
 | 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | Started | [![Project07](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml) |
 | 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | Started | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml) |
-| 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | TBD |
-| 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | TBD |
-| 11 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | TBD |
-| 12 | [SDRam project] | Not started | TBD |
-| 13 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
+| 9 | [E-Paper Module SPI project] | Not started | TBD |
+| 10 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | TBD |
+| 11 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | TBD |
+| 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | TBD |
+| 13 | [SDRam project] | Not started | TBD |
+| 14 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
 
 Interesting Resources
 ---------------------
