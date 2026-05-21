@@ -1,0 +1,15 @@
+// System Hardware Clock (Onboard 27 MHz oscillator)
+IO_LOC "sys_clk" 4;
+IO_PORT "sys_clk" IO_TYPE=LVCMOS33PULL_MODE=NONE;
+
+// Onboard Reset Key (S1 Button)
+IO_LOC "sys_reset" 88;
+IO_PORT "sys_reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// Six Onboard LEDs
+IO_LOC "leds[0]" 15;
+IO_LOC "leds[1]" 16;
+IO_LOC "leds[2]" 17;
+IO_LOC "leds[3]" 18;
+IO_LOC "leds[4]" 19;
+IO_LOC "leds[5]" 20;
