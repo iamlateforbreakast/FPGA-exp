@@ -1,6 +1,8 @@
 # FPGA-exp
 A few experiments targetting the Sipeed Tang Nano 20K. The general aim would be to form a general view about the FPGA development process regarding complexity and development time as well as testing efficiency.
 
+git clone git@github.com:iamlateforbreakast/FPGA-exp.git
+
 Setting up the Sipeed toolchain
 -------------------------------
 
