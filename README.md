@@ -8,6 +8,26 @@ Setting up the Sipeed toolchain
 
 The Sipeed Tang Nano 20K is descrbed here: https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html
 
+Building inside a container
+----------------------------
+
+A `Containerfile` and `docker-compose.yml` are provided to build the full
+open-source toolchain (Yosys, nextpnr-himbaechel with the gowin uarch,
+Apycula's `gowin_pack`, openFPGALoader) plus the OCaml/dune/Hardcaml stack
+used by the `*_hardcaml` projects, on top of Ubuntu 22.04. The image runs
+as a dedicated `builder` user with `/home/builder` as its home, and the
+repository is bind-mounted into `/home/builder/FPGA-exp`.
+
+    podman compose build
+    podman compose run --rm fpga-builder
+    # inside the container:
+    cd FPGA-exp/all_projects/project04/led_hardcaml
+    make
+
+`docker compose` works the same way if you'd rather use Docker. To flash a
+board from inside the container, uncomment the USB `devices:` entry in
+`docker-compose.yml` first.
+
 Projects
 --------
 
