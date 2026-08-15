@@ -1,0 +1,33 @@
+# Usage (podman):
+#   podman compose build
+#   podman compose run --rm fpga-builder
+#   # then inside the container, e.g.:
+#   cd FPGA-exp/all_projects/project04/led_hardcaml && make
+#
+# Also works with `docker compose` unmodified.
+
+services:
+  fpga-builder:
+    build:
+      context: .
+      dockerfile: Containerfile
+      args:
+        USER_UID: "${USER_UID:-1000}"
+        USER_GID: "${USER_GID:-1000}"
+    image: fpga-exp-builder:latest
+    container_name: fpga-exp-builder
+    user: builder
+    working_dir: /home/builder
+    volumes:
+      # Mount the repo into the builder's home. Kept as a subdirectory
+      # (not $HOME itself) so it doesn't shadow the opam switch installed
+      # into /home/builder/.opam at image build time.
+      - .:/home/builder/FPGA-exp:Z
+    # Uncomment to allow openFPGALoader to reach the Tang Nano 20K over USB
+    # for flashing (host must expose the device; on rootless podman you may
+    # also need --group-add keep-groups or an equivalent udev rule):
+    # devices:
+    #   - /dev/bus/usb:/dev/bus/usb
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]

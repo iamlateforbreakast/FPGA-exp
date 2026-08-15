@@ -1,0 +1,7 @@
+.git
+_build
+verilog_out
+*.fs
+*.opam
+*.json
+*.vcd
