@@ -16,7 +16,7 @@ CONSTRAINT_FILE = ../tangnano20k.cst
 all: $(PROJECT).fs
 
 $(PROJECT).fs: $(PROJECT)_pnr.json
-	gowin_pack -d $(DEVICE) -o $@ $<
+	gowin_pack -d $(FAMILY) -o $@ $<
 
 $(PROJECT)_pnr.json : $(PROJECT).json
 	~/Tools/nextpnr/build/nextpnr-himbaechel -r --json $< --write $@ --freq 27 \
