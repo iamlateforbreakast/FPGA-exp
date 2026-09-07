@@ -46,7 +46,12 @@ Projects
 | 11 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | TBD |
 | 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | TBD |
 | 13 | [SDRam project] | Not started | TBD |
-| 14 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
+| 14 | [MCU_Interface] | Not started | TBD |
+| 15 | [Spacewire] | Not started | TBD |
+| 16 | [Leon3] | Not started | TBD |
+| 17 | [Raytracing GPU] | Not started | TBD |
+| 18 | [Image generator] | Not started | TBD |
+| 18 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
 
 Interesting Resources
 ---------------------
