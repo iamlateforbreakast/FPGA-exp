@@ -17,16 +17,16 @@ module Make (X : Config.S) = struct
 
   module O = struct
     type 'a t =
-      { mosi : 'a
-      ; sclk : 'a
-      ; cs :   'a
+      { mosi :  'a
+      ; sclk :  'a
+      ; cs :    'a
       ; ready : 'a
       }
     [@@deriving sexp_of, hardcaml]
   end
 
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
-    let spec = Reg_spec.create ~clock:input.clock ~reset:input.reset () in
+    let spec = Reg_spec.create ~clock:input.clock ~clear:input.reset () in
   
     (* Define a divider constant in your Config *)
     let divider_limit = 54 in
@@ -65,11 +65,13 @@ module Make (X : Config.S) = struct
             (* Toggle clock and shift logic *)
             sclk_reg <-- ~:(sclk_reg.value);
             if_ (sclk_reg.value) [ (* Falling edge of SCLK *)
-              shift_reg <-- (sll shift_reg.value 1); (* Shift Left *)
-              bit_cnt   <-- (bit_cnt.value +:. 1);][];
-          
-            if_ (bit_cnt.value ==:. 8) [
-              running <-- gnd;
+              if_ (bit_cnt.value ==:. 7) [ (* last bit already on the wire: stop *)
+                running  <-- gnd;
+                bit_cnt  <--. 0;
+              ] [
+                shift_reg <-- (sll shift_reg.value 1); (* Shift Left *)
+                bit_cnt   <-- (bit_cnt.value +:. 1);
+              ];
             ] [];
           ] [];
       ]];);

@@ -1,5 +1,4 @@
 (* top.ml *)
-(* screen.ml *)
 open Hardcaml
 
 module type Config = Config.S
@@ -64,9 +63,11 @@ module Make (X : Config) = struct
   let create (scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Always in
     let open Signal in
-    (* let { I.clock; i_reset } = i in *)
+    (* Board-specific button polarity is normalized here; everything below
+       treats [reset] as active-high. *)
+    let reset = X.normalize_reset i.i_reset in
     (* Create synchronous registers *)
-    let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:i.i_reset () in
+    let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
 
     (* State machine and Registers *)
     let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
@@ -80,7 +81,7 @@ module Make (X : Config) = struct
     (* Instantiate the screen SPI controller *)
     let screen_spi = MyScreen.hierarchical scope (
       MyScreen.I.{ clock = i.clock
-                 ; reset = i.i_reset
+                 ; reset
                  ; data_in = Always.Variable.value current_data
                  ; data_valid = (sm.is SEND_DATA  |: sm.is SEND_CMD)
                  }
@@ -134,7 +135,7 @@ module Make (X : Config) = struct
     ; O.o_sdin  = screen_spi.mosi
     ; O.o_cs    = screen_spi.cs
     ; O.o_dc    = dc_reg.value
-    ; O.o_reset = ~: (i.i_reset) (* Standard active-low reset for screens *)
+    ; O.o_reset = ~: reset (* Standard active-low reset for screens *)
     }
 
 end
