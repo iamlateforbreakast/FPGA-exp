@@ -1,0 +1,50 @@
+// Tang Nano 4K (GW1NSR-LV4CQN48PC7/I6) constraints for the OLED SPI design.
+// Verified against Sipeed's official pinout diagram (wiki.sipeed.com/hardware/en/tang/Tang-Nano-4K).
+//
+// This board has very few free 3.3V-capable header pins: Bank0 (3.3V) is
+// entirely consumed by JTAG + SPI flash, Bank2 (2.5V) by HDMI, and Bank3
+// (1.8V) mostly by the buttons and DVP camera data lines. That leaves only
+// FOUR free 3.3V pins on the whole header (33, 44, 46, 10) - used below for
+// the four signals an SSD1306-class OLED actually needs driven at 3.3V
+// (SCLK/SDIN/CS/DC). o_reset is intentionally NOT wired to the OLED: tie the
+// module's RES pin straight to 3V3 on the header (most SSD1306 breakouts
+// already have their own power-on reset circuit) rather than using a 5th
+// pin. o_reset is still constrained below (to a spare, otherwise-unused
+// Bank3/1.8V pin) purely so nextpnr doesn't auto-place it on a pin shared
+// with flash/JTAG/HDMI; leave it physically unconnected.
+
+IO_LOC "clock" 45;
+IO_PORT "clock" PULL_MODE=UP;
+
+// Onboard button, active-low on this board (pulled up; pressing pulls to 0)
+// - opposite polarity from the Nano 20K's i_reset wiring (PULL_MODE=DOWN,
+// active-high). Top.ml's reset is a synchronous, active-high `clear`, so
+// wired as-is here the design sits permanently in reset until the button is
+// held down. Invert this signal in the RTL (or swap in a different pin) for
+// correct button behavior on the 4K before relying on it.
+IO_LOC "i_reset" 15;
+IO_PORT "i_reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// connection to the external OLED SPI (Bank1, 3.3V - the only free 3.3V pins)
+IO_LOC "o_sclk" 39;
+IO_PORT "o_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "o_sdin" 40;
+IO_PORT "o_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "o_cs" 42;
+IO_PORT "o_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "o_dc" 41;
+IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+
+// Use HDMI
+// IO_LOC "o_sclk" 27;
+// IO_PORT "o_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+// IO_LOC "o_sdin" 28;
+// IO_PORT "o_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+// IO_LOC "o_cs" 29;
+// IO_PORT "o_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+// IO_LOC "o_dc" 30;
+// IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+
+// Spare pin only - not connected to the OLED. See note above.
+IO_LOC "o_reset" 9;
+IO_PORT "o_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
