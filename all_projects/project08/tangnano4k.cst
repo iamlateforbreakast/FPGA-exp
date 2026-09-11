@@ -30,40 +30,36 @@ IO_PORT "clock" PULL_MODE=UP;
 IO_LOC "i_reset" 15;
 IO_PORT "i_reset" IO_TYPE=LVCMOS18 PULL_MODE=UP;
 
-// Connection to the external OLED SPI. ALL FOUR of these must sit in Bank1
-// (VCCIO 3.3V), checked individually against Sipeed's pinmap - the bank is a
-// property of each pin, not of the header region, and neighbouring pins on
-// this header belong to different banks.
+// Connection to the external OLED SPI: SCLK 39, SDIN 40, DC 41, CS 42, with
+// RES on 43 below. All five are Bank1 (VCCIO 3.3V), so every signal reaches
+// the panel at a proper 3.3V logic level.
 //
-// In particular o_sclk/o_sdin were originally on pins 39/40, which look like
-// ordinary neighbours of 41/42 but are actually Bank3 (VCCIO 1.8V). Declaring
-// LVCMOS33 there does not raise the pin's swing: the FPGA drove clock and data
-// at only 1.8V, far below the logic HIGH an SH1106 (VDD 5V) will accept, so
-// the panel ignored every byte while CS/DC/RES looked perfectly healthy at
-// 3.3V.
+// Bank membership is per-pin and adjacent header pins can differ, so each one
+// is worth checking against Sipeed's pinmap rather than assuming from
+// proximity - i_reset on pin 15 above is exactly that trap. But 39/40 are NOT
+// an instance of it: an earlier revision moved SCLK/SDIN off them believing
+// they were Bank3/1.8V, which was a misreading of the pinmap. They are
+// Bank1/3.3V and were always correct here.
 //
-// UNRESOLVED, and the reason this design does not yet drive the panel: with
-// all four of SCLK/SDIN/CS/DC assigned as below, the state machine freezes
-// immediately after reset - reproducibly, 5 flashes out of 5, and with the
-// OLED physically disconnected. Re-route any one of them to a different
-// signal and the same RTL runs correctly at the designed 250kHz. The RTL
-// simulates correctly, the generated Verilog is structurally sound, timing
-// passes with wide margin (203MHz vs 27MHz) and utilisation is 5%, so this
-// looks like a toolchain/placement interaction rather than a logic bug.
+// An earlier revision of this file blamed a hard state-machine freeze on pin
+// placement - specifically on 44 being GCLKC_0, a global-clock input, and on
+// driving several of 41/42/43/44 at once. That explanation was wrong, and it
+// is recorded here only so nobody rediscovers it. The freeze reproduced with
+// SCLK/SDIN moved to 16/17 and with the OLED physically disconnected, which
+// rules out both pin location and panel loading. The real cause was yosys
+// re-encoding the FSM to one-hot; see the Makefile's fsm_encoding note.
 //
-// Best current lead: 41/42/43/44 are all GCLKT/GCLKC global-clock input pins.
-// Driving several at once appears to disturb the clock network - each works
-// individually. Worth trying next: move CS/DC/RES onto pins with no clock
-// function. 47/48 (Bank1) and 02/09 (Bank0, 3.3V) are the candidates, though
-// all four are shared with flash/DONE and need care.
-IO_LOC "o_sclk" 44;
-IO_PORT "o_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
-IO_LOC "o_sdin" 46;
-IO_PORT "o_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+// The lesson worth keeping is the method, not the conclusion: pin placement
+// and peripheral loading are easy to blame and hard to disprove, so change one
+// variable per flash and keep a control channel in every measurement.
+IO_LOC "o_sclk" 39;
+IO_PORT "o_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_LOC "o_sdin" 40;
+IO_PORT "o_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
 IO_LOC "o_cs" 42;
-IO_PORT "o_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_PORT "o_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
 IO_LOC "o_dc" 41;
-IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
 
 // Use HDMI
 // IO_LOC "o_sclk" 27;
@@ -80,6 +76,14 @@ IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
 // without needing any external probe or peripheral.
 IO_LOC "o_led" 10;
 IO_PORT "o_led" IO_TYPE=LVCMOS33 DRIVE=8;
+
+// A diagnostic build previously exported the FSM state number on 39/40/44 and
+// the heartbeat on 46. Those ports turned out to be load-bearing by accident:
+// routing the state register to a module port is exactly the condition under
+// which yosys declines to re-encode an FSM, so removing them let FSM_RECODE
+// switch the machine to one-hot and freeze it on power-up. See the long note
+// on the reset spec in lib/top.ml. The design no longer depends on that, so
+// they are gone; the heartbeat stays visible on the onboard LED below.
 
 // Drives the OLED's RES pin (active-low power-on reset pulse). See note above.
 IO_LOC "o_reset" 43;

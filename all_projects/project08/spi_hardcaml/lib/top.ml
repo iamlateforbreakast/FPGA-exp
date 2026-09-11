@@ -102,7 +102,29 @@ module Make (X : Config) = struct
     (* Board-specific button polarity is normalized here; everything below
        treats [reset] as active-high. *)
     let reset = X.normalize_reset i.i_reset |: por in
-    (* Create synchronous registers *)
+    (* A synchronous clear, deliberately, and paired with a synthesis
+       constraint - see the fsm_encoding note in the Makefile.
+
+       Because [por] above works by assuming flops power up to zero, the state
+       encoding must be one where all-zeros is a legal state. It is under
+       Hardcaml's binary encoding, where all-zeros is INIT. It is NOT under
+       one-hot, where INIT is 0000001 and all-zeros decodes to nothing, leaving
+       every next-state term false and the machine stuck forever.
+
+       yosys will happily make that substitution: a synchronous clear is just
+       another term in the register's input mux, so FSM_EXTRACT absorbs it into
+       the transition tree ("found reset state: 3'000 (guessed from mux tree)")
+       and FSM_RECODE then re-encodes to one-hot. That froze this design solidly
+       on the Nano 4K. It hid for a long time because four debug outputs
+       happened to route the state register to module ports, which is precisely
+       the condition under which yosys declines to recode - so deleting purely
+       observational outputs was what broke it.
+
+       Switching to an asynchronous reset also fixes the hardware, but Cyclesim
+       does not model a reset generated inside the design, so the whole POR
+       window becomes invisible in simulation and the testbench silently stops
+       asserting anything real. Pinning the encoding keeps hardware and
+       simulation agreeing. *)
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
 
     (* State machine and Registers *)
@@ -133,11 +155,24 @@ module Make (X : Config) = struct
        panel sees exactly one clean reset pulse regardless of what the FSM
        does afterwards - including looping back to INIT, which must NOT
        re-reset the panel. *)
-    let oled_rst_cnt =
-      reg_fb reg_sync_spec ~enable:vdd ~width:20
+    (* Two saturating counters, giving the two start-up edges the panel needs.
+
+       [oled_rst_n] releases RES. [panel_ready] gates the command sequence, and
+       is the fix for a real bug: nothing used to gate it at all (X.startup_wait
+       is referenced only by the older lib/screen.ml, never by this module), so
+       the FSM began transmitting 9.5us after power-on while RES stayed low for
+       another 19ms. The whole init sequence was clocked into a panel that was
+       held in reset and discarded every byte. Waiting for [panel_ready] - about
+       twice the RES pulse - means commands arrive after the panel is out of
+       reset and its internal power-on has settled. *)
+    let saturating ~width =
+      reg_fb reg_sync_spec ~enable:vdd ~width
         ~f:(fun c -> mux2 (msb c) c (c +:. 1))
     in
-    let oled_rst_n = msb oled_rst_cnt in
+    let rst_bits = if X.is_simulation then 6 else 20 in
+    let settle_bits = if X.is_simulation then 7 else 21 in
+    let oled_rst_n = msb (saturating ~width:rst_bits) in
+    let panel_ready = msb (saturating ~width:settle_bits) in
 
     (* Mux between Command ROM and Data ROM based on state *)
     let current_data = Variable.wire ~default:(zero 8) in
@@ -158,7 +193,10 @@ module Make (X : Config) = struct
           page_idx  <--. 0;
           col_idx   <--. 0;
           setup_idx <--. 0;
-          sm.set_next SEND_CMD;
+          (* Hold here until the panel is out of reset and settled - see
+             [panel_ready]. Reached only once, at power-on: the end of a frame
+             now loops back to PAGE_SETUP rather than here. *)
+          when_ panel_ready [ sm.set_next SEND_CMD ];
         ];
 
         SEND_CMD, [
@@ -208,7 +246,13 @@ module Make (X : Config) = struct
               col_idx <--. 0;
               if_ (page_idx.value ==:. 7) [
                 page_idx <--. 0;
-                sm.set_next INIT; (* Loop back or go to IDLE *)
+                setup_idx <--. 0;
+                (* Stream the next frame; do NOT re-run the init sequence.
+                   Going back to INIT here replayed all 22 command bytes about
+                   29 times a second, including display-off/display-on, which
+                   the known-good RP2040 driver sends exactly once before
+                   settling into a data-only loop. *)
+                sm.set_next PAGE_SETUP;
               ] [
                 page_idx <-- (page_idx.value +:. 1);
                 sm.set_next PAGE_SETUP;

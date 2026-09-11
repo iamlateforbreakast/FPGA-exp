@@ -49,24 +49,25 @@ module Config_nano20k = struct
   let normalize_reset x = x
 end
 
-(* Nano 4K: the reset button is deliberately NOT wired into the design's
-   clear at all - [normalize_reset] discards the pin and returns a constant
-   de-asserted reset.
+(* Nano 4K reset button (pin 15) is active-low - pulled up, pressing drives it
+   to 0 - so it is inverted here into the active-high reset the design expects,
+   the opposite of the 20K's wiring above.
 
-   The button (pin 15) sits in Bank3, VCCIO 1.8V, so its released level can
-   only reach 1.8V - below the ~2.0V VIH an LVCMOS33 buffer wants, and not
-   far above a 1.8V buffer's either. Read wrong, and because the 4K's button
-   is active-low the design needs that signal inverted, a mis-read idle level
-   inverts into an *asserted* reset that parks every register at 0 and stops
-   the design dead. Making a demo that never needs a manual reset depend on
-   that pin trades nothing for a whole class of intermittent failure.
+   This pin previously had to be discarded because the constraint declared
+   LVCMOS33 on it while pin 15 is Bank3, VCCIO 1.8V. Its pull-up could only
+   reach 1.8V, under the ~2.0V VIH a 3.3V input buffer wants, so the released
+   button read LOW or marginal - and because of the inversion below, a misread
+   idle level became an *asserted* reset that parked every register and stopped
+   the design dead, intermittently. The constraint is now LVCMOS18, where 1.8V
+   is comfortably above the ~1.17V VIH, so the pin is trustworthy and the
+   button is wired back in.
 
-   A defined initial state comes from the power-on reset in Top instead (see
-   [por] there), which is what actually forces the state register into a valid
-   encoding - GSR alone proved not to be enough. *)
+   Top ORs this with its power-on reset rather than relying on it: the POR is
+   what guarantees a valid initial state after configuration, and the button
+   only adds manual reset on top. *)
 module Config_nano4k = struct
   include Common_config
-  let normalize_reset _pin = Hardcaml.Signal.gnd
+  let normalize_reset pin = Hardcaml.Signal.(~: pin)
 end
 
 let generate (module X : Config.S) ~output_dir =
