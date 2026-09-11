@@ -5,9 +5,11 @@ open Project08_lib
 module My_config = struct
   let file_name = "image.hex"
   let startup_wait = 10
-  let clk_div = 4 
+  let clk_div = 4
   let commands = [ 0xAE; 0x80; 0xAF ]
+  let col_offset = 2
   let is_simulation = false
+  let normalize_reset x = x
 end
 
 module MyScreen = Top.Make(My_config)
@@ -31,6 +33,14 @@ let testbench () =
       (Bits.to_int !(outputs.o_reset))
   in
   
+  (* Cycle past the power-on reset before sampling. Top holds [por] asserted
+     for the first 256 cycles, which is longer than this whole test window -
+     without this the lines below would all be the reset state and the test
+     would assert nothing about the design's actual behaviour. *)
+  for _ = 1 to 256 do
+    Cyclesim.cycle sim
+  done;
+
   (* Run the simulation loop *)
   for _cycle = 0 to My_config.startup_wait * 3 do
     Cyclesim.cycle sim;
@@ -40,10 +50,35 @@ let testbench () =
 let%expect_test "screen" =
   testbench ();
   [%expect {|
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-    io_sclk=0 io_sdin=0 io_cs=0 io_dc=0 io_reset=0
-  |}]
+    io_sclk=0 io_sdin=0 io_cs=1 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    io_sclk=0 io_sdin=1 io_cs=0 io_dc=0 io_reset=0
+    |}]

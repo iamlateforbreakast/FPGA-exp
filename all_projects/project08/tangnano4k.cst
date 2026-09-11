@@ -1,34 +1,64 @@
 // Tang Nano 4K (GW1NSR-LV4CQN48PC7/I6) constraints for the OLED SPI design.
 // Verified against Sipeed's official pinout diagram (wiki.sipeed.com/hardware/en/tang/Tang-Nano-4K).
 //
-// This board has very few free 3.3V-capable header pins: Bank0 (3.3V) is
-// entirely consumed by JTAG + SPI flash, Bank2 (2.5V) by HDMI, and Bank3
-// (1.8V) mostly by the buttons and DVP camera data lines. That leaves only
-// FOUR free 3.3V pins on the whole header (33, 44, 46, 10) - used below for
-// the four signals an SSD1306-class OLED actually needs driven at 3.3V
-// (SCLK/SDIN/CS/DC). o_reset is intentionally NOT wired to the OLED: tie the
-// module's RES pin straight to 3V3 on the header (most SSD1306 breakouts
-// already have their own power-on reset circuit) rather than using a 5th
-// pin. o_reset is still constrained below (to a spare, otherwise-unused
-// Bank3/1.8V pin) purely so nextpnr doesn't auto-place it on a pin shared
-// with flash/JTAG/HDMI; leave it physically unconnected.
+// SCLK/SDIN/CS/DC use header pins 39/40/42/41 - physical, breadboard-
+// accessible Bank1 (3.3V) pins, shared with the unused DVP camera interface
+// (fine, since this design doesn't use the camera).
+//
+// This module is SH1106-based (1.3" 128x64), not SSD1306, and - unlike the
+// assumption an earlier revision of this file made - it has no autonomous
+// power-on reset circuit: RES must actually be pulsed low by the FPGA (see
+// Top's oled_rst_cnt) or the chip never leaves its
+// undefined post-power-up state no matter what commands follow. Wire the
+// module's RES pin to o_reset (pin 43) rather than tying it to 3V3.
 
 IO_LOC "clock" 45;
 IO_PORT "clock" PULL_MODE=UP;
 
-// Onboard button, active-low on this board (pulled up; pressing pulls to 0)
-// - opposite polarity from the Nano 20K's i_reset wiring (PULL_MODE=DOWN,
-// active-high). Top.ml's reset is a synchronous, active-high `clear`, so
-// wired as-is here the design sits permanently in reset until the button is
-// held down. Invert this signal in the RTL (or swap in a different pin) for
-// correct button behavior on the 4K before relying on it.
+// Onboard button (USR_KEY_2), active-low on this board: pulled up, pressing
+// pulls to 0 - opposite polarity from the Nano 20K's i_reset wiring
+// (PULL_MODE=DOWN, active-high).
+//
+// IO_TYPE must be LVCMOS18, NOT LVCMOS33: pin 15 is in Bank3, whose VCCIO on
+// this board is 1.8V (see Sipeed's pinmap). Declaring LVCMOS33 here asks for
+// a 3.3V input buffer, whose VIH minimum (~2.0V) is *above* the 1.8V that the
+// internal pull-up can actually reach - so the released (idle) button reads
+// LOW or marginal instead of HIGH. Since Top inverts this signal for the 4K,
+// a mis-read LOW becomes an asserted reset, holding the whole design in
+// permanent clear with every output stuck at 0. Being marginal rather than
+// flatly wrong, it also presents intermittently, which is worse to debug.
 IO_LOC "i_reset" 15;
-IO_PORT "i_reset" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "i_reset" IO_TYPE=LVCMOS18 PULL_MODE=UP;
 
-// connection to the external OLED SPI (Bank1, 3.3V - the only free 3.3V pins)
-IO_LOC "o_sclk" 39;
+// Connection to the external OLED SPI. ALL FOUR of these must sit in Bank1
+// (VCCIO 3.3V), checked individually against Sipeed's pinmap - the bank is a
+// property of each pin, not of the header region, and neighbouring pins on
+// this header belong to different banks.
+//
+// In particular o_sclk/o_sdin were originally on pins 39/40, which look like
+// ordinary neighbours of 41/42 but are actually Bank3 (VCCIO 1.8V). Declaring
+// LVCMOS33 there does not raise the pin's swing: the FPGA drove clock and data
+// at only 1.8V, far below the logic HIGH an SH1106 (VDD 5V) will accept, so
+// the panel ignored every byte while CS/DC/RES looked perfectly healthy at
+// 3.3V.
+//
+// UNRESOLVED, and the reason this design does not yet drive the panel: with
+// all four of SCLK/SDIN/CS/DC assigned as below, the state machine freezes
+// immediately after reset - reproducibly, 5 flashes out of 5, and with the
+// OLED physically disconnected. Re-route any one of them to a different
+// signal and the same RTL runs correctly at the designed 250kHz. The RTL
+// simulates correctly, the generated Verilog is structurally sound, timing
+// passes with wide margin (203MHz vs 27MHz) and utilisation is 5%, so this
+// looks like a toolchain/placement interaction rather than a logic bug.
+//
+// Best current lead: 41/42/43/44 are all GCLKT/GCLKC global-clock input pins.
+// Driving several at once appears to disturb the clock network - each works
+// individually. Worth trying next: move CS/DC/RES onto pins with no clock
+// function. 47/48 (Bank1) and 02/09 (Bank0, 3.3V) are the candidates, though
+// all four are shared with flash/DONE and need care.
+IO_LOC "o_sclk" 44;
 IO_PORT "o_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
-IO_LOC "o_sdin" 40;
+IO_LOC "o_sdin" 46;
 IO_PORT "o_sdin" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
 IO_LOC "o_cs" 42;
 IO_PORT "o_cs" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
@@ -45,6 +75,12 @@ IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
 // IO_LOC "o_dc" 30;
 // IO_PORT "o_dc" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
 
-// Spare pin only - not connected to the OLED. See note above.
-IO_LOC "o_reset" 9;
+// Onboard LED (the 4K's only one). Carries a free-running heartbeat, so the
+// board itself reports whether the design is loaded, clocked and out of reset
+// without needing any external probe or peripheral.
+IO_LOC "o_led" 10;
+IO_PORT "o_led" IO_TYPE=LVCMOS33 DRIVE=8;
+
+// Drives the OLED's RES pin (active-low power-on reset pulse). See note above.
+IO_LOC "o_reset" 43;
 IO_PORT "o_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
