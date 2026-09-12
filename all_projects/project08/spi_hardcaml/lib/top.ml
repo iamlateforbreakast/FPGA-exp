@@ -124,14 +124,17 @@ module Make (X : Config) = struct
        which yosys declines to recode - so deleting purely observational
        outputs was what broke it. Pinning fsm_encoding directly on the
        register below removes the substitution instead of relying on
-       incidental port wiring to block it. *)
-    let sm =
-      State_machine.create
-        (module States)
-        reg_sync_spec
-        ~enable:vdd
-        ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
-    in
+       incidental port wiring to block it.
+
+       State_machine.create has no ~attributes parameter in the pinned
+       hardcaml.v0.17.0 (that's a later, unreleased addition) - [add_attribute]
+       mutates the signal in place and returns it, so applying it to
+       [sm.current] after the fact reaches the same register. *)
+    let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    ignore
+      (add_attribute sm.current
+         (Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding")
+        : Signal.t);
     let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let page_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in (* 0..7 *)
     let col_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:7 in (* 0..127 *)
