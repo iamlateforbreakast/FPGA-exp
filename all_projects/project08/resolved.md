@@ -108,14 +108,19 @@ yosys -q -p "read_verilog $(VERILOG_FILES); setattr -set fsm_encoding \"none\" w
 ```
 
 That worked, but blindly: `w:*` sets the attribute on every wire in the design, not just the
-state register, from a build script rather than the design itself. Moved into Hardcaml instead —
-`Always.State_machine.create` takes an `~attributes:Rtl_attribute.t list` that attaches directly
-to the register it creates:
+state register, from a build script rather than the design itself. Moved into Hardcaml instead,
+via `Signal.add_attribute` on the state machine's own register:
 
 ```ocaml
-State_machine.create (module States) reg_sync_spec ~enable:vdd
-  ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
+let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+ignore (add_attribute sm.current
+  (Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding") : Signal.t);
 ```
+
+(`State_machine.create` itself gained an `~attributes` parameter for exactly this later, but not
+in `hardcaml.v0.17.0` — the version this project pins — so it has to be applied to `sm.current`
+after the fact instead. `add_attribute` mutates the signal in place and returns it, which is why
+the call can be `ignore`d.)
 
 This emits the same `(* fsm_encoding = "none" *)` yosys respects, scoped to the one register that
 needs it, and it now lives next to the state machine it protects instead of in a synthesis
