@@ -101,11 +101,25 @@ Four debug outputs exporting the state number had been satisfying that condition
 **accidentally load-bearing**: deleting purely observational ports broke a working design,
 which is exactly the kind of change nobody suspects.
 
-Fixed by pinning the encoding in the Makefile (`synth_gowin` has no `-nofsm` flag):
+First fixed by pinning the encoding from the Makefile (`synth_gowin` has no `-nofsm` flag):
 
 ```make
 yosys -q -p "read_verilog $(VERILOG_FILES); setattr -set fsm_encoding \"none\" w:*; synth_gowin ..."
 ```
+
+That worked, but blindly: `w:*` sets the attribute on every wire in the design, not just the
+state register, from a build script rather than the design itself. Moved into Hardcaml instead —
+`Always.State_machine.create` takes an `~attributes:Rtl_attribute.t list` that attaches directly
+to the register it creates:
+
+```ocaml
+State_machine.create (module States) reg_sync_spec ~enable:vdd
+  ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
+```
+
+This emits the same `(* fsm_encoding = "none" *)` yosys respects, scoped to the one register that
+needs it, and it now lives next to the state machine it protects instead of in a synthesis
+command line that has to be remembered separately. The Makefile line is gone.
 
 An asynchronous reset also fixes the hardware — it puts the reset on a real flop pin, outside
 the transition logic, correct under any encoding. It was rejected because Cyclesim does not
