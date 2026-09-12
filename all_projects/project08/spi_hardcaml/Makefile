@@ -32,6 +32,12 @@ $(PROJECT)_pnr.json : $(PROJECT).json
 	--vopt cst=$(CONSTRAINT_FILE) \
 	--device $(DEVICE)
 
+# The FSM encoding is pinned in lib/top.ml itself (an fsm_encoding=none
+# Rtl_attribute on the state register via State_machine.create), not here:
+# see the comment above that register for why it matters. That is more
+# targeted than blanket-applying the attribute to every wire from the
+# synthesis command line, and travels with the source instead of the build
+# script.
 $(PROJECT).json : $(VERILOG_DIR)/$(TOP_MODULE).v
 	yosys -q -p "read_verilog $(VERILOG_FILES); synth_gowin -top $(TOP_MODULE) -json $@"
 
