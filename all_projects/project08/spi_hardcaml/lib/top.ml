@@ -101,47 +101,55 @@ module Make (X : Config) = struct
     ) in
 
     compile [
-      sm.switch [
-        INIT, [
-          cmd_idx   <--. 0;
-          data_idx  <--. 0;
-          sm.set_next SEND_CMD;
-        ];
-        
-        SEND_CMD, [
-          dc_reg <--. 0;
-          current_data <-- (command_rom ~index:cmd_idx.value);
-          sm.set_next WAIT_SPI_CMD;
-        ];
-        
-        WAIT_SPI_CMD, [
-          if_ screen_spi.ready [
-            if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
-              sm.set_next SEND_DATA;
-            ] [
-              cmd_idx <-- (cmd_idx.value +:. 1);
-              sm.set_next SEND_CMD;
-            ]
-          ][]
-        ];
-        
-        SEND_DATA, [
-          dc_reg <--. 1;
-          current_data <-- (display_rom ~index:data_idx.value);
-          sm.set_next WAIT_SPI_DATA;
-        ];
-        
-        WAIT_SPI_DATA, [
-          if_ screen_spi.ready [
-            if_ (data_idx.value ==:. (128 * 8 - 1)) [
-              sm.set_next INIT; (* Loop back or go to IDLE *)
-            ] [
-              data_idx <-- (data_idx.value +:. 1);
-              sm.set_next SEND_DATA;
-            ]
-          ][]
-        ];
-      ]
+      sm.switch
+        ~default:
+          [ (* Any code the FSM shouldn't be able to reach (e.g. a physical
+               power-up value that doesn't correspond to a valid state under
+               whatever encoding synthesis chooses) self-heals to INIT
+               within one cycle instead of latching up forever. *)
+            sm.set_next INIT
+          ]
+        [
+          INIT, [
+            cmd_idx   <--. 0;
+            data_idx  <--. 0;
+            sm.set_next SEND_CMD;
+          ];
+
+          SEND_CMD, [
+            dc_reg <--. 0;
+            current_data <-- (command_rom ~index:cmd_idx.value);
+            sm.set_next WAIT_SPI_CMD;
+          ];
+
+          WAIT_SPI_CMD, [
+            if_ screen_spi.ready [
+              if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
+                sm.set_next SEND_DATA;
+              ] [
+                cmd_idx <-- (cmd_idx.value +:. 1);
+                sm.set_next SEND_CMD;
+              ]
+            ][]
+          ];
+
+          SEND_DATA, [
+            dc_reg <--. 1;
+            current_data <-- (display_rom ~index:data_idx.value);
+            sm.set_next WAIT_SPI_DATA;
+          ];
+
+          WAIT_SPI_DATA, [
+            if_ screen_spi.ready [
+              if_ (data_idx.value ==:. (128 * 8 - 1)) [
+                sm.set_next INIT; (* Loop back or go to IDLE *)
+              ] [
+                data_idx <-- (data_idx.value +:. 1);
+                sm.set_next SEND_DATA;
+              ]
+            ][]
+          ];
+        ]
     ];
     
     { O.o_sclk  = screen_spi.sclk
