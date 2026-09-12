@@ -76,14 +76,17 @@ module Make (X : Config) = struct
        promote the register to one-hot during synth_gowin, where all-zeros
        decodes to no state at all and the machine never starts. Pinning
        fsm_encoding on the state register itself keeps the guarantee
-       regardless of the synthesis command line. *)
-    let sm =
-      State_machine.create
-        (module States)
-        reg_sync_spec
-        ~enable:vdd
-        ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
-    in
+       regardless of the synthesis command line.
+
+       State_machine.create has no ~attributes parameter in the pinned
+       hardcaml.v0.17.0 (that's a later, unreleased addition) - [add_attribute]
+       mutates the signal in place and returns it, so applying it to
+       [sm.current] after the fact reaches the same register. *)
+    let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    ignore
+      (add_attribute sm.current
+         (Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding")
+        : Signal.t);
     let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let data_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:13 in (* 128*8 = 1024 *)
     let dc_reg = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
