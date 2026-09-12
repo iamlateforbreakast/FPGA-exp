@@ -70,7 +70,20 @@ module Make (X : Config) = struct
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
 
     (* State machine and Registers *)
-    let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    (* [reg_sync_spec]'s synchronous clear drives this register to all-zero,
+       which decodes to INIT (the first constructor in [States]) only under
+       binary state encoding. yosys's FSM_RECODE pass is otherwise free to
+       promote the register to one-hot during synth_gowin, where all-zeros
+       decodes to no state at all and the machine never starts. Pinning
+       fsm_encoding on the state register itself keeps the guarantee
+       regardless of the synthesis command line. *)
+    let sm =
+      State_machine.create
+        (module States)
+        reg_sync_spec
+        ~enable:vdd
+        ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
+    in
     let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let data_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:13 in (* 128*8 = 1024 *)
     let dc_reg = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
