@@ -190,92 +190,93 @@ module Make (X : Config) = struct
     ) in
 
     compile [
-      sm.switch [
-        INIT, [
-          cmd_idx   <--. 0;
-          page_idx  <--. 0;
-          col_idx   <--. 0;
-          setup_idx <--. 0;
-          (* Hold here until the panel is out of reset and settled - see
-             [panel_ready]. Reached only once, at power-on: the end of a frame
-             now loops back to PAGE_SETUP rather than here. *)
-          when_ panel_ready [ sm.set_next SEND_CMD ];
-        ];
+      sm.switch
+        ~default:
+          [ (* These nine states are binary encoded in four bits, so codes
+               9..15 exist but match no branch below: nothing is ever
+               assigned in them, including the state itself, so the machine
+               would latch up permanently the instant it landed in one.
+               This recovers explicitly instead of leaving correctness
+               resting on every flop powering up to a valid code. *)
+            sm.set_next INIT
+          ]
+        [
+          INIT, [
+            cmd_idx   <--. 0;
+            page_idx  <--. 0;
+            col_idx   <--. 0;
+            setup_idx <--. 0;
+            (* Hold here until the panel is out of reset and settled - see
+               [panel_ready]. Reached only once, at power-on: the end of a
+               frame now loops back to PAGE_SETUP rather than here. *)
+            when_ panel_ready [ sm.set_next SEND_CMD ];
+          ];
 
-        SEND_CMD, [
-          dc_reg <--. 0;
-          current_data <-- (command_rom ~index:cmd_idx.value);
-          sm.set_next WAIT_SPI_CMD;
-        ];
+          SEND_CMD, [
+            dc_reg <--. 0;
+            current_data <-- (command_rom ~index:cmd_idx.value);
+            sm.set_next WAIT_SPI_CMD;
+          ];
 
-        WAIT_SPI_CMD, [
-          if_ screen_spi.ready [
-            if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
-              sm.set_next PAGE_SETUP;
-            ] [
-              cmd_idx <-- (cmd_idx.value +:. 1);
-              sm.set_next SEND_CMD;
-            ]
-          ][]
-        ];
-
-        PAGE_SETUP, [
-          dc_reg <--. 0;
-          current_data <-- (page_setup_rom ~setup_idx:setup_idx.value ~page:page_idx.value);
-          sm.set_next WAIT_SPI_PAGE_SETUP;
-        ];
-
-        WAIT_SPI_PAGE_SETUP, [
-          if_ screen_spi.ready [
-            if_ (setup_idx.value ==:. 2) [
-              setup_idx <--. 0;
-              sm.set_next SEND_DATA;
-            ] [
-              setup_idx <-- (setup_idx.value +:. 1);
-              sm.set_next PAGE_SETUP;
-            ]
-          ][]
-        ];
-
-        SEND_DATA, [
-          dc_reg <--. 1;
-          current_data <-- (display_rom ~index:(concat_msb [ page_idx.value; col_idx.value ]));
-          sm.set_next WAIT_SPI_DATA;
-        ];
-
-        WAIT_SPI_DATA, [
-          if_ screen_spi.ready [
-            if_ (col_idx.value ==:. 127) [
-              col_idx <--. 0;
-              if_ (page_idx.value ==:. 7) [
-                page_idx <--. 0;
-                setup_idx <--. 0;
-                (* Stream the next frame; do NOT re-run the init sequence.
-                   Going back to INIT here replayed all 22 command bytes about
-                   29 times a second, including display-off/display-on, which
-                   the known-good RP2040 driver sends exactly once before
-                   settling into a data-only loop. *)
+          WAIT_SPI_CMD, [
+            if_ screen_spi.ready [
+              if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
                 sm.set_next PAGE_SETUP;
               ] [
-                page_idx <-- (page_idx.value +:. 1);
+                cmd_idx <-- (cmd_idx.value +:. 1);
+                sm.set_next SEND_CMD;
+              ]
+            ][]
+          ];
+
+          PAGE_SETUP, [
+            dc_reg <--. 0;
+            current_data <-- (page_setup_rom ~setup_idx:setup_idx.value ~page:page_idx.value);
+            sm.set_next WAIT_SPI_PAGE_SETUP;
+          ];
+
+          WAIT_SPI_PAGE_SETUP, [
+            if_ screen_spi.ready [
+              if_ (setup_idx.value ==:. 2) [
+                setup_idx <--. 0;
+                sm.set_next SEND_DATA;
+              ] [
+                setup_idx <-- (setup_idx.value +:. 1);
                 sm.set_next PAGE_SETUP;
               ]
-            ] [
-              col_idx <-- (col_idx.value +:. 1);
-              sm.set_next SEND_DATA;
-            ]
-          ][]
-        ];
-      ];
+            ][]
+          ];
 
-      (* Self-heal from the unused encodings. These nine states are binary
-         encoded in four bits, so codes 9..15 exist but match no branch above:
-         nothing is ever assigned in them, including the state itself, so the
-         machine latches up permanently the instant it lands in one. Recovering
-         explicitly costs one comparator and removes the possibility entirely,
-         rather than leaving correctness resting on every flop powering up to a
-         valid code. *)
-      when_ (sm.current >=:. List.length States.all) [ sm.set_next INIT ];
+          SEND_DATA, [
+            dc_reg <--. 1;
+            current_data <-- (display_rom ~index:(concat_msb [ page_idx.value; col_idx.value ]));
+            sm.set_next WAIT_SPI_DATA;
+          ];
+
+          WAIT_SPI_DATA, [
+            if_ screen_spi.ready [
+              if_ (col_idx.value ==:. 127) [
+                col_idx <--. 0;
+                if_ (page_idx.value ==:. 7) [
+                  page_idx <--. 0;
+                  setup_idx <--. 0;
+                  (* Stream the next frame; do NOT re-run the init sequence.
+                     Going back to INIT here replayed all 22 command bytes
+                     about 29 times a second, including display-off/on,
+                     which the known-good RP2040 driver sends exactly once
+                     before settling into a data-only loop. *)
+                  sm.set_next PAGE_SETUP;
+                ] [
+                  page_idx <-- (page_idx.value +:. 1);
+                  sm.set_next PAGE_SETUP;
+                ]
+              ] [
+                col_idx <-- (col_idx.value +:. 1);
+                sm.set_next SEND_DATA;
+              ]
+            ][]
+          ];
+        ]
     ];
     
     { O.o_sclk  = screen_spi.sclk
