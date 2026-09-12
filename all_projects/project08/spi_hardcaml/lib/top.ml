@@ -102,33 +102,36 @@ module Make (X : Config) = struct
     (* Board-specific button polarity is normalized here; everything below
        treats [reset] as active-high. *)
     let reset = X.normalize_reset i.i_reset |: por in
-    (* A synchronous clear, deliberately, and paired with a synthesis
-       constraint - see the fsm_encoding note in the Makefile.
-
-       Because [por] above works by assuming flops power up to zero, the state
-       encoding must be one where all-zeros is a legal state. It is under
-       Hardcaml's binary encoding, where all-zeros is INIT. It is NOT under
-       one-hot, where INIT is 0000001 and all-zeros decodes to nothing, leaving
-       every next-state term false and the machine stuck forever.
-
-       yosys will happily make that substitution: a synchronous clear is just
-       another term in the register's input mux, so FSM_EXTRACT absorbs it into
-       the transition tree ("found reset state: 3'000 (guessed from mux tree)")
-       and FSM_RECODE then re-encodes to one-hot. That froze this design solidly
-       on the Nano 4K. It hid for a long time because four debug outputs
-       happened to route the state register to module ports, which is precisely
-       the condition under which yosys declines to recode - so deleting purely
-       observational outputs was what broke it.
-
-       Switching to an asynchronous reset also fixes the hardware, but Cyclesim
-       does not model a reset generated inside the design, so the whole POR
-       window becomes invisible in simulation and the testbench silently stops
-       asserting anything real. Pinning the encoding keeps hardware and
-       simulation agreeing. *)
+    (* A synchronous clear, deliberately: an asynchronous one also fixes the
+       hardware, but Cyclesim does not model a reset generated inside the
+       design, so the whole POR window would become invisible in simulation
+       and the testbench would silently stop asserting anything real. *)
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
 
     (* State machine and Registers *)
-    let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    (* Because [por] above works by assuming flops power up to zero, the
+       state register's own reset path must also treat all-zero as a legal
+       state - true under Hardcaml's binary encoding (all-zero is INIT), not
+       under one-hot (INIT is 0000001, so all-zero decodes to no state at
+       all and the machine never starts). Left to itself, yosys's FSM_RECODE
+       pass is free to make exactly that substitution during synth_gowin: a
+       synchronous clear is just another term in the register's input mux,
+       so FSM_EXTRACT absorbs it into the transition tree ("found reset
+       state: 3'000 (guessed from mux tree)") and FSM_RECODE re-encodes to
+       one-hot from there. That froze this design solidly on the Nano 4K,
+       and hid for a long time because four debug outputs happened to route
+       the state register to module ports - precisely the condition under
+       which yosys declines to recode - so deleting purely observational
+       outputs was what broke it. Pinning fsm_encoding directly on the
+       register below removes the substitution instead of relying on
+       incidental port wiring to block it. *)
+    let sm =
+      State_machine.create
+        (module States)
+        reg_sync_spec
+        ~enable:vdd
+        ~attributes:[ Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding" ]
+    in
     let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
     let page_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in (* 0..7 *)
     let col_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:7 in (* 0..127 *)

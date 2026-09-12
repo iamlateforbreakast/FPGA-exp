@@ -32,15 +32,14 @@ $(PROJECT)_pnr.json : $(PROJECT).json
 	--vopt cst=$(CONSTRAINT_FILE) \
 	--device $(DEVICE)
 
-# setattr fsm_encoding=none is required, not cosmetic. The design's power-on
-# reset (lib/top.ml) relies on flops powering up to zero being the INIT state,
-# which holds under binary encoding but not under one-hot, where all-zeros
-# decodes to no state at all and the machine never starts. yosys's FSM_RECODE
-# picks one-hot for this FSM whenever it is free to, so the encoding is pinned
-# here. Without it the design freezes on the Nano 4K at power-up.
-# synth_gowin has no -nofsm flag, hence the attribute.
+# The FSM encoding is pinned in lib/top.ml itself (an fsm_encoding=none
+# Rtl_attribute on the state register via State_machine.create), not here:
+# see the comment above that register for why it matters. That is more
+# targeted than blanket-applying the attribute to every wire from the
+# synthesis command line, and travels with the source instead of the build
+# script.
 $(PROJECT).json : $(VERILOG_DIR)/$(TOP_MODULE).v
-	yosys -q -p "read_verilog $(VERILOG_FILES); setattr -set fsm_encoding \"none\" w:*; synth_gowin -top $(TOP_MODULE) -json $@"
+	yosys -q -p "read_verilog $(VERILOG_FILES); synth_gowin -top $(TOP_MODULE) -json $@"
 
 $(VERILOG_DIR)/$(TOP_MODULE).v: $(SOURCES)
 	BOARD=$(BOARD) dune exec ./bin/generate.exe
