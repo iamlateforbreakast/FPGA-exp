@@ -15,12 +15,12 @@
 *)
 
 open Hardcaml
-open Hardcaml_waveterm
+open Project06_lib
 open Test_utils
 
 (* Use 480p — fewer cycles to simulate a full frame *)
-module Pat = Test_pattern.Make(Config.Res_480p)
-module C   = Config.Res_480p
+module Pat = Test_pattern.Make(Test_config.Res_480p)
+module C   = Test_config.Res_480p
 
 (* ── simulator ───────────────────────────────────────────────────────── *)
 
@@ -28,20 +28,25 @@ let create_sim () =
   let module Sim = Cyclesim.With_interface(Pat.I)(Pat.O) in
   Sim.create (Pat.create (Scope.create ~flatten_design:true ()))
 
-(** Reset the simulator for two cycles then release. *)
+(** Put the design in reset, then release it with all counters at zero.
+
+    NOTE: [Test_pattern] builds its [Reg_spec] with [~reset:] (an
+    *asynchronous* reset).  Cyclesim does not act on the value of an async
+    reset input while cycling — it only applies it from [Cyclesim.reset].
+    So driving [rst_n := 0] and cycling does NOT reset anything in
+    simulation; the counters keep running.  Use [Cyclesim.reset] instead. *)
 let release_reset sim =
-  let i = Cyclesim.inputs sim in
+  let i : Bits.t ref Pat.I.t = Cyclesim.inputs sim in
   i.rst_n   := Bits.of_int ~width:1 0;
   i.pxl_clk := Bits.of_int ~width:1 0;  (* unused by Cyclesim — for clarity *)
   i.mode    := Bits.of_int ~width:3 0;
-  Cyclesim.cycle sim;
-  Cyclesim.cycle sim;
+  Cyclesim.reset sim;
   i.rst_n := Bits.of_int ~width:1 1
 
 (** Cycle once and return outputs snapshot *)
 let step sim =
   Cyclesim.cycle sim;
-  let o = Cyclesim.outputs sim in
+  let o : Bits.t ref Pat.O.t = Cyclesim.outputs sim in
   ( port_bool o.de
   , port_bool o.hs
   , port_bool o.vs
@@ -114,45 +119,48 @@ let test_vs_pulse_height () =
 
 (* ── Test 4 — sync polarity (positive-polarity config) ───────────────── *)
 (*  Switch to 720p (positive polarity) and verify hs is high during pulse *)
-module Pat720 = Test_pattern.Make(Config.Res_720p)
-module C720   = Config.Res_720p
+module Pat720 = Test_pattern.Make(Test_config.Res_720p)
+module C720   = Test_config.Res_720p
 
 let test_sync_polarity_positive () =
   Printf.printf "\n[Test Pattern] Test 4 — positive-polarity HS/VS (720p)\n";
   let module Sim = Cyclesim.With_interface(Pat720.I)(Pat720.O) in
   let sim = Sim.create (Pat720.create (Scope.create ~flatten_design:true ())) in
-  let i = Sim.inputs sim in
+  let i : Bits.t ref Pat720.I.t = Cyclesim.inputs sim in
   i.rst_n := Bits.of_int ~width:1 0; i.mode := Bits.of_int ~width:3 0;
-  Sim.cycle sim; Sim.cycle sim;
+  Cyclesim.cycle sim; Cyclesim.cycle sim;
   i.rst_n := Bits.of_int ~width:1 1;
   (* Skip first frame *)
-  for _ = 1 to C720.h_total * C720.v_total do Sim.cycle sim done;
+  for _ = 1 to C720.h_total * C720.v_total do Cyclesim.cycle sim done;
   (* Sample 200 cycles and check HS is high during sync region *)
   let saw_hs_high = ref false in
+  let o : Bits.t ref Pat720.O.t = Cyclesim.outputs sim in
   for _ = 1 to C720.h_sync + 10 do
-    Sim.cycle sim;
-    let hs = Bits.to_int !(Sim.outputs sim).hs in
-    if hs = 1 then saw_hs_high := true
+    Cyclesim.cycle sim;
+    if Bits.to_int !(o.hs) = 1 then saw_hs_high := true
   done;
   check "positive-polarity: HS goes high at some point" !saw_hs_high
 
 (* ── Test 5 — pipeline latency = 5 ──────────────────────────────────── *)
 (*  We can't directly observe the combinational pre-pipeline de_w, but we
-    can verify that after reset the first DE edge appears exactly
-    (h_sync + h_bporch + 5) cycles into the first line, where +5 is the
-    pipeline delay.                                                       *)
+    can verify when the first DE of a frame appears.  The first active
+    pixel sits at (v_cnt, h_cnt) = (v_sync + v_bporch, h_sync + h_bporch),
+    i.e. after the vertical *and* horizontal blanking, and the 5-deep
+    pipeline delays it by a further 5 clocks.                             *)
 let test_pipeline_latency () =
   Printf.printf "\n[Test Pattern] Test 5 — DE pipeline latency = 5 cycles\n";
   let sim = create_sim () in
   release_reset sim;
   let first_de_cycle = ref (-1) in
   let cycle = ref 0 in
-  while !first_de_cycle = -1 && !cycle < C.h_total + 20 do
+  while !first_de_cycle = -1 && !cycle < one_frame_cycles do
     let (de,_,_,_,_,_) = step sim in
     incr cycle;
     if de then first_de_cycle := !cycle
   done;
-  let expected_latency = C.h_sync + C.h_bporch + 5 in (* combinational + 5 pipe stages *)
+  let expected_latency =
+    ((C.v_sync + C.v_bporch) * C.h_total) + C.h_sync + C.h_bporch + 5
+  in
   check_eq "first DE cycle (with pipeline delay)"
     ~expected:expected_latency
     ~got:!first_de_cycle
@@ -183,7 +191,7 @@ let test_reset_clears () =
     ignore (step sim)
   done;
   (* Assert reset *)
-  let i = Cyclesim.inputs sim in
+  let i : Bits.t ref Pat.I.t = Cyclesim.inputs sim in
   i.rst_n := Bits.of_int ~width:1 0;
   (* After reset, counters should clear; DE should drop within h_total *)
   let de_still_high = ref false in
