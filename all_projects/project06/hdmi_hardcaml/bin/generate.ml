@@ -3,17 +3,20 @@ open Hardcaml
 open Project06_lib
 
 module My_config = struct
-  let clk_fre = 27_000_000 (* Hz *)
-  let h_total = 1440
-  let v_total = 900
-  let h_res   = 1280
-  let v_res   = 720
-  let h_sync  = 160
-  let v_sync  = 5
-  let h_bporch = 160
-  let v_bporch = 5
-  let hs_pol   = false
-  let vs_pol   = false
+  (* 1280x720 @ 60 Hz (CEA-861-D format 4). Pixel clock must match what
+     lib/top.ml's rPLL (IDIV_SEL=3, FBDIV_SEL=54, ODIV_SEL=2) + CLKDIV
+     (DIV_MODE=5) produce: 27 MHz * 55 / 4 / 5 = 74.25 MHz. *)
+  let clk_fre = 74_250_000 (* Hz *)
+  let h_total  = 1650
+  let h_sync   = 40
+  let h_bporch = 220
+  let h_res    = 1280
+  let v_total  = 750
+  let v_sync   = 5
+  let v_bporch = 20
+  let v_res    = 720
+  let hs_pol   = true
+  let vs_pol   = true
   let is_simulation = false
   let pattern = [0;1;2;3;4;5;6;7]
 end
