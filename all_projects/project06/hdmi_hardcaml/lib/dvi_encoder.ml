@@ -53,8 +53,9 @@ module Make (X : Config.S) = struct
     let qm_7_0 = select qm 7 0 in
     let qm_8 = select qm 8 8 in
     let ones_in_qm = popcount qm_7_0 in
-    (* let disparity = (ones_in_qm <<: 1) -: of_int ~width:5 8 in *)
-    let disparity = (concat_lsb [ones_in_qm; gnd]) -: (of_int ~width:5 8) in
+    (* disparity = 2 * ones_in_qm - 8 ; concat_msb puts ones_in_qm at the MSBs,
+       i.e. {ones_in_qm, 1'b0}, matching the reference dvi_encoder.v. *)
+    let disparity = (concat_msb [ones_in_qm; gnd]) -: (of_int ~width:5 8) in
 
     (* let bias = Always.Variable.reg spec ~width:5 () in *)
     let bias = Always.Variable.reg ~enable:vdd (Reg_spec.create ~clock:input.pix_clk ~clear:~:(input.rst_n) ()) ~width:5 in
@@ -82,7 +83,7 @@ module Make (X : Config.S) = struct
             bias <-- bias.value +: (uresize (concat_msb [qm_8; gnd]) 5) -: disparity;
           ] [
             encoded <-- concat_msb [ of_int ~width:1 0; qm_8; qm_7_0 ];
-            bias <-- bias.value -: (uresize (concat_msb [qm_8; gnd]) 5) +: disparity;
+            bias <-- bias.value -: (uresize (concat_msb [~:qm_8; gnd]) 5) +: disparity;
           ]
         ]
       ]
