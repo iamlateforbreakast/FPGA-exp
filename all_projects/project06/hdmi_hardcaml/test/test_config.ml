@@ -31,6 +31,18 @@ module Res_720p : S = struct
 
   let is_simulation = true
   let pattern = [ 0; 1; 2; 3; 4; 5; 6; 7 ]
+
+  (* Unused by Test_pattern/Dvi_encoder/Dvi_tx, required only to satisfy
+     Config.S. *)
+  let normalize_reset x = x
+  let normalize_led x = x
+  let led_width = 6
+  let lvds_primitive = `TLVDS
+  let pll_primitive = `RPLL
+  let pll_idiv_sel = 2
+  let pll_fbdiv_sel = 13
+  let pll_odiv_sel = 4
+  let gowin_device = "GW2A-18C"
 end
 
 (* 480p @ 60 Hz  (640x480, pixel clock 25.175 MHz) – cheaper to simulate *)
@@ -52,4 +64,14 @@ module Res_480p : S = struct
 
   let is_simulation = true
   let pattern = [ 0; 1; 2; 3; 4; 5; 6; 7 ]
+
+  let normalize_reset x = x
+  let normalize_led x = x
+  let led_width = 6
+  let lvds_primitive = `TLVDS
+  let pll_primitive = `RPLL
+  let pll_idiv_sel = 2
+  let pll_fbdiv_sel = 13
+  let pll_odiv_sel = 4
+  let gowin_device = "GW2A-18C"
 end

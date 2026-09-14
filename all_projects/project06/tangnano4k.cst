@@ -1,0 +1,136 @@
+// Tang Nano 4K (GW1NSR-LV4CQN48PC7/I6) constraints for the HDMI/DVI design.
+//
+// Verified against Sipeed's own working examples (github.com/sipeed/TangNano-4K-example):
+//   - hdmi_720p/src/hdmi.cst   -> TMDS clock/data pin numbers and reset pin
+//   - key_blink/src/key_blink.cst, led_test/project/src/led_test.cst
+//                              -> onboard LED (pin 10) and both onboard
+//                                 buttons key[0]/pin 14, key[1]/pin 15
+//
+// The Nano 4K DOES expose true-LVDS-capable pin pairs for TMDS output (unlike
+// e.g. its lack of an onboard WS2812), which is why this design - unlike
+// project04/project05's Nano 20K designs - can be fully pin-constrained here
+// rather than needing a "NOT YET CONSTRAINED" list for its core function.
+
+// ---------------------------------------------------------------------
+// Clock
+// ---------------------------------------------------------------------
+IO_LOC "I_clk" 45;
+IO_PORT "I_clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ---------------------------------------------------------------------
+// Onboard buttons. Both are Bank3 (VCCIO=1.8V per Sipeed's key_blink.cst,
+// which declares BANK_VCCIO=1.8 explicitly) - IO_TYPE must be LVCMOS18, NOT
+// LVCMOS33, or the 3.3V input buffer's ~2.0V VIH sits above what the
+// internal pull-up can drive on a 1.8V bank and the idle (released) level
+// reads low/marginal. See project08/tangnano4k.cst for the full writeup of
+// this exact trap on the same board.
+//
+// KEY1/pin 15 is wired here as I_rst, matching project08's choice of
+// button for reset on this board.
+IO_LOC "I_rst" 15;
+IO_PORT "I_rst" IO_TYPE=LVCMOS18 PULL_MODE=UP BANK_VCCIO=1.8;
+
+// KEY0/pin 14 -> I_key. Currently unused by lib/top.ml (dead input, wired
+// nowhere), kept constrained only so nextpnr doesn't have to auto-place it.
+IO_LOC "I_key" 14;
+IO_PORT "I_key" IO_TYPE=LVCMOS18 PULL_MODE=UP BANK_VCCIO=1.8;
+
+// Reset polarity: the Nano 4K's buttons are pulled UP (idle/released reads
+// 1, pressing pulls to 0 - opposite of the Nano 20K's PULL_MODE=DOWN
+// wiring). bin/generate.ml's Config_nano4k.normalize_reset inverts I_rst
+// before lib/top.ml's `global_rst_n = ~I_rst & pll_lock` sees it, so this
+// pin-level PULL_MODE=UP wiring is correct as-is and does not need any
+// further RTL change here.
+
+// ---------------------------------------------------------------------
+// TMDS output (verified against Sipeed's hdmi_720p/src/hdmi.cst, which
+// pins clk on 28/27 and the three data lanes on 30/29, 32/31, 35/34).
+//
+// That reference RTL exposes one port per differential pair and lets a
+// single IO_LOC "name" P,N constrain both physical pins together. This
+// design's top.ml instead brings the TLVDS_OBUF's O/OB out as two separate
+// ports (*_p / *_n), matching how tangnano20k.cst already constrains this
+// same design for the 20K - so each pin gets its own IO_LOC line here too,
+// using the same physical pin numbers Sipeed's reference verified as a
+// working TMDS pair.
+//
+// Channel-to-lane mapping follows the {r,g,b} comment on DVI_TX_Top's
+// O_tmds_data_p port in hdmi_verilog/dvi_tx.v, and this design's own
+// `concat_msb [r_p; g_p; b_p]` in lib/dvi_tx.ml (MSB-first, so bit 2 = red,
+// bit 0 = blue) - i.e. lane 0 = blue, lane 1 = green, lane 2 = red.
+// These pins are driven with ELVDS_OBUF (emulated LVDS), so IO_TYPE is
+// LVDS25E and DRIVE is meaningful - they are ordinary LVCMOS drivers run in
+// anti-phase, unlike a true-LVDS pair where DRIVE must be left alone.
+// Attributes match apycula's own examples/tangnano4k.cst ELVDS entries and
+// Sipeed's hdmi.cst DRIVE=8.
+//
+// Why ELVDS and not TLVDS: apycula's device database marks all eight of
+// these bels TRUELVDS, and TLVDS_OBUF places, packs and loads without a
+// single tool warning - but no monitor ever locks onto the output. Sipeed's
+// prebuilt hdmi.fs for this board drives these same pins with ELVDS_OBUF
+// and displays fine on the same board/cable/monitor (verified by flashing
+// it as a control), with clocking identical to this design's. apycula
+// refuses ELVDS on a TRUELVDS bel; see the Makefile for how that guard is
+// relaxed.
+IO_LOC "O_tmds_clk_p" 28;
+IO_PORT "O_tmds_clk_p" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+IO_LOC "O_tmds_clk_n" 27;
+IO_PORT "O_tmds_clk_n" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+
+IO_LOC "O_tmds_data_p[0]" 30;   // blue
+IO_PORT "O_tmds_data_p[0]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+IO_LOC "O_tmds_data_n[0]" 29;
+IO_PORT "O_tmds_data_n[0]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+
+IO_LOC "O_tmds_data_p[1]" 32;   // green
+IO_PORT "O_tmds_data_p[1]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+IO_LOC "O_tmds_data_n[1]" 31;
+IO_PORT "O_tmds_data_n[1]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+
+IO_LOC "O_tmds_data_p[2]" 35;   // red
+IO_PORT "O_tmds_data_p[2]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+IO_LOC "O_tmds_data_n[2]" 34;
+IO_PORT "O_tmds_data_n[2]" IO_TYPE=LVDS25E PULL_MODE=NONE DRIVE=8;
+
+// ---------------------------------------------------------------------
+// LED. O_led is 6 bits wide on the Nano 20K but the Nano 4K only has ONE
+// onboard LED, on pin 10 (led_test.cst, key_blink.cst, and
+// project08/tangnano4k.cst all agree on this pin). Config_nano4k.led_width
+// = 1 in bin/generate.ml, so on this board Top.O.led (and Leds.O.leds) is
+// genuinely a single-bit output.
+//
+// IMPORTANT: a single-bit Hardcaml port synthesizes through synth_gowin as
+// a scalar cell named "O_led", NOT "O_led[0]" - unlike the 20K's 6-bit
+// O_led, which keeps its bracketed per-bit names. Constraining "O_led[0]"
+// here (matching the 20K's naming style) fails place-and-route with
+// "Unconstrained IO:O_led_OBUF_O"; verified by actually running
+// yosys+nextpnr-himbaechel against the generated 1-bit netlist in the
+// fpga-exp-dev container. Use the bare name below.
+IO_LOC "O_led" 10;
+IO_PORT "O_led" IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ---------------------------------------------------------------------
+// CLKDIV placement.
+//
+// The pixel clock comes from a CLKDIV (/5) fed by the PLLVR's 126 MHz
+// CLKOUT, and CLKDIV's HCLKIN must reach the PLL over *dedicated* HCLK
+// routing - general fabric routing is not an option for it. Only some HCLK
+// sections on this device can be reached from the PLL, and without a
+// constraint nextpnr picks a section by placement seed: it lands on a
+// reachable one some runs and on CLKDIV_HCLK0_SECT1 (top side) on others,
+// where routing fails with
+//
+//   Failed to route net '<pll clkout>' ... to X16Y19/CLKDIV_HCLK0_SECT1_HCLKIN
+//   using dedicated routing.
+//   ERROR: Routing design failed.
+//
+// i.e. the build is a coin flip. Pinning the CLKDIV to the right side makes
+// it deterministic, and the right side is also where the four OSER10
+// serializers and the TMDS pins live (pins 27-35 all place in column X37),
+// so the HCLK network feeding them is the same one. Verified by sweeping
+// all eight sections: RIGHTSIDE[0], BOTTOMSIDE[0/1] and TOPSIDE[0/1] route,
+// while RIGHTSIDE[1] and both LEFTSIDE sections fail.
+//
+// "clkdiv" is the instance name set explicitly in lib/top.ml's [clkdiv]
+// helper - INS_LOC needs a stable name to refer to.
+INS_LOC "clkdiv" RIGHTSIDE[0];

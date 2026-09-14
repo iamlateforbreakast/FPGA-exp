@@ -15,7 +15,7 @@ module Make (X : Config) = struct
 
   module O = struct
     type 'a t =
-      { leds : 'a[@bits 6]
+      { leds : 'a[@bits X.led_width]
       } [@@deriving hardcaml]
   end
 
@@ -40,7 +40,10 @@ module Make (X : Config) = struct
                         (mux2 (d ==:. (List.length X.pattern - 1))(zero 6)(d +:. 1)) d) in
     let _ = Signal.(clk_counter -- "dbg_clk_counter") in
     let _ = Signal.(led_counter -- "dbg_led_counter") in
-    { O.leds = pattern_rom ~index:led_counter
+    (* On boards with fewer physical LEDs than the pattern's 6-bit mask
+       width (e.g. the Nano 4K's single LED), only the low X.led_width bits
+       of each pattern step are driven. *)
+    { O.leds = select (pattern_rom ~index:led_counter) (X.led_width - 1) 0
     }
 
   let hierarchical (scope : Scope.t) (i : Signal.t I.t) : Signal.t O.t =
