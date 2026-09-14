@@ -63,10 +63,18 @@ module Make (X : Config.S) = struct
       ()
     |> fun m -> Map.find_exn m "Q"
 
-  (* Helper for TLVDS_OBUF instantiation *)
-  let tlvds_obuf ~inst ~input =
+  (* Helper for the differential output buffer. True vs emulated LVDS is a
+     property of how the board wired its HDMI connector, so the primitive
+     name comes from Config.S - see config_intf.ml's [lvds_primitive]. Both
+     primitives expose the same I / O / OB ports, so only the name changes. *)
+  let lvds_obuf ~inst ~input =
+    let name =
+      match X.lvds_primitive with
+      | `TLVDS -> "TLVDS_OBUF"
+      | `ELVDS -> "ELVDS_OBUF"
+    in
     let m = Instantiation.create
-      ~name:"TLVDS_OBUF"
+      ~name
       ~instance:inst
       ~inputs:[ "I", input ]
       ~outputs:[ "O", 1; "OB", 1 ]
@@ -101,10 +109,10 @@ module Make (X : Config.S) = struct
     let ser_r = oser10 ~inst:"red_ser" ~data:enc_r ~pclk:i.rgb_clk ~fclk:i.serial_clk ~reset:rst in
 
     (* 3. LVDS Output Buffers *)
-    let clk_p, clk_n = tlvds_obuf ~inst:"clk_obuf" ~input:ser_clk in
-    let b_p, b_n     = tlvds_obuf ~inst:"blu_obuf" ~input:ser_b in
-    let g_p, g_n     = tlvds_obuf ~inst:"grn_obuf" ~input:ser_g in
-    let r_p, r_n     = tlvds_obuf ~inst:"red_obuf" ~input:ser_r in
+    let clk_p, clk_n = lvds_obuf ~inst:"clk_obuf" ~input:ser_clk in
+    let b_p, b_n     = lvds_obuf ~inst:"blu_obuf" ~input:ser_b in
+    let g_p, g_n     = lvds_obuf ~inst:"grn_obuf" ~input:ser_g in
+    let r_p, r_n     = lvds_obuf ~inst:"red_obuf" ~input:ser_r in
 
     { O.
       tmds_clk_p  = clk_p;

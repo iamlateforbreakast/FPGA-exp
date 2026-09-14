@@ -20,15 +20,17 @@ module Make (X : Config) = struct
       ; o_cs :    'a [@bits 1]
       ; o_dc :    'a [@bits 1]
       ; o_reset : 'a [@bits 1]
+      ; o_led :   'a [@bits 1]
       }
     [@@deriving hardcaml]
   end
 
   module States = struct
-    type t = INIT | SEND_CMD | WAIT_SPI_CMD | SEND_DATA | WAIT_SPI_DATA
+    type t = INIT | SEND_CMD | WAIT_SPI_CMD | PAGE_SETUP | WAIT_SPI_PAGE_SETUP
+           | SEND_DATA | WAIT_SPI_DATA
     [@@deriving sexp_of, compare, enumerate]
   end
-  
+
   let command_rom ~index =
     let open Signal in
     let rom = List.map (fun c -> of_int ~width:8 c) X.commands in
@@ -39,6 +41,17 @@ module Make (X : Config) = struct
     let size = 128 * 8 in
     let rom = List.init size (fun i -> of_int ~width:8 (i mod 256)) in
     mux index rom
+
+  (* SH1106 needs the page (0xB0..0xB7) and lower/upper column-address
+     commands re-sent before every 128-byte page of data; the column
+     address is constant (X.col_offset) since we always start each page at
+     column 0 of the visible 128. *)
+  let page_setup_rom ~setup_idx ~page =
+    let open Signal in
+    let page_cmd = of_int ~width:8 0xB0 |: uresize page 8 in
+    let low_col = of_int ~width:8 (0x00 lor (X.col_offset land 0x0F)) in
+    let high_col = of_int ~width:8 (0x10 lor (X.col_offset lsr 4)) in
+    mux setup_idx [ page_cmd; low_col; high_col ]
 
   (*
   let display_rom (clock: Signal.t) (read_address: Signal.t) =
@@ -63,17 +76,109 @@ module Make (X : Config) = struct
   let create (scope: Scope.t) (i: _ I.t) : _ O.t =
     let open Always in
     let open Signal in
+    (* Power-on reset. [por_cnt] deliberately has no reset of its own: it
+       relies on Gowin's GSR clearing every flop to 0 at the end of
+       configuration, then counts up and saturates once its top bit sets, so
+       [por] is asserted for the first 256 cycles after configuration and
+       never again.
+
+       This is what gives the state machine below a defined starting state.
+       Without it the state register has no initialiser at all, and a 9-state
+       machine binary-encoded in 4 bits can come up in one of the unused
+       encodings 9..15 - where no switch case matches, nothing is ever
+       assigned, and the machine is stuck forever with every [sm.is] reading
+       low. That is not hypothetical: it is exactly the failure this replaces,
+       introduced by wiring [clear] to a constant to avoid depending on the
+       board's marginal 1.8V reset button.
+
+       The button is still ORed in, so boards whose button is electrically
+       sound (the Nano 20K) keep a working manual reset, while the 4K - whose
+       [normalize_reset] discards the pin - relies on the power-on path alone. *)
+    let por_cnt =
+      reg_fb (Reg_spec.create ~clock:i.clock ()) ~enable:vdd ~width:9
+        ~f:(fun c -> mux2 (msb c) c (c +:. 1))
+    in
+    let por = ~:(msb por_cnt) in
     (* Board-specific button polarity is normalized here; everything below
        treats [reset] as active-high. *)
-    let reset = X.normalize_reset i.i_reset in
-    (* Create synchronous registers *)
+    let reset = X.normalize_reset i.i_reset |: por in
+    (* A synchronous clear, deliberately: an asynchronous one also fixes the
+       hardware, but Cyclesim does not model a reset generated inside the
+       design, so the whole POR window would become invisible in simulation
+       and the testbench would silently stop asserting anything real. *)
     let reg_sync_spec = Reg_spec.create ~clock:i.clock ~clear:reset () in
 
     (* State machine and Registers *)
+    (* Because [por] above works by assuming flops power up to zero, the
+       state register's own reset path must also treat all-zero as a legal
+       state - true under Hardcaml's binary encoding (all-zero is INIT), not
+       under one-hot (INIT is 0000001, so all-zero decodes to no state at
+       all and the machine never starts). Left to itself, yosys's FSM_RECODE
+       pass is free to make exactly that substitution during synth_gowin: a
+       synchronous clear is just another term in the register's input mux,
+       so FSM_EXTRACT absorbs it into the transition tree ("found reset
+       state: 3'000 (guessed from mux tree)") and FSM_RECODE re-encodes to
+       one-hot from there. That froze this design solidly on the Nano 4K,
+       and hid for a long time because four debug outputs happened to route
+       the state register to module ports - precisely the condition under
+       which yosys declines to recode - so deleting purely observational
+       outputs was what broke it. Pinning fsm_encoding directly on the
+       register below removes the substitution instead of relying on
+       incidental port wiring to block it.
+
+       State_machine.create has no ~attributes parameter in the pinned
+       hardcaml.v0.17.0 (that's a later, unreleased addition) - [add_attribute]
+       mutates the signal in place and returns it, so applying it to
+       [sm.current] after the fact reaches the same register. *)
     let sm = State_machine.create (module States) reg_sync_spec ~enable:vdd in
+    ignore
+      (add_attribute sm.current
+         (Rtl_attribute.create ~value:(Rtl_attribute.Value.String "none") "fsm_encoding")
+        : Signal.t);
     let cmd_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:8 in
-    let data_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:13 in (* 128*8 = 1024 *)
+    let page_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:3 in (* 0..7 *)
+    let col_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:7 in (* 0..127 *)
+    let setup_idx = Variable.reg ~enable:vdd reg_sync_spec ~width:2 in (* 0..2 *)
     let dc_reg = Variable.reg ~enable:vdd reg_sync_spec ~width:1 in
+    (* Heartbeat for the onboard LED: a free-running counter whose top bit
+       toggles roughly every 0.3s at 27MHz. This is the bring-up canary - if
+       it blinks, the bitstream is loaded, the clock reaches the fabric and
+       the design is out of reset. If it doesn't, nothing downstream (SPI,
+       OLED) can possibly work, and the fault is here rather than in the
+       peripheral. Deliberately independent of the SPI state machine, so it
+       keeps blinking even if that machine stalls. *)
+    let heartbeat = reg_fb reg_sync_spec ~enable:vdd ~width:24 ~f:(fun c -> c +:. 1) in
+
+    (* The OLED's RES pulse is generated here, deliberately OUTSIDE the command
+       state machine: a counter that saturates, holding RES low for the first
+       2^19 cycles (~19ms at 27MHz) after reset and then releasing it forever.
+
+       An earlier version drove RES from two extra leading FSM states. That
+       coupled panel reset to command sequencing for no benefit and made the
+       machine's start-up unobservable; it also meant any FSM stall left the
+       panel pinned in reset. Keeping it separate restores the simpler command
+       sequence that was measured working on this board, and guarantees the
+       panel sees exactly one clean reset pulse regardless of what the FSM
+       does afterwards - including looping back to INIT, which must NOT
+       re-reset the panel. *)
+    (* Two saturating counters, giving the two start-up edges the panel needs.
+
+       [oled_rst_n] releases RES. [panel_ready] gates the command sequence, and
+       is the fix for a real bug: nothing used to gate it at all (X.startup_wait
+       is referenced only by the older lib/screen.ml, never by this module), so
+       the FSM began transmitting 9.5us after power-on while RES stayed low for
+       another 19ms. The whole init sequence was clocked into a panel that was
+       held in reset and discarded every byte. Waiting for [panel_ready] - about
+       twice the RES pulse - means commands arrive after the panel is out of
+       reset and its internal power-on has settled. *)
+    let saturating ~width =
+      reg_fb reg_sync_spec ~enable:vdd ~width
+        ~f:(fun c -> mux2 (msb c) c (c +:. 1))
+    in
+    let rst_bits = if X.is_simulation then 6 else 20 in
+    let settle_bits = if X.is_simulation then 7 else 21 in
+    let oled_rst_n = msb (saturating ~width:rst_bits) in
+    let panel_ready = msb (saturating ~width:settle_bits) in
 
     (* Mux between Command ROM and Data ROM based on state *)
     let current_data = Variable.wire ~default:(zero 8) in
@@ -83,59 +188,106 @@ module Make (X : Config) = struct
       MyScreen.I.{ clock = i.clock
                  ; reset
                  ; data_in = Always.Variable.value current_data
-                 ; data_valid = (sm.is SEND_DATA  |: sm.is SEND_CMD)
+                 ; data_valid = (sm.is SEND_DATA |: sm.is SEND_CMD |: sm.is PAGE_SETUP)
                  }
     ) in
 
     compile [
-      sm.switch [
-        INIT, [
-          cmd_idx   <--. 0;
-          data_idx  <--. 0;
-          sm.set_next SEND_CMD;
-        ];
-        
-        SEND_CMD, [
-          dc_reg <--. 0;
-          current_data <-- (command_rom ~index:cmd_idx.value);
-          sm.set_next WAIT_SPI_CMD;
-        ];
-        
-        WAIT_SPI_CMD, [
-          if_ screen_spi.ready [
-            if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
-              sm.set_next SEND_DATA;
-            ] [
-              cmd_idx <-- (cmd_idx.value +:. 1);
-              sm.set_next SEND_CMD;
-            ]
-          ][]
-        ];
-        
-        SEND_DATA, [
-          dc_reg <--. 1;
-          current_data <-- (display_rom ~index:data_idx.value);
-          sm.set_next WAIT_SPI_DATA;
-        ];
-        
-        WAIT_SPI_DATA, [
-          if_ screen_spi.ready [
-            if_ (data_idx.value ==:. (128 * 8 - 1)) [
-              sm.set_next INIT; (* Loop back or go to IDLE *)
-            ] [
-              data_idx <-- (data_idx.value +:. 1);
-              sm.set_next SEND_DATA;
-            ]
-          ][]
-        ];
-      ]
+      sm.switch
+        ~default:
+          [ (* These nine states are binary encoded in four bits, so codes
+               9..15 exist but match no branch below: nothing is ever
+               assigned in them, including the state itself, so the machine
+               would latch up permanently the instant it landed in one.
+               This recovers explicitly instead of leaving correctness
+               resting on every flop powering up to a valid code. *)
+            sm.set_next INIT
+          ]
+        [
+          INIT, [
+            cmd_idx   <--. 0;
+            page_idx  <--. 0;
+            col_idx   <--. 0;
+            setup_idx <--. 0;
+            (* Hold here until the panel is out of reset and settled - see
+               [panel_ready]. Reached only once, at power-on: the end of a
+               frame now loops back to PAGE_SETUP rather than here. *)
+            when_ panel_ready [ sm.set_next SEND_CMD ];
+          ];
+
+          SEND_CMD, [
+            dc_reg <--. 0;
+            current_data <-- (command_rom ~index:cmd_idx.value);
+            sm.set_next WAIT_SPI_CMD;
+          ];
+
+          WAIT_SPI_CMD, [
+            if_ screen_spi.ready [
+              if_ (cmd_idx.value ==:. (List.length X.commands - 1)) [
+                sm.set_next PAGE_SETUP;
+              ] [
+                cmd_idx <-- (cmd_idx.value +:. 1);
+                sm.set_next SEND_CMD;
+              ]
+            ][]
+          ];
+
+          PAGE_SETUP, [
+            dc_reg <--. 0;
+            current_data <-- (page_setup_rom ~setup_idx:setup_idx.value ~page:page_idx.value);
+            sm.set_next WAIT_SPI_PAGE_SETUP;
+          ];
+
+          WAIT_SPI_PAGE_SETUP, [
+            if_ screen_spi.ready [
+              if_ (setup_idx.value ==:. 2) [
+                setup_idx <--. 0;
+                sm.set_next SEND_DATA;
+              ] [
+                setup_idx <-- (setup_idx.value +:. 1);
+                sm.set_next PAGE_SETUP;
+              ]
+            ][]
+          ];
+
+          SEND_DATA, [
+            dc_reg <--. 1;
+            current_data <-- (display_rom ~index:(concat_msb [ page_idx.value; col_idx.value ]));
+            sm.set_next WAIT_SPI_DATA;
+          ];
+
+          WAIT_SPI_DATA, [
+            if_ screen_spi.ready [
+              if_ (col_idx.value ==:. 127) [
+                col_idx <--. 0;
+                if_ (page_idx.value ==:. 7) [
+                  page_idx <--. 0;
+                  setup_idx <--. 0;
+                  (* Stream the next frame; do NOT re-run the init sequence.
+                     Going back to INIT here replayed all 22 command bytes
+                     about 29 times a second, including display-off/on,
+                     which the known-good RP2040 driver sends exactly once
+                     before settling into a data-only loop. *)
+                  sm.set_next PAGE_SETUP;
+                ] [
+                  page_idx <-- (page_idx.value +:. 1);
+                  sm.set_next PAGE_SETUP;
+                ]
+              ] [
+                col_idx <-- (col_idx.value +:. 1);
+                sm.set_next SEND_DATA;
+              ]
+            ][]
+          ];
+        ]
     ];
     
     { O.o_sclk  = screen_spi.sclk
     ; O.o_sdin  = screen_spi.mosi
     ; O.o_cs    = screen_spi.cs
     ; O.o_dc    = dc_reg.value
-    ; O.o_reset = ~: reset (* Standard active-low reset for screens *)
+    ; O.o_reset = oled_rst_n
+    ; O.o_led   = msb heartbeat
     }
 
 end

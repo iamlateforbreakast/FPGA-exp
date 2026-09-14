@@ -15,10 +15,10 @@
 *)
 
 open Hardcaml
-open Hardcaml_waveterm
+open Project06_lib
 open Test_utils
 
-module Enc = Dvi_encoder.Make(Config.Res_480p)
+module Enc = Dvi_encoder.Make(Test_config.Res_480p)
 
 (* ── helpers ─────────────────────────────────────────────────────────── *)
 
@@ -39,13 +39,14 @@ let transitions v =
 
 (* Drive one cycle: set inputs, cycle, return encoded output *)
 let drive_cycle sim ~rst_n ~de ~control ~data =
-  let i = Cyclesim.inputs sim in
+  let i : Bits.t ref Enc.I.t = Cyclesim.inputs sim in
   i.rst_n   := Bits.of_int ~width:1 rst_n;
   i.de      := Bits.of_int ~width:1 de;
   i.control := Bits.of_int ~width:2 control;
   i.data    := Bits.of_int ~width:8 data;
   Cyclesim.cycle sim;
-  port_int (Cyclesim.outputs sim).encoded
+  let o : Bits.t ref Enc.O.t = Cyclesim.outputs sim in
+  port_int o.encoded
 
 (* ── Test 1 — control tokens ─────────────────────────────────────────── *)
 (*  TMDS spec, Table 3-2 *)
