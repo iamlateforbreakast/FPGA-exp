@@ -41,17 +41,17 @@ Projects
 | 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | In progress| ✅ | 🟡 `hdmi_hardcaml` only | [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
 | 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | Started | ✅ | ❌ | [![Project07](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml) |
 | 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | Started | ✅ `spi_hardcaml` | ✅ `spi_hardcaml` (tested on HW) | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml) |
-| 9 | [E-Paper Module SPI project] | Not started | — | — | TBD |
-| 10 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | ✅ | ❌ | TBD |
-| 11 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | — | — | TBD |
-| 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | — | — | TBD |
-| 13 | [SDRam project] | Not started | — | — | TBD |
-| 14 | [MCU_Interface] | Not started | — | — | TBD |
-| 15 | [Spacewire] | Not started | ✅ (in `project15`) | ❌ | TBD |
-| 16 | [Leon3] | Not started | — | — | TBD |
-| 17 | [Raytracing GPU] | Not started | — | — | TBD |
-| 18 | [Image generator] | Not started | — | — | TBD |
-| 18 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | — | — | TBD |
+| 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | ✅ | ❌ | TBD |
+| 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | — | — | TBD |
+| 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | — | — | TBD |
+| 15 | [Spacewire](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project15) | Not started | ✅ | ❌ | TBD |
+| 16 | [E-Paper Module SPI project] | Not started | — | — | TBD |
+| 17 | [SDRam project] | Not started | — | — | TBD |
+| 18 | [MCU_Interface] | Not started | — | — | TBD |
+| 19 | [Leon3] | Not started | — | — | TBD |
+| 20 | [Raytracing GPU] | Not started | — | — | TBD |
+| 21 | [Image generator] | Not started | — | — | TBD |
+| 22 | [Advanced project] | Not started | — | — | TBD |
 
 Board support:
 
