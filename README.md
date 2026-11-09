@@ -1,5 +1,5 @@
 # FPGA-exp
-A few experiments targetting the Sipeed Tang Nano 20K. The general aim would be to form a general view about the FPGA development process regarding complexity and development time as well as testing efficiency.
+A few experiments targetting the Sipeed Tang Nano 20K (and, for some projects, the Tang Nano 4K). The general aim would be to form a general view about the FPGA development process regarding complexity and development time as well as testing efficiency.
 
 git clone git@github.com:iamlateforbreakast/FPGA-exp.git
 
@@ -31,27 +31,40 @@ board from inside the container, uncomment the USB `devices:` entry in
 Projects
 --------
 
-| P  | Desc. | Status | Test |
-| -- | ------------------------------------------ | ------- | ------ |
-| 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | Not started | N/A |
-| 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | Not started | N/A |
-| 3 | [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03) | Completed | [![Project03](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project03.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project03.yml) |
-| 4 | [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04) | Completed | [![Project04](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml) |
-| 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | In progress| [![Project05](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml) |
-| 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | In progress| [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
-| 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | Started | [![Project07](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml) |
-| 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | Started | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml) |
-| 9 | [E-Paper Module SPI project] | Not started | TBD |
-| 10 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | TBD |
-| 11 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | TBD |
-| 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project11) | Not started | TBD |
-| 13 | [SDRam project] | Not started | TBD |
-| 14 | [MCU_Interface] | Not started | TBD |
-| 15 | [Spacewire] | Not started | TBD |
-| 16 | [Leon3] | Not started | TBD |
-| 17 | [Raytracing GPU] | Not started | TBD |
-| 18 | [Image generator] | Not started | TBD |
-| 18 | [Advanced project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | TBD |
+| P  | Desc. | Status | Nano 20K | Nano 4K | Test |
+| -- | ------------------------------------------ | ------- | -------- | ------- | ------ |
+| 1 | [Evaluate the Sipeed proprietary toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project01) | Not started | — | — | N/A |
+| 2 | [Evaluate the open source toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project02) | Not started | ✅ | ❌ | N/A |
+| 3 | [Evaluate the Hardcaml toolchain](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project03) | Completed | ✅ | ❌ | [![Project03](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project03.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project03.yml) |
+| 4 | [Use GPIO to drive LEDS](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project04) | Completed | ✅ | ❌ | [![Project04](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project04.yml) |
+| 5 | [UART project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project05) | In progress| ✅ | ❌ | [![Project05](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project05.yml) |
+| 6 | [HDMI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project06) | In progress| ✅ | 🟡 `hdmi_hardcaml` only | [![Project06](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project06.yml) |
+| 7 | [I2C project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project07) | Started | ✅ | ❌ | [![Project07](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project07.yml) |
+| 8 | [SPI project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project08) | Started | ✅ `spi_hardcaml` | ✅ `spi_hardcaml` (tested on HW) | [![Project08](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project08.yml) |
+| 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | ✅ | ❌ | TBD |
+| 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | — | — | TBD |
+| 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | — | — | TBD |
+| 15 | [Spacewire](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project15) | Not started | ✅ | ❌ | TBD |
+| 16 | [E-Paper Module SPI project] | Not started | — | — | TBD |
+| 17 | [SDRam project] | Not started | — | — | TBD |
+| 18 | [MCU_Interface] | Not started | — | — | TBD |
+| 19 | [Leon3] | Not started | — | — | TBD |
+| 20 | [Raytracing GPU] | Not started | — | — | TBD |
+| 21 | [Image generator] | Not started | — | — | TBD |
+| 22 | [Advanced project] | Not started | — | — | TBD |
+
+Board support:
+
+- ✅ supported: the project has a constraint file (`.cst`) for the board
+- 🟡 build target and constraint file exist, but not yet tested on hardware
+- ❌ not supported yet
+- — no build files yet (documentation only)
+
+For projects that support both boards, select the target with
+`make BOARD=nano20k` (default) or `make BOARD=nano4k`.
+The Nano 20K uses a `GW2AR-LV18QN88C8/I7` (family `GW2A-18C`); the Nano 4K uses a
+`GW1NSR-LV4CQN48PC7/I6` (family `GW1NS-4`).
+Note: `project08/spi_verilog` currently targets a Tang Nano 9K, and `project06/hdmi_verilog` the Nano 20K only.
 
 Interesting Resources
 ---------------------
