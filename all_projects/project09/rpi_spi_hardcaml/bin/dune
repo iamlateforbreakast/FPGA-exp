@@ -1,10 +1,12 @@
 (executable
- (public_name sdcard_hardcaml)
+ (public_name rpi_spi_hardcaml)
  (name generate)
+ (modules generate)
  (libraries project09_lib hardcaml)
  (preprocess (pps ppx_jane ppx_hardcaml)))
 
 (executable
  (name simulate)
- (libraries project09_lib hardcaml)
+ (modules simulate)
+ (libraries project09_lib hardcaml hardcaml_waveterm hardcaml_waveterm.interactive)
  (preprocess (pps ppx_jane ppx_hardcaml)))
