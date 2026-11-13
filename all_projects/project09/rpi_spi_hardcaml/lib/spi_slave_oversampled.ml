@@ -1,4 +1,4 @@
-(* spi_slave.ml *)
+(* spi_slave_oversampled.ml *)
 open Hardcaml
 open Hardcaml.Signal
 
@@ -11,32 +11,19 @@ module type Config = Config.S
    synchronized versions. On every rising SCLK edge the slave samples MOSI; on
    every falling edge it advances MISO.
 
+   The synchronizer and edge detector put about four system clocks (~150 ns)
+   between a falling SCLK edge and the next MISO bit, so the Pi, which samples
+   MISO half an SCLK period later, reads stale bits above about 2 MHz.
+   [Spi_slave_sclk] avoids this by clocking its shift registers from SCLK.
+
    MISO returns the byte received in the *previous* transaction: TX is loaded
    from [rx_data] when CS asserts, so the first transaction after reset returns
    0x00. That one-byte pipeline is intentional - it gives both ends a simple
    way to verify the link (and to measure round-trip latency) without needing
    the master to know anything about the slave's state. *)
 module Make (_ : Config.S) = struct
-  module I = struct
-    type 'a t =
-      { clock : 'a [@bits 1]
-      ; reset : 'a [@bits 1]
-      ; sclk  : 'a [@bits 1]
-      ; cs_n  : 'a [@bits 1]
-      ; mosi  : 'a [@bits 1]
-      }
-    [@@deriving sexp_of, hardcaml]
-  end
-
-  module O = struct
-    type 'a t =
-      { miso     : 'a [@bits 1]
-      ; irq      : 'a [@bits 1]
-      ; rx_data  : 'a [@bits 8]
-      ; rx_valid : 'a [@bits 1]
-      }
-    [@@deriving sexp_of, hardcaml]
-  end
+  module I = Spi_slave_intf.I
+  module O = Spi_slave_intf.O
 
   let create (_scope : Scope.t) (input : Signal.t I.t) : Signal.t O.t =
     let open Always in
