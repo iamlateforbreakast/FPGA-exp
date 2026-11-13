@@ -1,0 +1,9 @@
+(lang dune 3.16)
+
+(name project13)
+
+(generate_opam_files true)
+
+(package
+ (name project13)
+ (description "Project 13 - SDRAM on Tang Nano 20K and HyperRAM on Tang Nano 4K"))

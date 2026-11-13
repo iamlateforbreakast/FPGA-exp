@@ -1,0 +1,37 @@
+name: Project13
+run-name: ${{ github.actor }} is building and simulating the SDRAM/HyperRAM controllers. 🚀
+
+on:
+  push:
+    paths: 'all_projects/project13/**' # Triggers only if update is project13
+
+jobs:
+  Project13-Build-And-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 5.2.0
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup OCAML and Opam environment
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+          allow-prerelease-opam: true
+      - name: Install Hardcaml and dependencies
+        working-directory: all_projects/project13
+        run: |
+          opam install hardcaml ppx_hardcaml ppx_jane ppx_inline_test
+      - name: Generate Verilog
+        working-directory: all_projects/project13
+        run: opam exec -- dune build
+      - name: Run SDRAM and HyperRAM simulations
+        working-directory: all_projects/project13
+        run: opam exec -- dune runtest

@@ -1,0 +1,13 @@
+(executable
+ (public_name project13_generate)
+ (name generate)
+ (modules generate)
+ (libraries project13_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
+
+(executable
+ (public_name project13_simulate)
+ (name simulate)
+ (modules simulate)
+ (libraries project13_lib hardcaml)
+ (preprocess (pps ppx_jane ppx_hardcaml)))
