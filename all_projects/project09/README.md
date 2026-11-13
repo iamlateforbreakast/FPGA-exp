@@ -45,6 +45,7 @@ The open-source flow (yosys, nextpnr-himbaechel, gowin_pack) is described in
 the repository README.
 
 ```sh
+podman compose run --rm fpga-exp-dev
 cd all_projects/project09/rpi_spi_hardcaml
 dune build                 # check the Hardcaml design compiles
 make                       # Nano 20K: rpi_spi_hardcaml_nano20k.fs
@@ -87,3 +88,36 @@ the FPGA alone.
 If transfers mismatch, slow the clock down (`--speed 100000`) before
 suspecting the design: the slave oversamples SCLK with the 27 MHz system clock
 and, like any asynchronous input, needs SCLK comfortably slower than that.
+
+Hardware status
+---------------
+
+Verified on a Tang Nano 4K driven by a Raspberry Pi Zero W, with the bitstream
+both loaded to SRAM and written to flash. `spi_loopback.py --count 32` passes,
+and `--led 0x01` lights the LED. A 256-byte random-data loopback gave:
+
+| SCLK | Result |
+| ---- | ------ |
+| 500 kHz | 256/256 |
+| 1 MHz (script default) | 256/256 |
+| 2 MHz | 256/256 |
+| 4 MHz | 88/256 |
+| 8 MHz | 2/256 |
+
+**Keep SCLK at or below 2 MHz.** SCLK goes through a two-flop synchronizer and
+an edge detector on the 27 MHz clock, so MISO changes about four system
+clocks (~150 ns) after each falling SCLK edge. At 4 MHz half an SCLK period is
+only 125 ns, so the Pi samples MISO before the new bit is there.
+
+The Nano 20K build has not been tested on hardware.
+
+### If every byte reads back as `0x00`
+
+Check the wiring before the design. On the Pi, `pinctrl` can tell a floating
+MISO line from a driven one: enable the pull-up with `pinctrl set 9 pu`, then
+run a transfer. If it reads `0xFF`, nothing is driving MISO. If it still reads
+`0x00`, the line is driven or tied low. If the FPGA is not the one driving it,
+the MISO wire is in the wrong 4K hole or touching GND. Go by the FPGA pin
+numbers printed next to the holes; they do not run in order along the header.
+With the FPGA disconnected, a jumper from MOSI to MISO on the Pi should echo
+every byte within the same transfer.
