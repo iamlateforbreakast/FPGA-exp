@@ -1,5 +1,6 @@
 (library
   (name project09_lib)
-  (modules top spi_slave config_intf config)
+  (modules top spi_slave_intf spi_slave_sclk spi_slave_oversampled config_intf
+    config)
   (libraries hardcaml)
   (preprocess (pps ppx_jane ppx_hardcaml)))

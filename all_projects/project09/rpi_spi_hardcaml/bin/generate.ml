@@ -16,8 +16,20 @@ module Config_nano4k = struct
   let led_width = 1
 end
 
-let generate (module X : Config.S) ~output_dir =
-  let module MyTop = Top.Make (X) in
+(* The SPI slave implementation, selected with SPI=sclk (default) or
+   SPI=oversampled; see lib/spi_slave_intf.ml. *)
+let spi_slave (module X : Config.S) = function
+  | "sclk" ->
+    (module Spi_slave_sclk.Make (X) : Spi_slave_intf.S)
+  | "oversampled" ->
+    (module Spi_slave_oversampled.Make (X) : Spi_slave_intf.S)
+  | other ->
+    failwith
+      (Printf.sprintf "Unknown SPI '%s'; expected sclk or oversampled" other)
+
+let generate (module X : Config.S) ~spi ~output_dir =
+  let module Spi = (val spi_slave (module X) spi) in
+  let module MyTop = Top.Make (X) (Spi) in
   let module TopCircuit = Circuit.With_interface (MyTop.I) (MyTop.O) in
   let scope = Scope.create ~flatten_design:false () in
   let circuit = TopCircuit.create_exn ~name:"top_level" (MyTop.create scope) in
@@ -29,10 +41,11 @@ let generate (module X : Config.S) ~output_dir =
 
 let () =
   let board = Option.value (Sys.getenv_opt "BOARD") ~default:"nano20k" in
-  let output_dir = "verilog_out/" ^ board in
+  let spi = Option.value (Sys.getenv_opt "SPI") ~default:"sclk" in
+  let output_dir = "verilog_out/" ^ board ^ "/" ^ spi in
   match board with
-  | "nano20k" -> generate (module Config_nano20k : Config.S) ~output_dir
-  | "nano4k" -> generate (module Config_nano4k : Config.S) ~output_dir
+  | "nano20k" -> generate (module Config_nano20k : Config.S) ~spi ~output_dir
+  | "nano4k" -> generate (module Config_nano4k : Config.S) ~spi ~output_dir
   | other ->
     failwith
       (Printf.sprintf "Unknown BOARD '%s'; expected nano20k or nano4k" other)
