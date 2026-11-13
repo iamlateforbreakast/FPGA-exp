@@ -45,6 +45,7 @@ The open-source flow (yosys, nextpnr-himbaechel, gowin_pack) is described in
 the repository README.
 
 ```sh
+podman compose run --rm fpga-exp-dev
 cd all_projects/project09/rpi_spi_hardcaml
 dune build                 # check the Hardcaml design compiles
 make                       # Nano 20K: rpi_spi_hardcaml_nano20k.fs
@@ -87,3 +88,71 @@ the FPGA alone.
 If transfers mismatch, slow the clock down (`--speed 100000`) before
 suspecting the design: the slave oversamples SCLK with the 27 MHz system clock
 and, like any asynchronous input, needs SCLK comfortably slower than that.
+
+### Ready LED
+
+A headless Pi Zero W gives no sign of when it is on Wi-Fi and accepting SSH.
+`raspberry_pi/ready_led.sh` drives an LED on a Pi GPIO to show this:
+
+- **Blinking:** booting, or not yet on Wi-Fi with `sshd` running.
+- **Solid on:** `wlan0` has an IPv4 address and `sshd` is active, so you can
+  ssh in.
+
+Wire GPIO17 (header pin 11) through a 330 Ω resistor to the LED's anode (long
+leg), and the cathode to GND (pin 9). GPIO17 is clear of the SPI pins and the
+IRQ line.
+
+Add this line to the end of `/boot/firmware/config.txt`:
+
+```
+dtoverlay=gpio-led,gpio=17,label=ready,trigger=timer
+```
+
+The overlay registers the pin as `/sys/class/leds/ready`, and `trigger=timer`
+makes the kernel blink it early in boot, before the script starts. Then
+install the script and its systemd unit, and reboot:
+
+```sh
+sudo install -m 755 raspberry_pi/ready_led.sh /usr/local/bin/
+sudo install -m 644 raspberry_pi/ready-led.service /etc/systemd/system/
+sudo systemctl enable ready-led
+sudo reboot
+```
+
+The script checks the state every 2 seconds and logs each change, which
+`journalctl -t ready-led` shows. On the test Pi Zero W, the LED goes solid
+about 3 minutes after power-on. To use a different pin, change `gpio=` in the
+overlay line. The script does not need to change.
+
+Hardware status
+---------------
+
+Verified on a Tang Nano 4K driven by a Raspberry Pi Zero W, with the bitstream
+both loaded to SRAM and written to flash. `spi_loopback.py --count 32` passes,
+and `--led 0x01` lights the LED. A 256-byte random-data loopback gave:
+
+| SCLK | Result |
+| ---- | ------ |
+| 500 kHz | 256/256 |
+| 1 MHz (script default) | 256/256 |
+| 2 MHz | 256/256 |
+| 4 MHz | 88/256 |
+| 8 MHz | 2/256 |
+
+**Keep SCLK at or below 2 MHz.** SCLK goes through a two-flop synchronizer and
+an edge detector on the 27 MHz clock, so MISO changes about four system
+clocks (~150 ns) after each falling SCLK edge. At 4 MHz half an SCLK period is
+only 125 ns, so the Pi samples MISO before the new bit is there.
+
+The Nano 20K build has not been tested on hardware.
+
+### If every byte reads back as `0x00`
+
+Check the wiring before the design. On the Pi, `pinctrl` can tell a floating
+MISO line from a driven one: enable the pull-up with `pinctrl set 9 pu`, then
+run a transfer. If it reads `0xFF`, nothing is driving MISO. If it still reads
+`0x00`, the line is driven or tied low. If the FPGA is not the one driving it,
+the MISO wire is in the wrong 4K hole or touching GND. Go by the FPGA pin
+numbers printed next to the holes; they do not run in order along the header.
+With the FPGA disconnected, a jumper from MOSI to MISO on the Pi should echo
+every byte within the same transfer.
