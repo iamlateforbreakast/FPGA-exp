@@ -1,0 +1,12 @@
+[Unit]
+Description=Show Wi-Fi/SSH readiness on a GPIO LED
+After=local-fs.target
+
+[Service]
+Environment=IFACE=wlan0 LED=ready
+ExecStart=/usr/local/bin/ready_led.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

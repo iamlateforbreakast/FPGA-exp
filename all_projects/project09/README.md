@@ -89,6 +89,41 @@ If transfers mismatch, slow the clock down (`--speed 100000`) before
 suspecting the design: the slave oversamples SCLK with the 27 MHz system clock
 and, like any asynchronous input, needs SCLK comfortably slower than that.
 
+### Ready LED
+
+A headless Pi Zero W gives no sign of when it is on Wi-Fi and accepting SSH.
+`raspberry_pi/ready_led.sh` drives an LED on a Pi GPIO to show this:
+
+- **Blinking:** booting, or not yet on Wi-Fi with `sshd` running.
+- **Solid on:** `wlan0` has an IPv4 address and `sshd` is active, so you can
+  ssh in.
+
+Wire GPIO17 (header pin 11) through a 330 Ω resistor to the LED's anode (long
+leg), and the cathode to GND (pin 9). GPIO17 is clear of the SPI pins and the
+IRQ line.
+
+Add this line to the end of `/boot/firmware/config.txt`:
+
+```
+dtoverlay=gpio-led,gpio=17,label=ready,trigger=timer
+```
+
+The overlay registers the pin as `/sys/class/leds/ready`, and `trigger=timer`
+makes the kernel blink it early in boot, before the script starts. Then
+install the script and its systemd unit, and reboot:
+
+```sh
+sudo install -m 755 raspberry_pi/ready_led.sh /usr/local/bin/
+sudo install -m 644 raspberry_pi/ready-led.service /etc/systemd/system/
+sudo systemctl enable ready-led
+sudo reboot
+```
+
+The script checks the state every 2 seconds and logs each change, which
+`journalctl -t ready-led` shows. On the test Pi Zero W, the LED goes solid
+about 3 minutes after power-on. To use a different pin, change `gpio=` in the
+overlay line. The script does not need to change.
+
 Hardware status
 ---------------
 
