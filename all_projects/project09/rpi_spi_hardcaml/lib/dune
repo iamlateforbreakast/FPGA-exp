@@ -1,5 +1,5 @@
 (library
   (name project09_lib)
-  (modules config_intf config sdcard)
+  (modules top spi_slave config_intf config)
   (libraries hardcaml)
   (preprocess (pps ppx_jane ppx_hardcaml)))

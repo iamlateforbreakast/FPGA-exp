@@ -1,42 +1,38 @@
-// onboard BL616 UART connection
-IO_LOC "uart_rx" 70;
-IO_LOC "uart_tx" 8; // JTAG TDO re-use
-IO_PORT "uart_rx" PULL_MODE=UP IO_TYPE=LVCMOS33 BANK_VCCIO=3.3;
-IO_PORT "uart_tx" DRIVE=8 IO_TYPE=LVCMOS33 BANK_VCCIO=3.3;
+// Raspberry Pi <-> Tang Nano 20K SPI link (3.3V, mode 0, MSB first)
+//
+// RPi physical pin 23 (GPIO11 / SCLK) -> FPGA pin 42
+// RPi physical pin 19 (GPIO10 / MOSI) -> FPGA pin 41
+// RPi physical pin 24 (GPIO8  / CE0)  -> FPGA pin 51
+// RPi physical pin 21 (GPIO9  / MISO) <- FPGA pin 54
+// RPi physical pin 22 (GPIO25 / IRQ)  <- FPGA pin 56  (optional)
+// RPi physical pin 6  (GND)           -- FPGA GND
+IO_LOC "i_sclk" 42;
+IO_PORT "i_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "i_mosi" 41;
+IO_PORT "i_mosi" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "i_cs_n" 51;
+IO_PORT "i_cs_n" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8;
+IO_LOC "o_miso" 54;
+IO_PORT "o_miso" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "o_irq" 56;
+IO_PORT "o_irq" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
 
-// the six on-board leds
-IO_LOC "leds_n[5]" 20;
-IO_PORT "leds_n[5]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
-IO_LOC "leds_n[4]" 19;
-IO_PORT "leds_n[4]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
-IO_LOC "leds_n[3]" 18;
-IO_PORT "leds_n[3]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
-IO_LOC "leds_n[2]" 17;
-IO_PORT "leds_n[2]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
-IO_LOC "leds_n[1]" 16;
-IO_PORT "leds_n[1]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
-IO_LOC "leds_n[0]" 15;
-IO_PORT "leds_n[0]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+// the six on-board LEDs
+IO_LOC "leds[5]" 20;
+IO_PORT "leds[5]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[4]" 19;
+IO_PORT "leds[4]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[3]" 18;
+IO_PORT "leds[3]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[2]" 17;
+IO_PORT "leds[2]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[1]" 16;
+IO_PORT "leds[1]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[0]" 15;
+IO_PORT "leds[0]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
 
-// SD card
-IO_LOC "sd_clk" 83;
-IO_PORT "sd_clk" PULL_MODE=NONE IO_TYPE=LVCMOS33; 
-IO_LOC "sd_cmd" 82;        // MOSI
-IO_PORT "sd_cmd" PULL_MODE=NONE IO_TYPE=LVCMOS33;
-IO_LOC "sd_dat[0]" 84;       // MISO
-IO_PORT "sd_dat[0]" PULL_MODE=NONE IO_TYPE=LVCMOS33;
-IO_LOC "sd_dat[1]" 85;
-IO_PORT "sd_dat[1]" PULL_MODE=NONE IO_TYPE=LVCMOS33;
-IO_LOC "sd_dat[2]" 80;
-IO_PORT "sd_dat[2]" PULL_MODE=NONE IO_TYPE=LVCMOS33;
-IO_LOC "sd_dat[3]" 81;
-IO_PORT "sd_dat[3]" PULL_MODE=NONE IO_TYPE=LVCMOS33;
-
-// two on-board buttons
-IO_LOC "user" 88;
-IO_PORT "user" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
-IO_LOC "reset" 87;
-IO_PORT "reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
-
-IO_LOC "clk" 4;
-IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+// clock and the active-high on-board reset button
+IO_LOC "clock" 4;
+IO_PORT "clock" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "i_reset" 87;
+IO_PORT "i_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;

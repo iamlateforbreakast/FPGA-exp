@@ -1,0 +1,10 @@
+(lang dune 3.16)
+
+(name project09)
+
+(generate_opam_files true)
+
+(package
+ (name project09)
+ (synopsis "Raspberry Pi to Tang Nano 20K SPI link")
+ (description "SPI slave on the Tang Nano 20K driven by a Raspberry Pi"))

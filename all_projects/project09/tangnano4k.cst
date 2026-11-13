@@ -1,0 +1,39 @@
+// Tang Nano 4K (GW1NSR-LV4CQN48PC7/I6) constraints for the RPi SPI link.
+//
+// Pin numbers follow Sipeed's official Tang Nano 4K pinout and the already
+// verified 4K constraint files in this repository:
+//   - project08/tangnano4k.cst -> header pins 39/40/41/42/43 are Bank1 (3.3V)
+//   - project06/tangnano4k.cst -> buttons are Bank3 (1.8V), clock is pin 45
+//   - project06/project08      -> the single onboard LED is pin 10
+//
+// This design needs only ordinary 3.3V GPIO, so it can be fully constrained
+// on the 4K (unlike its 6-LED sibling designs on the 20K). The SPI signals
+// use header pins, not the board's HDMI/TMDS or flash/JTAG pins.
+
+// 27 MHz oscillator.
+IO_LOC "clock" 45;
+IO_PORT "clock" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// Onboard button KEY1 / pin 15. Bank3 has VCCIO = 1.8V on this board, so the
+// input buffer must be LVCMOS18. The button is active-low (pulled up when
+// released), and bin/generate.ml's Config_nano4k.normalize_reset inverts it
+// before lib/top.ml sees the active-high reset it expects.
+IO_LOC "i_reset" 15;
+IO_PORT "i_reset" IO_TYPE=LVCMOS18 PULL_MODE=UP;
+
+// Raspberry Pi SPI signals on breadboard-accessible Bank1 (3.3V) header pins.
+IO_LOC "i_sclk" 39;
+IO_PORT "i_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "i_mosi" 40;
+IO_PORT "i_mosi" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "i_cs_n" 42;
+IO_PORT "i_cs_n" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8;
+IO_LOC "o_miso" 41;
+IO_PORT "o_miso" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "o_irq" 43;
+IO_PORT "o_irq" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+
+// The Nano 4K has ONE onboard LED (pin 10), so Config_nano4k sets led_width
+// = 1 and the generated top-level port is the scalar "leds", not "leds[0]".
+IO_LOC "leds" 10;
+IO_PORT "leds" IO_TYPE=LVCMOS33 DRIVE=8;
