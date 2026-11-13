@@ -44,6 +44,7 @@ Projects
 | 9 | [SDCard project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project09) | Not started | ✅ | ❌ | TBD |
 | 10 | [USB project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project10) | Not started | — | — | TBD |
 | 12 | [ADC/DAC project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project12) | Not started | — | — | TBD |
+| 13 | [SDRAM / HyperRAM project](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project13) | In progress | 🟡 | ✅ HyperRAM (tested on HW) | [![Project13](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project13.yml/badge.svg)](https://github.com/iamlateforbreakast/FPGA-exp/actions/workflows/project13.yml) |
 | 15 | [Spacewire](https://github.com/iamlateforbreakast/FPGA-exp/tree/main/all_projects/project15) | Not started | ✅ | ❌ | TBD |
 | 16 | [E-Paper Module SPI project] | Not started | — | — | TBD |
 | 17 | [SDRam project] | Not started | — | — | TBD |

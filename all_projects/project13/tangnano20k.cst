@@ -1,0 +1,29 @@
+// Tang Nano 20K: clock, reset button, six onboard LEDs.
+// The SDRAM is inside the GW2AR-18 package and uses nextpnr's SIP
+// pseudo-pins (O_sdram_* / IO_sdram_dq); it needs no IO_LOC entries here.
+//
+// The LED bank is 3.3 V (this matches nand2mario/sdram-tang-nano-20k, whose
+// SDRAM design uses these same LED pins with LVCMOS33).  Do not add
+// BANK_VCCIO=1.8 here: the embedded SDRAM's pseudo-pins share the bank and
+// would then conflict with the 3.3 V default IO_TYPE.
+
+IO_LOC "clock" 4;
+IO_PORT "clock" PULL_MODE=UP;
+
+// Onboard button, active-high on this board.
+IO_LOC "i_reset" 87;
+IO_PORT "i_reset" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+
+// Onboard LEDs are active-low; lib/top_sdram.ml inverts them.
+IO_LOC "leds[5]" 20;
+IO_PORT "leds[5]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[4]" 19;
+IO_PORT "leds[4]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[3]" 18;
+IO_PORT "leds[3]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[2]" 17;
+IO_PORT "leds[2]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[1]" 16;
+IO_PORT "leds[1]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC "leds[0]" 15;
+IO_PORT "leds[0]" PULL_MODE=UP DRIVE=8 IO_TYPE=LVCMOS33;

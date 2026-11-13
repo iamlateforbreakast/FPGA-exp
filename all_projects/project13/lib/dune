@@ -1,0 +1,5 @@
+(library
+  (name project13_lib)
+  (modules config_intf config pll memory_test sdram sdram_system top_sdram hyperram hyperram_system debug_spi top_hyperram sim_models)
+  (libraries hardcaml)
+  (preprocess (pps ppx_jane ppx_hardcaml)))

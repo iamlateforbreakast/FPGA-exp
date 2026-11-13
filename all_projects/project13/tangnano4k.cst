@@ -1,0 +1,25 @@
+// Tang Nano 4K: clock, reset button, single onboard LED.
+// The HyperRAM is inside the GW1NS-4 package and uses nextpnr's SIP
+// pseudo-pins (O_hpram_* / IO_hpram_*); it needs no IO_LOC entries here.
+
+IO_LOC "clock" 45;
+IO_PORT "clock" PULL_MODE=UP;
+
+// Onboard button, active-low on this board (pin 15 is Bank3, 1.8V).
+IO_LOC "i_reset" 15;
+IO_PORT "i_reset" IO_TYPE=LVCMOS18 PULL_MODE=UP;
+
+// Single onboard LED, active-high.
+IO_LOC "O_led" 10;
+IO_PORT "O_led" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+
+// SPI debug readout (lib/debug_spi.ml) to the project09 Raspberry Pi rig,
+// on the same 3.3V Bank1 header pins project09 uses.
+IO_LOC "i_sclk" 39;
+IO_PORT "i_sclk" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_LOC "i_mosi" 40;
+IO_PORT "i_mosi" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_LOC "o_miso" 41;
+IO_PORT "o_miso" IO_TYPE=LVCMOS33 PULL_MODE=DOWN DRIVE=8;
+IO_LOC "i_cs_n" 42;
+IO_PORT "i_cs_n" IO_TYPE=LVCMOS33 PULL_MODE=UP;
