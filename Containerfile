@@ -1,31 +1,29 @@
-# Containerfile for the FPGA-exp open-source toolchain (Tang Nano 20K / Gowin GW2A).
+# Containerfile for the FPGA-exp open-source toolchain 
+# (Tang Nano 20K and 4k / Gowin GW2A and GW1NS-A).
 #
 # -------------------------------------------------------------------------
 # Builds Yosys, nextpnr-himbaechel (gowin uarch) and openFPGALoader from
-# source, since the toolchain requires features/architectures newer than
-# what Ubuntu 22.04's apt packages ship (see all_projects/project02/Fedora_WSL.md).
-# Also sets up an opam switch with dune + hardcaml for the projects that
-# generate Verilog from OCaml/Hardcaml.
+# source.
 
-FROM ubuntu:24.04 AS FPGA-tools-build
+FROM localhost/base24:latest AS FPGA-tools-build
 
 ARG YOSYS_REF=yosys-0.38
 ARG NEXTPNR_REF=nextpnr-0.11.1
-ARG OPENFPGALOADER_REF=v0.12.1
+ARG OPENFPGALOADER_REF=v1.2.0
 ARG OCAML_VERSION=5.1.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Etc/UTC
+USER root
 
 # --- system / build dependencies ---------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential cmake git pkg-config \
-        bison flex gperf \
+        pkg-config \
+        gperf \
         libboost-all-dev libeigen3-dev libreadline-dev \
         tcl-dev libffi-dev zlib1g-dev \
         libftdi1-dev libhidapi-dev libudev-dev libusb-1.0-0-dev \
-        python3 python3-pip python3-venv \
-        opam m4 unzip curl ca-certificates sudo rsync \
+        opam m4 rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Yosys (from source: guarantees a synth_gowin pass with current cell libs) --
@@ -75,7 +73,13 @@ CMD ["/bin/bash"]
 
 # --- FPGA-exp-dev (for building the Hardcaml projects) ----------------------
 
-FROM ubuntu:24.04 AS FPGA-exp-dev
+FROM localhost/base24:latest AS FPGA-exp-dev
+
+ARG USERNAME=builder
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+USER root
 
 ARG OCAML_VERSION=5.1.1
 
@@ -84,34 +88,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # --- system / build dependencies ---------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential cmake git pkg-config \
-        bison flex gperf \
+        pkg-config \
+        gperf \
         libboost-all-dev libeigen3-dev libreadline-dev \
         tcl-dev libffi-dev zlib1g-dev libgmp-dev \
         libftdi1-dev libhidapi-dev libudev-dev libusb-1.0-0-dev \
-        python3 python3-pip python3-venv \
-        opam m4 unzip curl ca-certificates sudo rsync \
+        python3-pip python3-venv \
+        opam m4 rsync \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=FPGA-tools-build /usr/local/bin/ /usr/local/bin/
 COPY --from=FPGA-tools-build /usr/local/share/ /usr/local/share/
 
-# --- dedicated non-root build user --------------------------------------
-ARG USERNAME=builder
-ARG USER_UID=1000
-ARG USER_GID=1000
-
-RUN userdel -r ubuntu 2>/dev/null || true \
-    && groupdel ubuntu 2>/dev/null || true \
-    && groupadd --gid ${USER_GID} ${USERNAME} \
-    && useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} \
-    && groupadd -f plugdev \
-    && usermod -aG dialout,plugdev ${USERNAME} \
-    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
-    && chmod 0440 /etc/sudoers.d/${USERNAME}
-
 USER ${USERNAME}
-WORKDIR /home/${USERNAME}
+WORKDIR /home/builder
 
 # --- OCaml / dune / hardcaml toolchain (as builder, no root needed) -----
 RUN opam init --bare --disable-sandboxing -y \
@@ -122,8 +112,8 @@ RUN opam init --bare --disable-sandboxing -y \
         ppx_jane ppx_inline_test ppx_expect \
     && opam clean -a -c -s --logs
 
-ENV PATH=/home/${USERNAME}/.opam/default/bin:$PATH
-RUN echo 'eval $(opam env)' >> /home/${USERNAME}/.bashrc
+ENV PATH=/home/builder/.opam/default/bin:$PATH
+RUN echo 'eval $(opam env)' >> /home/builder/.bashrc
 
 # --- Apycula (provides gowin_pack, used to produce the .fs bitstream) --
 RUN pip3 install --no-cache-dir --break-system-packages apycula
@@ -137,7 +127,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # --- runtime libraries only (openFPGALoader's shared-lib deps) ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libftdi1-2 libhidapi-hidraw0 libudev1 libusb-1.0-0 \
+        libftdi1-2 libhidapi-hidraw0 libhidapi-libusb0 libudev1 libusb-1.0-0 \
         zlib1g libcap2 \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
